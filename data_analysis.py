@@ -12,18 +12,20 @@ import os
 import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
+import matplotlib
 import matplotlib.pyplot as plt
 from itertools import compress
+matplotlib.use('qt5agg')
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
-qwp_R = 'polarizer_qwp'  # folder for qwp at first configuration
-qwp_L = 'polarizer_qwp2'  # folder for qwp at second configuration
-partial_pol = 'partial_pol'  # folder location of partial pol data
+qwp_R = 'qwp_R'  # folder for qwp at first configuration
+qwp_L = 'qwp_L'  # folder for qwp at second configuration
+partial_pol = 'partial_pol3'  # folder location of partial pol data
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
-os.chdir('C:\\Users\\Noah\\Dropbox\\Polarization Diffraction Gratings\\2017_06_22_polarimetry\\calibration2')
+os.chdir('C:\\Users\\User\\Desktop\\Polarimeter Project\\Polarization optics calibration\\2017_07_11')
 
-#%% Extract and fit linear polarizaer data.
+#%% Extract and fit linear polarizer data.
 
 angles = []  # angles of the linear polarizer
 inc_powers = []  # incident powers during measurement
@@ -36,26 +38,24 @@ fit_parameters = []
 variances = []
 
 os.chdir(linear_pol_extension)  # go get the linear pol data
+
 for file in os.listdir():
     if fnmatch.fnmatch(file, '*.txt'):
         params = file.split('_')
         try:  # if file name matches format do stuff with it
             power = float(params[-1][:-4])  # get rid of '.txt'
-            angle = int(params[0][:-3])  # get rid of 'deg' in string
+            angle = float(params[0][:-3])  # get rid of 'deg' in string
             inc_powers.append(power)
             angles.append(angle)
-            
             # make file into array
             my_data = np.genfromtxt(file, delimiter=',')
             pd1_voltage.append(np.mean(my_data[:, 0]))
             pd2_voltage.append(np.mean(my_data[:, 1]))
             pd3_voltage.append(np.mean(my_data[:, 2]))
-            pd4_voltage.append(np.mean(my_data[:, 3]))
-            
-            
+            pd4_voltage.append(np.mean(my_data[:, 3]))           
         except ValueError: # don't do anything with invalid file name
             pass
-        
+       
 # rearrange all data as sorted by pol_angle
 sorted_lists = sorted(zip(angles, inc_powers, pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage))
 # now recover each individual list
@@ -64,24 +64,24 @@ angles, inc_powers, pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage =  [[x[i]
 # begin plotting of obtained data
         
 num_angles = len(angles) # number of angular test points
-angles = angles[:(num_angles-1)//2] # cut out part of array from 0 to 170 deg
+angles = angles[:(num_angles)//2] # cut out part of array from 0 to 170 deg
 
 # split the photodiode powers into two separate lists
 
-pd1_voltage1 = np.array(pd1_voltage[:(num_angles-1)//2])
-pd2_voltage1 = np.array(pd2_voltage[:(num_angles-1)//2])
-pd3_voltage1 = np.array(pd3_voltage[:(num_angles-1)//2])
-pd4_voltage1 = np.array(pd4_voltage[:(num_angles-1)//2])
+pd1_voltage1 = np.array(pd1_voltage[:(num_angles)//2])
+pd2_voltage1 = np.array(pd2_voltage[:(num_angles)//2])
+pd3_voltage1 = np.array(pd3_voltage[:(num_angles)//2])
+pd4_voltage1 = np.array(pd4_voltage[:(num_angles)//2])
 
-pd1_voltage2 = np.array(pd1_voltage[(num_angles-1)//2:-1])
-pd2_voltage2 = np.array(pd2_voltage[(num_angles-1)//2:-1])
-pd3_voltage2 = np.array(pd3_voltage[(num_angles-1)//2:-1])
-pd4_voltage2 = np.array(pd4_voltage[(num_angles-1)//2:-1])
+pd1_voltage2 = np.array(pd1_voltage[(num_angles)//2:])
+pd2_voltage2 = np.array(pd2_voltage[(num_angles)//2:])
+pd3_voltage2 = np.array(pd3_voltage[(num_angles)//2:])
+pd4_voltage2 = np.array(pd4_voltage[(num_angles)//2:])
 
 # slice the incident power list in half as well
 
-inc_powers1 = np.array(inc_powers[:(num_angles-1)//2])
-inc_powers2 = np.array(inc_powers[(num_angles-1)//2:-1])
+inc_powers1 = np.array(inc_powers[:(num_angles)//2])
+inc_powers2 = np.array(inc_powers[(num_angles)//2:])
 
 # normalize each by the power incident during measurement
 
@@ -102,7 +102,7 @@ pd3_voltage = (pd3_voltage1+pd3_voltage2)/2
 pd4_voltage = (pd4_voltage1+pd4_voltage2)/2
 
 # construct a larger matrix to hold the voltages
-pd_voltages = np.vstack((pd1_voltage, pd2_voltage, pd3_voltage,         pd4_voltage)) 
+pd_voltages = np.vstack((pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage)) 
 angles = np.array(angles)
 inc_powers = np.array(inc_powers)
 
@@ -111,24 +111,22 @@ def fit_function(theta, a, b, c):
     return a + b*np.cos(2*theta*np.pi/180) + c*np.sin(2*theta*np.pi/180)
 
 plt.figure
-plt.rc('text', usetex=True)
-plt.rc('font', family='serif')
-plt.xlabel(r'$\theta$')
-plt.ylabel('Normalized intensity (a.u.)')
+plt.yticks([]) # y units are arbitrary
 
 thetas = np.linspace(0, 180, 1000)
 
 for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
-    plt.plot(x, y, "o")
     popt, variance = curve_fit(fit_function, x, y)
-    plt.plot(thetas, fit_function(thetas, *popt))
+    plt.plot(thetas, fit_function(thetas, *popt), linewidth=2.5)
+    plt.plot(x, y, "o")
     
     # store the fits as anonymous functions
     fit_functions.append(lambda theta: fit_function(theta, *popt))
     fit_parameters.append(popt)
     variances.append(variance)
+plt.show()
 
 #%% move onto the qwpR part of the calibration
 
@@ -154,8 +152,8 @@ for i in range(2):
             params = file.split('_')
             try:  # if file name matches format do stuff with it
                 power = float(params[-1][:-4])  # get rid of '.txt'
-                pol_angle = int(params[0][1:-3])  # get rid of 'deg' in string
-                qwp_angle = int(params[1][1:-3])
+                pol_angle = float(params[0][1:-3])  # get rid of 'deg' in string
+                qwp_angle = float(params[1][1:-3])
                 qwp_power_incR.append(power)
                 pol_anglesR.append(pol_angle)
                 qwp_anglesR.append(qwp_angle)
@@ -226,6 +224,7 @@ for i in range(len(pd1_voltage)):
     
 plt.figure(2)
 plt.plot(dops)
+plt.show()
 
 L = np.array([pd1L, pd2L, pd3L, pd4L])
 stokes=np.dot(Ainv, L)
@@ -278,14 +277,24 @@ for i in range(len(pol_angles2)):
     partial_dops[i] = np.sqrt(stokes_temp[1]**2 + stokes_temp[2]**2 + stokes_temp[3]**2)/stokes_temp[0]
 
 plt.figure(3)
-plt.plot(pol_angles2, partial_dops, "o")
+plt.plot(pol_angles2, partial_dops, "ro", markersize=10)
+plt.xlabel('$\theta_{LP} (\circ)$', fontsize='25', fontname='Sans Serif')
+plt.ylabel('Degree of Polarization (DOP)', fontsize='14')
+partial_pol_fig = plt.gca()
+partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length=5)
+partial_pol_fig.set_ylim([0, 1.05])
+
 
 thetas = np.linspace(0, np.max(pol_angles2), 1000)
 def partial_pol_func(x, scale, offset):
     return scale * np.abs(np.cos(2*(x-offset)*np.pi/180))
 
 popt2, variance2 = curve_fit(partial_pol_func, pol_angles2, partial_dops)
-plt.plot(thetas, partial_pol_func(thetas, *popt2))
+plt.plot(thetas, partial_pol_func(thetas, *popt2), linewidth = 2.5)
+plt.show()
+# now save the figure
+file_name = os.getcwd() + 'partial_pol.svg'
+plt.savefig(file_name, format='svg')
 
 #%% Analyze data vs. the Thorlabs polarimeter.
 
@@ -411,5 +420,7 @@ plt.figure(4)
 # plot data from the ThorLabs polarimeter
 plt.scatter(range(len(dops)), dops, marker='o')
 helicities = pol_states[:, 3]
+plt.show()
 # plot data from our polarimeter
 plt.scatter(range(len(dop_states)), dop_states, marker='x')
+plt.show()
