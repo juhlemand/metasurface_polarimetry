@@ -76,7 +76,7 @@ ch4.TerminalConfig = 'SingleEnded';
 %dark current measurement
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);  
-dark = daq_measure(5, 'dark');
+dark = daq_measure(5, 'data/dark.txt');
 
 %% Carry out the linear part of the calibration
 
@@ -87,8 +87,8 @@ default_duration = 0.5; % measurement duration in seconds
 
 figure % opens new figure window
 
-cd 'C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\2017_07_11\polarizer_only'; % cd into a new directory for the linear polarization data
-addpath('C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\');
+cd 'data\polarizer_only'; % cd into a new directory for the linear polarization data
+addpath('.');
 figure;
 xlabel('Linear polarizer angle');
 ylabel('Power (a.u.)');
@@ -116,8 +116,8 @@ hold off
 %% Move on to the QWP part of the calibration, RCP
 cd '..';
 input(['Place the QWP oriented at ', num2str(qwp_at_rcp), ' in front of the linear polarizer and press return to continue.']);
-cd 'C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\2017_07_11\qwp_R'; % cd into a new directory for the linear polarization data
-addpath('C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\');
+cd 'data\qwp_R'; % cd into a new directory for the linear polarization data
+addpath('.');
 default_duration = 0.5;
 qwp_angles = 0:5:359;
 
@@ -153,8 +153,8 @@ hold off
 
 default_duration = 0.5;
 %input(['Place the QWP oriented at ', num2str(qwp_at_lcp), ' in front of the linear polarizer and press return to continue.']);
-cd 'C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\2017_07_11\qwp_L'; % cd into a new directory for the linear polarization data
-addpath('..');
+cd 'data\qwp_L'; % cd into a new directory for the linear polarization data
+addpath('.');
 addpath('..');
 qwp_angles = 0:5:360;
 
@@ -192,7 +192,7 @@ disp('Calibration completed.');
 
 default_duration = 0.5;
 input('Press return to begin partial polarization measurement.');
-cd 'C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\2017_07_11\partial_pol3'; % cd into a new directory for the linear polarization data
+cd 'data\partial_pol3'; % cd into a new directory for the linear polarization data
 addpath('..');
 addpath('..');
 pol_angles = 0:5:359;

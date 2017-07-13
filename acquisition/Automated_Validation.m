@@ -1,6 +1,8 @@
 %%Initialize serial communications with motors, the power meter, and the daq
+clear;
 addpath('..');
-addpath('../..');
+addpath('.');
+addpath('..\..');
 fpos    = get(0,'DefaultFigurePosition'); % figure default position
 fpos(3) = 640; % figure window size;Width
 fpos(4) = 480; % Heights
@@ -10,7 +12,10 @@ f = figure('Position', fpos,...
        
 global h_rot_mount
 global h_rot_mount2
-       
+
+serial_rotation_mount = 55000517; % serial number of 1st motor 
+serial_rotation_mount2 = 55000631; % serial number of rotation stage 
+
 h_rot_mount = actxcontrol('MGMOTOR.MGMotorCtrl.1',[20 20 600 480], f);
 h_rot_mount2 = actxcontrol('MGMOTOR.MGMotorCtrl.1',[20 480 600 480], f);
 h_rot_mount.StartCtrl;
@@ -36,7 +41,8 @@ ch3.TerminalConfig = 'SingleEnded';
 ch4.TerminalConfig = 'SingleEnded';
 
 %% measurement using metasurface polarimeter
-addpath('C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\');
+addpath('..\..');
+cd 'data\comparison'
 fl=struct2cell(dir());
 fl=natsort(fl(1,:));
 fl=string(fl);
@@ -53,8 +59,6 @@ meas_points = uint16(360*rand(N_DATA_POINTS,2));
 meas_points = min_travel(meas_points, 50000, 10);
 
 input('Make sure polarimeter is not obstructing beam and press return to start measurement.');
-
-cd 'C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration\2017_07_11\comparison2'; % cd into a new directory for the linear polarization data
 for i = 1:length(meas_points)
     h_rot_mount.SetAbsMovePos(0, meas_points(i,1)); % set a move to the angular offset from 0
     h_rot_mount.MoveAbsolute(0,0); % now move the polarizer    
@@ -75,11 +79,10 @@ end
 %% measurement using polarimeter
 
 input('Switch to polarimeter, makes sure that TXP_Server is started and press return to start measurement.');
-addpath('C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration');
 
 system('start ..\..\TXP_PAX.exe');
 disp('Waiting for polarimeter to warm up');
-pause(60)
+%pause(15*60)
 for i = 1:length(meas_points)
     h_rot_mount.SetAbsMovePos(0, meas_points(i,1)); % set a move to the angular offset from 0
     h_rot_mount.MoveAbsolute(0,0); % now move the polarizer    
