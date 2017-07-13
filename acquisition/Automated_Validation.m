@@ -77,7 +77,7 @@ end
 input('Switch to polarimeter, makes sure that TXP_Server is started and press return to start measurement.');
 addpath('C:\Users\User\Desktop\Polarimeter Project\Polarization optics calibration');
 
-system('start ..\..\TXP_PAX_continuous.exe');
+system('start ..\..\TXP_PAX.exe');
 disp('Waiting for polarimeter to warm up');
 pause(60)
 for i = 1:length(meas_points)
@@ -102,6 +102,6 @@ for i = 1:length(meas_points)
     %   ret = system('start ..\..\TXP_PAX_continuous.exe');
     %end
 end
-system('kill -f TXP_PAX_continuous.exe')
+system('taskkill /F /IM TXP_PAX.exe');
 disp('DONE')
 
