@@ -47,23 +47,23 @@ int main(int argc, char** argv) {
 	FILE *file;
 	char fn[100] = "polarimeter.txt";
 
-	file = fopen(fn, "a");
-	if (file == NULL) {
-		perror("Error opening file.");
-	}
+	//if (file == NULL) {
+	//	perror("Error opening file.");
+	//}
 	int i;
 	char reading[1000];
 	Sleep(500);
 	while(1==1) {
 		TXPPAX_GetSingleMeas(instr, VI_TRUE, &st1, &st2, &st3, &azi, &ell, &dop, &pow, VI_NULL);
-
+		file = fopen(fn, "a");
 		sprintf(reading, "%+8.5lf,%+8.5lf,%+8.5lf,%+8.3lf,%+8.3lf,%8.4lf,%11.3le\n", st1, st2, st3, azi, ell, dop, pow);
 		//printf(reading);
 		fprintf(file, reading);
+		fclose(file);
 		Sleep(100);
 	}
 	//printf(reading);
-	fclose(file);
+	
 
 	Sleep(500);
 	TXPPAX_close(instr);

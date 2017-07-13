@@ -52,11 +52,11 @@ else
     fn = string(strsplit(fl(length(fl)-1),'_'));
     fn = str2double(fn(1));
 end
-N_DATA_POINTS = 10;
+N_DATA_POINTS = 1000;
 MEAS_DURATION = 1;
 
 meas_points = uint16(360*rand(N_DATA_POINTS,2));
-meas_points = min_travel(meas_points, 50000, 10);
+meas_points = min_travel(meas_points, 60000, 10);
 
 input('Make sure polarimeter is not obstructing beam and press return to start measurement.');
 for i = 1:length(meas_points)
@@ -70,6 +70,8 @@ for i = 1:length(meas_points)
        pause(1) 
     end
     
+    %wait for motor to stabilize
+    pause(0.5)
     fname = [num2str(fn+i),'_p', num2str(meas_points(i,1)), 'qwp', num2str(meas_points(i,2)), '.txt'];
     disp(['Polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
     dat = daq_measure(MEAS_DURATION, fname);
@@ -94,9 +96,27 @@ for i = 1:length(meas_points)
        pause(1) 
     end
     
-    disp(['Polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
-    pause(2)
+    %wait for motor to stabilize
+    pause(0.5)
     
+    fileID=-1;
+    while fileID == -1
+        fileID = fopen('polarimeter.txt','a');
+        fprintf(fileID, '%s\n', '#####START#####');
+    end
+    fclose(fileID);
+    
+    %actual measurement
+    disp(['Polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
+    pause(5)
+    
+    fileID=-1;
+    while fileID == -1
+        fileID = fopen('polarimeter.txt','a');
+        fprintf(fileID, '%s\n', '#####END#####');
+    end
+    fclose(fileID);
+    pause(0.5)
     %Single measurement version
     %ret=1;
     %ret = system('..\..\TXP_PAX.exe');
