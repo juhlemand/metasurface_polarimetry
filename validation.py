@@ -4,7 +4,13 @@ import matplotlib.pyplot as plt
 
 directory='acquisition\\data\\comparison\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
-N_measurements=10 #number of measurements which have been taken
+N_measurements=510 #number of measurements which have been taken
+
+#instrument matrix from calibration
+Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
+       [ 0.19654736, -0.11104338, -0.07040607,  0.01178421],
+       [-0.02460813, -0.15807655,  0.11181989, -0.01704692],
+       [ 0.06109838,  0.11286954,  0.02068727, -0.2059895 ]])
 
 os.chdir(directory)
 
@@ -24,9 +30,6 @@ class polarimeter:
         print(self.data)
         return str(self.stdev)
         
-def determine_dop(pol_state):
-    return np.sqrt(pol_state[1]**2+pol_state[2]**2+pol_state[3]**2)/pol_state[0]
-        
 polarimeter_raw=[]
 with open(polarimeter_file, 'r') as csvfile:
     reader = csv.reader(csvfile,delimiter=',')
@@ -42,13 +45,13 @@ p=[]
 is_measurement=0
 index=0
 for row in polarimeter_raw:
-    if row==['#####START#####']:
+    if row[:15]==['#####START#####']:
         is_measurement=1
               
-    elif row==['#####END#####']:
+    elif row[:13]==['#####END#####']:
         is_measurement=0
-        s_v=np.array([np.mean(np.array(p),0)[-2], np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
-        s_std=np.array([np.std(np.array(p),0)[-2], np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
+        s_v=np.array([0.01*np.mean(np.array(p),0)[-2], np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
+        s_std=0.01*np.array([np.std(np.array(p),0)[-2], np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
         polarimeter_data.add(index, s_v, s_std)
         index+=1
         p=[]
@@ -58,7 +61,6 @@ for row in polarimeter_raw:
 
 ###############################################################
 #%% Parsing metasurface data
-        
 fnames=os.listdir()
 fnames.remove(polarimeter_file)
 fnames=sorted(fnames, key=lambda item: (int(item.partition('_')[0])
@@ -68,7 +70,7 @@ if len(fnames)!=polarimeter_data.N_measurements:
     raise ValueError
 
 metasurface_data, err_m,=[],[]
-for n in range(3): #len(fnames)
+for n in range(len(fnames)):
     temp=[]
     with open(fnames[n], 'r') as csvfile:
         reader=csv.reader(csvfile, delimiter=',')
@@ -77,8 +79,13 @@ for n in range(3): #len(fnames)
             for el in row:
                 temp[-1].append(float(el))
     temp=np.array(temp)
-    err_m.append(np.std(temp,0))                    
     metasurface_data.append(np.average(temp,0))
+    #covariance matrix-based error calculation, from wikipedia
+    cov_m = np.diag(np.std(temp,0)**2)
+    #covariance of stokes vector
+    cov_stokes = np.dot(np.dot(Ainv,cov_m),np.linalg.inv(Ainv))
+    #taking the diagonal as standard error of stokes vector
+    err_m.append(np.sqrt(np.diagonal(cov_stokes)))
 
 err_m=np.array(err_m)
 metasurface_data=np.array(metasurface_data)
@@ -86,27 +93,38 @@ metasurface_data=np.array(metasurface_data)
 ###############################################################
 #%% Analysing and plotting comparison
 
-Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
-       [ 0.19654736, -0.11104338, -0.07040607,  0.01178421],
-       [-0.02460813, -0.15807655,  0.11181989, -0.01704692],
-       [ 0.06109838,  0.11286954,  0.02068727, -0.2059895 ]])
-
 for i in range(len(metasurface_data)):
     metasurface_data[i]=np.dot(Ainv, metasurface_data[i].transpose())
-    metasurface_data[i][0]=determine_dop(metasurface_data[i])
 
-metasurface_dops=metasurface_data.transpose()[0]
-polarimeter_dops=polarimeter_data.data.transpose()[-1]/100.
+m_dops=np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
+p_dops=polarimeter_data.data.transpose()[0]
 
-plt.errorbar(range(0,len(fnames)),metasurface_dops, alpha=0.5, yerr=err_m.transpose()[0], label='metasurface',fmt=' ')
-plt.errorbar(range(0,len(fnames)),polarimeter_dops, alpha=0.5, yerr=polarimeter_data.stdev.transpose()[-1], label='thorlabs',fmt=' ')
+#error in dop
+
+
+plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, yerr=err_m.transpose()[0], label='metasurface',fmt='.')
+plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=polarimeter_data.stdev.transpose()[0], label='thorlabs',fmt='.')
 plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
+plt.ylim([0,1.1])
 plt.legend()
 plt.show()
 
-diffs=metasurface_dops-polarimeter_dops
-plt.hist(diffs)
+diffs=m_dops-p_dops
+plt.hist(diffs,bins=500)
 plt.show()
 
-plt.scatter(polarimeter_dops, metasurface_dops)
+f, axarr  = plt.subplots(1,4)
+axarr[0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0].plot([0,1],[0,1],alpha=0.3,color='black')
+
+#poincare sphere coordinates
+p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
+m_2psi=np.arctan(metasurface_data.transpose()[2]/metasurface_data.transpose()[1])
+
+p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
+m_2chi=np.arctan(metasurface_data.transpose()[3]/np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2))
+
+axarr[1].scatter(polarimeter_data.data.transpose()[1], metasurface_data.transpose()[1],alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[2].scatter(p_2psi, m_2psi,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[3].scatter(p_2chi, m_2chi,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 plt.show()

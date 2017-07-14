@@ -57,7 +57,7 @@ MEAS_DURATION = 1;
 
 meas_points = int32(360*rand(N_DATA_POINTS,2));
 disp('Annealing travel path...')
-meas_points = min_travel(meas_points, 60000, 10);
+meas_points = min_travel(meas_points, 300000, 10);
 
 input('Make sure polarimeter is not obstructing beam and press return to start measurement.');
 for i = 1:length(meas_points)

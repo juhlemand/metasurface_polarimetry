@@ -3,7 +3,7 @@
 %meas_points = min_travel2(meas_points, 300000, 10);
 
 function out = min_travel(arr, n_iter, temperature)
-    %simulated annealing
+    %simulated annealing algorithm
     cooling_rate=0.00002;
     
     %cost is the rotation time spent
