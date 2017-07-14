@@ -1,12 +1,14 @@
+%meas_points = int32(360*rand(100,2));
+%disp('Annealing travel path...')
+%meas_points = min_travel2(meas_points, 300000, 10);
+
 function out = min_travel(arr, n_iter, temperature)
     %simulated annealing
-    cooling_rate=0.0001;
-    cost = 0;
-    for i=1:length(arr)-1
-        %cost is the rotation time spent
-        cost = cost+max(dist(arr(i+1,1),arr(i,1)),dist(arr(i+1,2),arr(i,2)));
-    end
-    disp(['Starting cost ', num2str(cost)])
+    cooling_rate=0.00002;
+    
+    %cost is the rotation time spent
+    c = cost(arr);
+    disp(['Starting cost ', num2str(c)])
     for n=1:n_iter
         temperature = temperature*exp(-cooling_rate*(n-1));
         %swap random rows and check cost
@@ -16,28 +18,25 @@ function out = min_travel(arr, n_iter, temperature)
         arr_new(rows(1),:)=arr_new(rows(2),:);
         arr_new(rows(2),:)=tmp;
             
-        cost_new = 0;
-        for i=1:length(arr_new)-1
-            cost_new = cost_new+max(dist(arr_new(i+1,1),arr_new(i,1)),dist(arr_new(i+1,2),arr_new(i,2)));
-        end
-        diff = double(cost_new-cost);
-        if diff<0
+        c_new = cost(arr_new);
+        delta = double(c_new-c);
+        if delta<0
             arr = arr_new;
-            cost=cost_new;
-        elseif exp(-diff/temperature)>rand()
+            c=c_new;
+        elseif exp(-delta/temperature)>rand()
             arr = arr_new;
-            cost=cost_new;
+            c=c_new;
         end
     end
-    disp(['End cost ', num2str(cost_new)])
+    disp(['End cost ', num2str(c_new)])
     out = arr;
 end
 
-function d = dist(p1,p2)
-    p1=int32(p1);
-    p2=int32(p2);
-    d1=abs(p1-p2);
-    d2=abs(p1+360-p2);
-    d3=abs(p2-p1-360);  
-    d=min([d1,d2,d3]);
+function c = cost(arr)
+    %distance on circular coordinates
+    d1=abs(diff(arr));
+    d2=abs(diff(arr)+360);
+    d3=abs(diff(arr)-360);  
+    c=min(min(d1,d2),d3);
+    c=sum(max(c,[],2));
 end

@@ -55,7 +55,7 @@ end
 N_DATA_POINTS = 500;
 MEAS_DURATION = 1;
 
-meas_points = uint32(360*rand(N_DATA_POINTS,2));
+meas_points = int32(360*rand(N_DATA_POINTS,2));
 disp('Annealing travel path...')
 meas_points = min_travel(meas_points, 60000, 10);
 
