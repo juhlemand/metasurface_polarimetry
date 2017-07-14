@@ -52,10 +52,11 @@ else
     fn = string(strsplit(fl(length(fl)-1),'_'));
     fn = str2double(fn(1));
 end
-N_DATA_POINTS = 1000;
+N_DATA_POINTS = 500;
 MEAS_DURATION = 1;
 
-meas_points = uint16(360*rand(N_DATA_POINTS,2));
+meas_points = uint32(360*rand(N_DATA_POINTS,2));
+disp('Annealing travel path...')
 meas_points = min_travel(meas_points, 60000, 10);
 
 input('Make sure polarimeter is not obstructing beam and press return to start measurement.');
@@ -84,7 +85,7 @@ input('Switch to polarimeter, makes sure that TXP_Server is started and press re
 
 system('start ..\..\TXP_PAX.exe');
 disp('Waiting for polarimeter to warm up');
-%pause(15*60)
+pause(15*60)
 for i = 1:length(meas_points)
     h_rot_mount.SetAbsMovePos(0, meas_points(i,1)); % set a move to the angular offset from 0
     h_rot_mount.MoveAbsolute(0,0); % now move the polarizer    

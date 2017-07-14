@@ -1,5 +1,3 @@
-
-
 function out = min_travel(arr, n_iter, temperature)
     %simulated annealing
     cooling_rate=0.0001;
@@ -12,7 +10,7 @@ function out = min_travel(arr, n_iter, temperature)
     for n=1:n_iter
         temperature = temperature*exp(-cooling_rate*(n-1));
         %swap random rows and check cost
-        rows=int16((length(arr)-1)*rand(1,2)+1);
+        rows=uint32((length(arr)-1)*rand(1,2)+1);
         arr_new = arr;
         tmp=arr_new(rows(1),:);
         arr_new(rows(1),:)=arr_new(rows(2),:);
@@ -36,8 +34,8 @@ function out = min_travel(arr, n_iter, temperature)
 end
 
 function d = dist(p1,p2)
-    p1=int16(p1);
-    p2=int16(p2);
+    p1=int32(p1);
+    p2=int32(p2);
     d1=abs(p1-p2);
     d2=abs(p1+360-p2);
     d3=abs(p2-p1-360);  

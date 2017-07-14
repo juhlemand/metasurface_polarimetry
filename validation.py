@@ -2,9 +2,9 @@ import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition\\data\\comparison\\'
-polarimeter_file='polarimeter.txt'
-N_measurements=3
+directory='acquisition\\data\\comparison\\' #data location folder
+polarimeter_file='polarimeter.txt' #polarimeter data file
+N_measurements=10 #number of measurements which have been taken
 
 os.chdir(directory)
 
@@ -47,8 +47,8 @@ for row in polarimeter_raw:
               
     elif row==['#####END#####']:
         is_measurement=0
-        s_v=np.array([np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2],np.mean(np.array(p),0)[-2]])
-        s_std=np.array([np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2],np.std(np.array(p),0)[-2]])
+        s_v=np.array([np.mean(np.array(p),0)[-2], np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
+        s_std=np.array([np.std(np.array(p),0)[-2], np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
         polarimeter_data.add(index, s_v, s_std)
         index+=1
         p=[]
@@ -56,6 +56,8 @@ for row in polarimeter_raw:
     elif is_measurement:
         p.append(np.array(row,dtype=float))
 
+###############################################################
+#%% Parsing metasurface data
         
 fnames=os.listdir()
 fnames.remove(polarimeter_file)
@@ -65,8 +67,8 @@ fnames=sorted(fnames, key=lambda item: (int(item.partition('_')[0])
 if len(fnames)!=polarimeter_data.N_measurements:
     raise ValueError
 
-metasurface_data=[]
-for n in range(len(fnames)):
+metasurface_data, err_m,=[],[]
+for n in range(3): #len(fnames)
     temp=[]
     with open(fnames[n], 'r') as csvfile:
         reader=csv.reader(csvfile, delimiter=',')
@@ -74,9 +76,15 @@ for n in range(len(fnames)):
             temp.append([])
             for el in row:
                 temp[-1].append(float(el))
+    temp=np.array(temp)
+    err_m.append(np.std(temp,0))                    
     metasurface_data.append(np.average(temp,0))
 
+err_m=np.array(err_m)
 metasurface_data=np.array(metasurface_data)
+
+###############################################################
+#%% Analysing and plotting comparison
 
 Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
        [ 0.19654736, -0.11104338, -0.07040607,  0.01178421],
@@ -90,8 +98,8 @@ for i in range(len(metasurface_data)):
 metasurface_dops=metasurface_data.transpose()[0]
 polarimeter_dops=polarimeter_data.data.transpose()[-1]/100.
 
-plt.scatter(range(0,len(fnames)),metasurface_dops, alpha=0.5, label='metasurface')
-plt.scatter(range(0,len(fnames)),polarimeter_dops, alpha=0.5, label='thorlabs')
+plt.errorbar(range(0,len(fnames)),metasurface_dops, alpha=0.5, yerr=err_m.transpose()[0], label='metasurface',fmt=' ')
+plt.errorbar(range(0,len(fnames)),polarimeter_dops, alpha=0.5, yerr=polarimeter_data.stdev.transpose()[-1], label='thorlabs',fmt=' ')
 plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
 plt.legend()
 plt.show()
