@@ -107,18 +107,19 @@ plt.ylim([0,1.1])
 plt.legend()
 plt.show()
 
+f, axarr  = plt.subplots(2,3)
+axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].plot([0,1],[0,1],alpha=0.3,color='black')
+axarr[0][0].set_title('DOP')
+axarr[0][0].set_xlabel('Polarimeter measurement')
+axarr[0][0].set_ylabel('Metasurface measurement')
+
 diffs=m_dops-p_dops
-plt.hist(diffs,bins=200)
-plt.title('DOP error metasurface-polarimeter')
-plt.show()
+axarr[1][0].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+axarr[1][0].axvline(0.0,color='black', alpha=0.25)
+#axarr[1][0].set_title('DOP error metasurface-polarimeter')
 
-f, axarr  = plt.subplots(1,3)
-axarr[0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0].plot([0,1],[0,1],alpha=0.3,color='black')
-axarr[0].set_title('DOP')
-axarr[0].set_xlabel('Polarimeter measurement')
-axarr[0].set_ylabel('Metasurface measurement')
-
+##############################################################
 #poincare sphere coordinates in radians
 p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
 m_2psi=np.arctan(metasurface_data.transpose()[2]/metasurface_data.transpose()[1])
@@ -126,13 +127,24 @@ m_2psi=np.arctan(metasurface_data.transpose()[2]/metasurface_data.transpose()[1]
 p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
 m_2chi=np.arctan(metasurface_data.transpose()[3]/np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2))
 
-axarr[1].scatter(p_2psi, m_2psi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[1].set_title('Azimuth $2\Theta$')
-axarr[1].set_xlabel('Polarimeter measurement (radians)')
-axarr[1].set_ylabel('Metasurface measurement (radians)')
+#taking the first few points as azimuth normalization
+az_offset = np.mean(p_2psi[:int(0.05*N_measurements)]-m_2psi[:int(0.05*N_measurements)])
 
-axarr[2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[2].set_title('Altitude $2\chi$')
-axarr[2].set_xlabel('Polarimeter measurement (radians)')
-axarr[2].set_ylabel('Metasurface measurement (radians)')
+axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][1].set_title('Azimuth $2\psi$')
+axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
+axarr[0][1].set_ylabel('Metasurface measurement (radians)')
+diffs=m_2psi-p_2psi
+axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+axarr[1][1].axvline(0.0,color='black', alpha=0.25)
+
+axarr[0][2].scatter(-p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][2].set_title('Altitude $2\chi$')
+axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
+axarr[0][2].set_ylabel('Metasurface measurement (radians)')
+diffs=m_2chi+p_2chi
+axarr[1][2].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+axarr[1][2].axvline(0.0,color='black', alpha=0.25)
+
+
 plt.show()
