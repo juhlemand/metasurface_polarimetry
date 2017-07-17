@@ -8,9 +8,16 @@ N_measurements=400 #number of measurements which have been taken
 
 #instrument matrix from calibration
 Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
-       [ 0.19654736, -0.11104338, -0.07040607,  0.01178421],
-       [-0.02460813, -0.15807655,  0.11181989, -0.01704692],
-       [ 0.06109838,  0.11286954,  0.02068727, -0.2059895 ]])
+               [ 0.19654736, -0.11104338, -0.07040607,  0.01178421],
+               [-0.02460813, -0.15807655,  0.11181989, -0.01704692],
+               [ 0.06109838,  0.11286954,  0.02068727, -0.2059895 ]])
+
+Ainv_err=np.array([[ 0.00517194,  0.00859091,  0.00173998,  0.01621496],
+                   [ 0.00071673,  0.00083473,  0.00023699,  0.0017958 ],
+                   [ 0.00158147,  0.00315179,  0.00053814,  0.00562389],
+                   [ 0.00044367,  0.00023757,  0.00014346,  0.0007576 ]])
+#https://www.ruhr-uni-bochum.de/ika/forschung/forschungsbereich_kolossa/Daten/Buchkapitel_Uncertainty.pdf
+Ainv_err_rel=Ainv_err/Ainv
 
 os.chdir(directory)
 
@@ -70,6 +77,7 @@ if len(fnames)!=polarimeter_data.N_measurements:
     raise ValueError
 
 metasurface_data, err_m,=[],[]
+err_m2=[]
 for n in range(len(fnames)):
     temp=[]
     with open(fnames[n], 'r') as csvfile:
@@ -85,8 +93,11 @@ for n in range(len(fnames)):
     #covariance of stokes vector
     cov_stokes = np.dot(np.dot(Ainv,cov_m),np.linalg.inv(Ainv))
     #taking the diagonal as standard error of stokes vector
-    err_m.append(np.sqrt(np.diagonal(cov_stokes)))
-
+    err=np.sqrt(np.diagonal(cov_stokes))
+    #we also another set of errors from Ainv
+    err_m.append(np.sqrt(err**2+np.dot(Ainv_err_rel**2,err**2)))
+    #err_m2.append(np.sqrt(np.dot(Ainv_err_rel**2,err**2))
+        
 err_m=np.array(err_m)
 metasurface_data=np.array(metasurface_data)
 

@@ -145,7 +145,7 @@ plt.figure
 plt.yticks([]) # y units are arbitrary
 
 thetas = np.linspace(0, 180, 1000)
-
+fit_errs=[]
 for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
@@ -154,7 +154,7 @@ for i in range(0,4):
     
     #standard error
     standard_err = np.sqrt(np.diag(variance))
-    print(standard_err)
+    fit_errs.append(standard_err)
     
     plt.plot(thetas, fit_function(thetas, *popt), linewidth=0.5)
     plt.errorbar(x, y, fmt=" ", yerr=err)
@@ -164,6 +164,8 @@ for i in range(0,4):
     fit_parameters.append(popt)
     variances.append(variance)
 plt.show()
+fit_errs=np.array(fit_errs)
+fit_parameters=np.array(fit_parameters)
 
 #%% move onto the qwpR part of the calibration
 
@@ -175,7 +177,11 @@ for i in range(2):
     pd1_voltageQR = []  # photodiode 1 voltages
     pd2_voltageQR = []
     pd3_voltageQR = []
-    pd4_voltageQR = []    
+    pd4_voltageQR = []
+    pd1_voltage_err = []
+    pd2_voltage_err = []
+    pd3_voltage_err = []
+    pd4_voltage_err = []
     
     os.chdir('..')  # move up a level
     if i == 1:
@@ -201,6 +207,10 @@ for i in range(2):
                 pd2_voltageQR.append(np.mean(data[:, 1]))
                 pd3_voltageQR.append(np.mean(data[:, 2]))
                 pd4_voltageQR.append(np.mean(data[:, 3]))
+                pd1_voltage_err.append(np.std(my_data[:, 0]))
+                pd2_voltage_err.append(np.std(my_data[:, 1]))
+                pd3_voltage_err.append(np.std(my_data[:, 2]))
+                pd4_voltage_err.append(np.std(my_data[:, 3]))
             except ValueError:  # don't do anything with invalid file name
                 pass
     
@@ -209,39 +219,75 @@ for i in range(2):
     qwp_power_incR = np.array(qwp_power_incR)
     
     numAngles = len(pol_anglesR)
+
+    # converting to array
+    pd1_voltage_err=np.array(pd1_voltage_err)
+    pd2_voltage_err=np.array(pd2_voltage_err)
+    pd3_voltage_err=np.array(pd3_voltage_err)
+    pd4_voltage_err=np.array(pd4_voltage_err)
     
     # normalize the photodiode voltages
     pd1_voltageQR = np.divide(np.array(pd1_voltageQR), qwp_power_incR)
     pd2_voltageQR = np.divide(np.array(pd2_voltageQR), qwp_power_incR)
     pd3_voltageQR = np.divide(np.array(pd3_voltageQR), qwp_power_incR)
     pd4_voltageQR = np.divide(np.array(pd4_voltageQR), qwp_power_incR)
-    
-    # average all the values in the list
-    
+    pd1_voltage_err=np.divide(np.sqrt((pd1_voltage_err)**2+power_meter_error**2), qwp_power_incR)
+    pd2_voltage_err=np.divide(np.sqrt((pd2_voltage_err)**2+power_meter_error**2), qwp_power_incR)
+    pd3_voltage_err=np.divide(np.sqrt((pd3_voltage_err)**2+power_meter_error**2), qwp_power_incR)
+    pd4_voltage_err=np.divide(np.sqrt((pd4_voltage_err)**2+power_meter_error**2), qwp_power_incR)
+
+  # average all the values in the list    
     if i == 1:
         pd1R = np.mean(pd1_voltageQR)
         pd2R = np.mean(pd2_voltageQR)
         pd3R = np.mean(pd3_voltageQR)
         pd4R = np.mean(pd4_voltageQR)
+        pd1R_err = np.sqrt(np.sum(pd1_voltage_err**2))
+        pd2R_err = np.sqrt(np.sum(pd2_voltage_err**2))
+        pd3R_err = np.sqrt(np.sum(pd3_voltage_err**2))
+        pd4R_err = np.sqrt(np.sum(pd4_voltage_err**2))
     else:
         pd1L = np.mean(pd1_voltageQR)
         pd2L = np.mean(pd2_voltageQR)
         pd3L = np.mean(pd3_voltageQR)
         pd4L = np.mean(pd4_voltageQR)
-
+        pd1L_err = np.sqrt(np.sum(pd1_voltage_err**2))
+        pd2L_err = np.sqrt(np.sum(pd2_voltage_err**2))
+        pd3L_err = np.sqrt(np.sum(pd3_voltage_err**2))
+        pd4L_err = np.sqrt(np.sum(pd4_voltage_err**2))
+        
 #%% Construct the instrument matrix
 A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
-A3 = np.matrix.transpose(np.array([A3]))
-A02 = np.array(fit_parameters) # data from linear calibration
-A = np.hstack((A02, A3)) # This is the instrument matrix!
+A3_err=np.array([np.sqrt(pd1R_err**2+pd1L_err**2)/2, np.sqrt(pd2R_err**2+pd2L_err**2)/2,
+                 np.sqrt(pd3R_err**2+pd3L_err**2)/2, np.sqrt(pd4R_err**2+pd4L_err**2)/2])
 
-Ainv = np.linalg.inv(A) # this is the inverse of the instrument matrix
-print('Instrument matrix Ainv:')
-print(Ainv)
+A3 = np.matrix.transpose(np.array([A3]))
+A3_err = np.matrix.transpose(np.array([A3_err]))
+
+A02 = np.array(fit_parameters) # data from linear calibration
+A02_err = np.array(fit_errs)
+
+A = np.hstack((A02, A3)) # This is the instrument matrix!
+A_err = np.hstack((A02_err, A3_err))
+
+print('Instrument matrix A:')
+print(A)
+print('')
 
 A_cond=np.linalg.cond(A, p=2)#condition number
-print('Condition number:')
+print('Condition number of A:')
 print(A_cond)
+print('')
+
+Ainv = np.linalg.inv(A) # this is the inverse of the instrument matrix
+print('Inverted matrix Ainv:')
+print(Ainv)
+print('')
+
+#Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf)
+Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv))
+print('Error in Ainv:')
+print(Ainv_err)
 
 # now let's define a function to reonstruct polarization state
 # measurement is a four vector of measured intensities
@@ -327,7 +373,6 @@ plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
 partial_pol_fig = plt.gca()
 partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length=5)
 partial_pol_fig.set_ylim([0, 1.05])
-
 
 thetas = np.linspace(0, np.max(pol_angles2), 1000)
 def partial_pol_func(x, scale, offset):
