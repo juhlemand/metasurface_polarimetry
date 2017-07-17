@@ -151,8 +151,13 @@ for i in range(0,4):
     y = pd_voltages[i, :]
     err = pd_errs[i, :]
     popt, variance = curve_fit(fit_function, x, y)
+    
+    #standard error
+    standard_err = np.sqrt(np.diag(variance))
+    print(standard_err)
+    
     plt.plot(thetas, fit_function(thetas, *popt), linewidth=0.5)
-    plt.errorbar(x, y, fmt=".", yerr=err)
+    plt.errorbar(x, y, fmt=" ", yerr=err)
     
     # store the fits as anonymous functions
     fit_functions.append(lambda theta: fit_function(theta, *popt))
@@ -225,14 +230,13 @@ for i in range(2):
         pd4L = np.mean(pd4_voltageQR)
 
 #%% Construct the instrument matrix
-
 A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
 A3 = np.matrix.transpose(np.array([A3]))
 A02 = np.array(fit_parameters) # data from linear calibration
 A = np.hstack((A02, A3)) # This is the instrument matrix!
 
 Ainv = np.linalg.inv(A) # this is the inverse of the instrument matrix
-print('Instrument matrix:')
+print('Instrument matrix Ainv:')
 print(Ainv)
 
 A_cond=np.linalg.cond(A, p=2)#condition number
@@ -261,7 +265,8 @@ for i in range(len(pd1_voltage)):
     stokes_list.append(stokes/stokes[0])
     
 plt.figure(2)
-plt.plot(dops)
+plt.scatter(np.arange(len(dops)),dops)
+plt.plot([0,len(dops)],[1,1],alpha=0.3, color='black')
 plt.show()
 
 L = np.array([pd1L, pd2L, pd3L, pd4L])
@@ -315,7 +320,8 @@ for i in range(len(pol_angles2)):
     partial_dops[i] = np.sqrt(stokes_temp[1]**2 + stokes_temp[2]**2 + stokes_temp[3]**2)/stokes_temp[0]
 
 plt.figure(3)
-plt.plot(pol_angles2, partial_dops, "ro", markersize=10)
+plt.plot(pol_angles2, partial_dops, ".", markersize=5)
+plt.plot([0,180],[1,1],color='black',alpha=0.25)
 plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
 plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
 partial_pol_fig = plt.gca()
@@ -328,7 +334,7 @@ def partial_pol_func(x, scale, offset):
     return scale * np.abs(np.cos(2*(x-offset)*np.pi/180))
 
 popt2, variance2 = curve_fit(partial_pol_func, pol_angles2, partial_dops)
-plt.plot(thetas, partial_pol_func(thetas, *popt2), linewidth = 2.5)
+plt.plot(thetas, partial_pol_func(thetas, *popt2), linewidth = 1, alpha=0.5)
 plt.show()
 # now save the figure
 #file_name = os.getcwd() + 'partial_pol.svg'

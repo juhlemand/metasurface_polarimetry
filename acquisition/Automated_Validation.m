@@ -42,7 +42,7 @@ ch4.TerminalConfig = 'SingleEnded';
 
 %% measurement using metasurface polarimeter
 addpath('..\..');
-cd 'data\comparison2'
+cd 'data\comparison1.2'
 fl=struct2cell(dir());
 fl=natsort(fl(1,:));
 fl=string(fl);
@@ -72,7 +72,7 @@ for i = 1:length(meas_points)
     end
     
     %wait for motor to stabilize
-    pause(0.5)
+    pause(1.0)
     fname = [num2str(fn+i),'_p', num2str(meas_points(i,1)), 'qwp', num2str(meas_points(i,2)), '.txt'];
     disp(['Metasurface polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
     dat = daq_measure(MEAS_DURATION, fname);
@@ -98,7 +98,7 @@ for i = 1:length(meas_points)
     end
     
     %wait for motor to stabilize
-    pause(0.5)
+    pause(1.0)
     
     fileID=-1;
     while fileID == -1

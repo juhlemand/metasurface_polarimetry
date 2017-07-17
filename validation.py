@@ -2,9 +2,9 @@ import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition\\data\\comparison2\\' #data location folder
+directory='acquisition\\data\\comparison1.2\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
-N_measurements=200 #number of measurements which have been taken
+N_measurements=400 #number of measurements which have been taken
 
 #instrument matrix from calibration
 Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
