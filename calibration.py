@@ -20,10 +20,12 @@ matplotlib.use('qt5agg')
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
 qwp_L = 'qwp_L'  # folder for qwp at second configuration
-partial_pol = 'partial_pol3'  # folder location of partial pol data
+partial_pol = 'partial_pol'  # folder location of partial pol data
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
-os.chdir('C:\\Users\\User\\Desktop\\Polarimeter Project\\Polarization optics calibration\\2017_07_11')
+power_meter_error = 0.01
+
+os.chdir('acquisition\\data\\calibration1')
 
 #%% Extract and fit linear polarizer data.
 
@@ -33,6 +35,10 @@ pd1_voltage = []  # photodiode 1 voltages
 pd2_voltage = []
 pd3_voltage = []
 pd4_voltage = []
+pd1_voltage_err = []  # photodiode errors
+pd2_voltage_err = []
+pd3_voltage_err = []
+pd4_voltage_err = []
 fit_functions = []
 fit_parameters = []
 variances = []
@@ -52,7 +58,12 @@ for file in os.listdir():
             pd1_voltage.append(np.mean(my_data[:, 0]))
             pd2_voltage.append(np.mean(my_data[:, 1]))
             pd3_voltage.append(np.mean(my_data[:, 2]))
-            pd4_voltage.append(np.mean(my_data[:, 3]))           
+            pd4_voltage.append(np.mean(my_data[:, 3]))
+            pd1_voltage_err.append(np.std(my_data[:, 0]))
+            pd2_voltage_err.append(np.std(my_data[:, 1]))
+            pd3_voltage_err.append(np.std(my_data[:, 2]))
+            pd4_voltage_err.append(np.std(my_data[:, 3]))
+            
         except ValueError: # don't do anything with invalid file name
             pass
        
@@ -72,24 +83,39 @@ pd1_voltage1 = np.array(pd1_voltage[:(num_angles)//2])
 pd2_voltage1 = np.array(pd2_voltage[:(num_angles)//2])
 pd3_voltage1 = np.array(pd3_voltage[:(num_angles)//2])
 pd4_voltage1 = np.array(pd4_voltage[:(num_angles)//2])
-
 pd1_voltage2 = np.array(pd1_voltage[(num_angles)//2:])
 pd2_voltage2 = np.array(pd2_voltage[(num_angles)//2:])
 pd3_voltage2 = np.array(pd3_voltage[(num_angles)//2:])
 pd4_voltage2 = np.array(pd4_voltage[(num_angles)//2:])
 
-# slice the incident power list in half as well
+pd1_voltage_err1 = np.array(pd1_voltage_err[:(num_angles)//2])
+pd2_voltage_err1 = np.array(pd2_voltage_err[:(num_angles)//2])
+pd3_voltage_err1 = np.array(pd3_voltage_err[:(num_angles)//2])
+pd4_voltage_err1 = np.array(pd4_voltage_err[:(num_angles)//2])
+pd1_voltage_err2 = np.array(pd1_voltage_err[(num_angles)//2:])
+pd2_voltage_err2 = np.array(pd2_voltage_err[(num_angles)//2:])
+pd3_voltage_err2 = np.array(pd3_voltage_err[(num_angles)//2:])
+pd4_voltage_err2 = np.array(pd4_voltage_err[(num_angles)//2:])
 
+# slice the incident power list in half as well
 inc_powers1 = np.array(inc_powers[:(num_angles)//2])
 inc_powers2 = np.array(inc_powers[(num_angles)//2:])
 
-# normalize each by the power incident during measurement
+#adding error from power meter, normalizing with incident power
+pd1_voltage_err1=np.divide(np.sqrt((pd1_voltage_err1)**2+power_meter_error**2), inc_powers1)
+pd2_voltage_err1=np.divide(np.sqrt((pd2_voltage_err1)**2+power_meter_error**2), inc_powers1)
+pd3_voltage_err1=np.divide(np.sqrt((pd3_voltage_err1)**2+power_meter_error**2), inc_powers1)
+pd4_voltage_err1=np.divide(np.sqrt((pd4_voltage_err1)**2+power_meter_error**2), inc_powers1)
+pd1_voltage_err2=np.divide(np.sqrt((pd1_voltage_err2)**2+power_meter_error**2), inc_powers1)
+pd2_voltage_err2=np.divide(np.sqrt((pd2_voltage_err2)**2+power_meter_error**2), inc_powers1)
+pd3_voltage_err2=np.divide(np.sqrt((pd3_voltage_err2)**2+power_meter_error**2), inc_powers1)
+pd4_voltage_err2=np.divide(np.sqrt((pd4_voltage_err2)**2+power_meter_error**2), inc_powers1)
 
+# normalize each by the power incident during measurement
 pd1_voltage1 = np.divide(pd1_voltage1, inc_powers1)
 pd2_voltage1 = np.divide(pd2_voltage1, inc_powers1)
 pd3_voltage1 = np.divide(pd3_voltage1, inc_powers1)
 pd4_voltage1 = np.divide(pd4_voltage1, inc_powers1)
-
 pd1_voltage2 = np.divide(pd1_voltage2, inc_powers2)
 pd2_voltage2 = np.divide(pd2_voltage2, inc_powers2)
 pd3_voltage2 = np.divide(pd3_voltage2, inc_powers2)
@@ -100,9 +126,14 @@ pd1_voltage = (pd1_voltage1+pd1_voltage2)/2
 pd2_voltage = (pd2_voltage1+pd2_voltage2)/2
 pd3_voltage = (pd3_voltage1+pd3_voltage2)/2
 pd4_voltage = (pd4_voltage1+pd4_voltage2)/2
+pd1_voltage_err = np.sqrt((pd1_voltage_err1**2+pd1_voltage_err2**2))/2
+pd2_voltage_err = np.sqrt((pd2_voltage_err1**2+pd2_voltage_err2**2))/2
+pd3_voltage_err = np.sqrt((pd3_voltage_err1**2+pd3_voltage_err2**2))/2
+pd4_voltage_err = np.sqrt((pd4_voltage_err1**2+pd4_voltage_err2**2))/2
 
 # construct a larger matrix to hold the voltages
-pd_voltages = np.vstack((pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage)) 
+pd_voltages = np.vstack((pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage))
+pd_errs = np.vstack((pd1_voltage_err,pd2_voltage_err,pd3_voltage_err,pd4_voltage_err))
 angles = np.array(angles)
 inc_powers = np.array(inc_powers)
 
@@ -118,9 +149,10 @@ thetas = np.linspace(0, 180, 1000)
 for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
+    err = pd_errs[i, :]
     popt, variance = curve_fit(fit_function, x, y)
-    plt.plot(thetas, fit_function(thetas, *popt), linewidth=2.5)
-    plt.plot(x, y, "o")
+    plt.plot(thetas, fit_function(thetas, *popt), linewidth=0.5)
+    plt.errorbar(x, y, fmt=".", yerr=err)
     
     # store the fits as anonymous functions
     fit_functions.append(lambda theta: fit_function(theta, *popt))
@@ -202,6 +234,7 @@ A = np.hstack((A02, A3)) # This is the instrument matrix!
 Ainv = np.linalg.inv(A) # this is the inverse of the instrument matrix
 print('Instrument matrix:')
 print(Ainv)
+
 A_cond=np.linalg.cond(A, p=2)#condition number
 print('Condition number:')
 print(A_cond)
@@ -283,8 +316,8 @@ for i in range(len(pol_angles2)):
 
 plt.figure(3)
 plt.plot(pol_angles2, partial_dops, "ro", markersize=10)
-plt.xlabel('$\theta_{LP} (\circ)$', fontsize='25', fontname='Sans Serif')
-plt.ylabel('Degree of Polarization (DOP)', fontsize='14')
+plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
+plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
 partial_pol_fig = plt.gca()
 partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length=5)
 partial_pol_fig.set_ylim([0, 1.05])

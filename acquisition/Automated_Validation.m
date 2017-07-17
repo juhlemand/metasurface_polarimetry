@@ -52,7 +52,7 @@ else
     fn = string(strsplit(fl(length(fl)-1),'_'));
     fn = str2double(fn(1));
 end
-N_DATA_POINTS = 90;
+N_DATA_POINTS = 100;
 MEAS_DURATION = 1;
 
 meas_points = int32(360*rand(N_DATA_POINTS,2));
@@ -74,7 +74,7 @@ for i = 1:length(meas_points)
     %wait for motor to stabilize
     pause(0.5)
     fname = [num2str(fn+i),'_p', num2str(meas_points(i,1)), 'qwp', num2str(meas_points(i,2)), '.txt'];
-    disp(['Polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
+    disp(['Metasurface polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
     dat = daq_measure(MEAS_DURATION, fname);
     pause(0.5)
 end
