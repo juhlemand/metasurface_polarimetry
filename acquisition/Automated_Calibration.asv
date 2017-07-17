@@ -1,9 +1,9 @@
 %% Specify values in absolute coordinates for polarization optics.
 clear;
-pol_hor = 18.9723; %Reference value with crossed polarizers
-qwp_at_rcp = 12.75; %Max reading on power meter with qwp between crossed polarizers
+pol_hor = 18.9723; %Reference 
+qwp_at_rcp = 12.75;
 qwp_at_lcp = mod(qwp_at_rcp + 90, 360);
-%last_polarizer_at_45 = 105;
+last_polarizer_at_45 = 105;
 serial_rotation_mount = 55000517; % serial number of 1st motor 
 serial_rotation_mount2 = 55000631; % serial number of rotation stage 
 serial_rotation_stage = 83839448; % serial number of 2nd rotation mount

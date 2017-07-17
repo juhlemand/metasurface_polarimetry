@@ -2,9 +2,9 @@ import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition\\data\\comparison\\' #data location folder
+directory='acquisition\\data\\comparison2\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
-N_measurements=510 #number of measurements which have been taken
+N_measurements=10 #number of measurements which have been taken
 
 #instrument matrix from calibration
 Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
@@ -101,7 +101,6 @@ p_dops=polarimeter_data.data.transpose()[0]
 
 #error in dop
 
-
 plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, yerr=err_m.transpose()[0], label='metasurface',fmt='.')
 plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=polarimeter_data.stdev.transpose()[0], label='thorlabs',fmt='.')
 plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
@@ -113,18 +112,17 @@ diffs=m_dops-p_dops
 plt.hist(diffs,bins=500)
 plt.show()
 
-f, axarr  = plt.subplots(1,4)
-axarr[0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+f, axarr  = plt.subplots(1,3)
+axarr[0].errorbar(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0].plot([0,1],[0,1],alpha=0.3,color='black')
 
-#poincare sphere coordinates
+#poincare sphere coordinates in radians
 p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
 m_2psi=np.arctan(metasurface_data.transpose()[2]/metasurface_data.transpose()[1])
 
 p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
 m_2chi=np.arctan(metasurface_data.transpose()[3]/np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2))
 
-axarr[1].scatter(polarimeter_data.data.transpose()[1], metasurface_data.transpose()[1],alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[2].scatter(p_2psi, m_2psi,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[3].scatter(p_2chi, m_2chi,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[1].scatter(p_2psi, m_2psi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 plt.show()
