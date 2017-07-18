@@ -1,6 +1,6 @@
 %% Specify values in absolute coordinates for polarization optics.
 clear;
-pol_hor = 132.5610; %Reference polarizer position
+pol_hor = 0.0; %Reference polarizer position
 %last_polarizer_at_45 = 105;
 serial_rotation_mount = 55000517; % serial number of 1st motor 
 serial_rotation_mount2 = 55000631; % serial number of rotation stage 
@@ -77,7 +77,7 @@ dark = daq_measure(5, 'data/calibration2/dark.txt');
 %% Carry out the linear part of the calibration
 
 input('Assure that the linear polarizer (no qwp) is in place, and that the system is aligned. Press return to continue.');
-linear_angles = 0:5:359; % range of angles at which to test
+linear_angles = 0:10:359; % range of angles at which to test
 
 default_duration = 0.5; % measurement duration in seconds
 
@@ -86,7 +86,7 @@ figure % opens new figure window
 mkdir('data\calibration2\polarizer_only')
 cd 'data\calibration2\polarizer_only'; % cd into a new directory for the linear polarization data
 addpath('.');
-figure;
+addpath('..\..\..')
 xlabel('Linear polarizer angle');
 ylabel('Power (a.u.)');
 title('Linear polarization calibration data.');
@@ -198,6 +198,7 @@ qwp_at_lcp = mod(qwp_at_rcp + 90, 360); %LCP and RCP are arbitray and can be swi
 cd '..';
 input(['Placing the QWP oriented at ', num2str(qwp_at_rcp), ', press return to continue.']);
 
+mkdir('data\calibration2\qwp_R')
 cd 'data\calibration2\qwp_R'; % cd into a new directory for the linear polarization data
 addpath('.');
 default_duration = 0.5;

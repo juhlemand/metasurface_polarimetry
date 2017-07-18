@@ -15,7 +15,6 @@ from scipy.optimize import curve_fit
 import matplotlib
 import matplotlib.pyplot as plt
 from itertools import compress
-matplotlib.use('qt5agg')
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
@@ -25,11 +24,11 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.01
 
-os.chdir('acquisition\\data\\calibration1')
+os.chdir('acquisition\\data\\calibration2')
 
 #%% Extract and fit linear polarizer data.
 
-angles = []  # angles of the linear polarizer
+angles = []  # angles off the linear polarizer
 inc_powers = []  # incident powers during measurement
 pd1_voltage = []  # photodiode 1 voltages
 pd2_voltage = []
@@ -167,6 +166,9 @@ plt.show()
 fit_errs=np.array(fit_errs)
 fit_parameters=np.array(fit_parameters)
 
+print('Fit Standard Errors')
+print(fit_errs)
+print('')
 #%% move onto the qwpR part of the calibration
 
 # get the data for both qwp sets of measurements
