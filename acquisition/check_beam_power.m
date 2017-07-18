@@ -11,7 +11,7 @@ function out = check_beam_power()
     h_rot_stage.MoveAbsolute(0,1);
     
     tic;
-    while and(toc<36, or(ismoving(h_rot_mount)==1, ismoving(h_rot_mount2)==1))
+    while and(toc<36, or(IsMoving(h_rot_mount)==1, IsMoving(h_rot_mount2)==1))
        pause(1) 
     end
     

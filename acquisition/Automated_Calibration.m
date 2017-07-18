@@ -1,22 +1,18 @@
 %% Specify values in absolute coordinates for polarization optics.
 clear;
-pol_hor = 18.9723; %Reference value with crossed polarizers
-qwp_at_rcp = 12.75; %Max reading on power meter with qwp between crossed polarizers
-qwp_at_lcp = mod(qwp_at_rcp + 90, 360);
+pol_hor = 132.5610; %Reference polarizer position
 %last_polarizer_at_45 = 105;
 serial_rotation_mount = 55000517; % serial number of 1st motor 
 serial_rotation_mount2 = 55000631; % serial number of rotation stage 
 serial_rotation_stage = 83839448; % serial number of 2nd rotation mount
-% for reference: the polarizer after the polarimeter is vertical at 140 degrees on the
+% for reference: the polarizer after the polarimeter is vertical at 134 degrees on the
 % mount
 
 global limit_in_beam
 global limit_out_beam
 
-limit_in_beam = 0; % point at which power meter is in the beam
-limit_out_beam = 0.649984;% point at which the power meter is out of the beam
-
-%% Initialize serial communications with motors, the power meter, and the daq
+limit_in_beam = 0.0; % point at which power meter is in the beam
+limit_out_beam = 0.75;% point at which the power meter is out of the beam
 
 addpath('..');
 fpos    = get(0,'DefaultFigurePosition'); % figure default position
@@ -76,7 +72,7 @@ ch4.TerminalConfig = 'SingleEnded';
 %dark current measurement
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);  
-dark = daq_measure(5, 'data/calibration/dark.txt');
+dark = daq_measure(5, 'data/calibration2/dark.txt');
 
 %% Carry out the linear part of the calibration
 
@@ -87,6 +83,7 @@ default_duration = 0.5; % measurement duration in seconds
 
 figure % opens new figure window
 
+mkdir('data\calibration2\polarizer_only')
 cd 'data\calibration2\polarizer_only'; % cd into a new directory for the linear polarization data
 addpath('.');
 figure;
@@ -113,9 +110,94 @@ for i = 1:length(linear_angles)
 end
 hold off
 
+%% Finding crossed polarizer position
+input('Place second polarizer in setup and press return to continue.');
+
+n_angles=30;
+angles=linspace(0,180,n_angles);
+
+figure
+hold on
+h_rot_stage.SetAbsMovePos(0, limit_in_beam);
+h_rot_stage.MoveAbsolute(0,1);
+pwrs = zeros(n_angles,1);
+for i=1:length(angles)
+    h_rot_mount.SetAbsMovePos(0, pol_hor+angles(i));
+    h_rot_mount.MoveAbsolute(0,1);   
+    pause(1)
+    fprintf(pwr_meter, 'MEAS:POW?');
+    pwrs(i) = str2double(fscanf(pwr_meter));
+    pwrs(i) = pwrs(i)/(0.001);
+    plot(angles(i), pwrs(i), 'bo'); 
+    pause(0.5)  
+end
+
+min_angle_index = find(pwrs == min(pwrs(:)));
+
+%second iteration near min_angle
+angles=linspace(angles(min_angle_index)-10,angles(min_angle_index)+10,n_angles);
+pwrs = zeros(n_angles,1);
+for i=1:length(angles)
+    h_rot_mount.SetAbsMovePos(0, pol_hor+angles(i));
+    h_rot_mount.MoveAbsolute(0,1);    
+    pause(1)
+    fprintf(pwr_meter, 'MEAS:POW?');
+    pwrs(i) = str2double(fscanf(pwr_meter));
+    pwrs(i) = pwrs(i)/(0.001);
+    plot(angles(i), pwrs(i), 'ro'); 
+    pause(0.5)
+end
+hold off
+
+min_angle = min(angles);
+
+%% Finding QWP position
+input('Place QWP between the two polarizers and press return to continue.');
+
+n_angles=30;
+angles=linspace(0,180,n_angles);
+
+figure
+hold on
+h_rot_stage.SetAbsMovePos(0, limit_in_beam);
+h_rot_stage.MoveAbsolute(0,1);
+pwrs = zeros(n_angles,1);
+for i=1:length(angles)
+    h_rot_mount2.SetAbsMovePos(0, angles(i));
+    h_rot_mount2.MoveAbsolute(0,1);   
+    pause(1)
+    fprintf(pwr_meter, 'MEAS:POW?');
+    pwrs(i) = str2double(fscanf(pwr_meter));
+    pwrs(i) = pwrs(i)/(0.001);
+    plot(angles(i), pwrs(i), 'bo'); 
+    pause(0.5)  
+end
+
+max_angle_index = find(pwrs == max(pwrs(:)));
+
+%second iteration near min_angle
+angles=linspace(angles(max_angle_index)-10,angles(max_angle_index)+10,n_angles);
+pwrs = zeros(n_angles,1);
+for i=1:length(angles)
+    h_rot_mount2.SetAbsMovePos(0, angles(i));
+    h_rot_mount2.MoveAbsolute(0,1);    
+    pause(1)
+    fprintf(pwr_meter, 'MEAS:POW?');
+    pwrs(i) = str2double(fscanf(pwr_meter));
+    pwrs(i) = pwrs(i)/(0.001);
+    plot(angles(i), pwrs(i), 'ro'); 
+    pause(0.5)
+end
+hold off
+
+qwp_at_rcp = max(angles); %Max reading on power meter with qwp between crossed polarizers
+qwp_at_lcp = mod(qwp_at_rcp + 90, 360); %LCP and RCP are arbitray and can be switched
+
+
 %% Move on to the QWP part of the calibration, RCP
 cd '..';
-input(['Place the QWP oriented at ', num2str(qwp_at_rcp), ' in front of the linear polarizer and press return to continue.']);
+input(['Placing the QWP oriented at ', num2str(qwp_at_rcp), ', press return to continue.']);
+
 cd 'data\calibration2\qwp_R'; % cd into a new directory for the linear polarization data
 addpath('.');
 default_duration = 0.5;
