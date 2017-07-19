@@ -69,7 +69,7 @@ ch2.TerminalConfig = 'SingleEnded';
 ch3.TerminalConfig = 'SingleEnded';
 ch4.TerminalConfig = 'SingleEnded';
 
-%dark current measurement
+%% dark current measurement
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);  
 dark = daq_measure(5, 'data/calibration2/dark.txt');
@@ -113,92 +113,81 @@ hold off
 %% Finding crossed polarizer position
 input('Place second polarizer in setup and press return to continue.');
 
-n_angles=30;
-angles=linspace(0,180,n_angles);
-
+n_angles=15;
 figure
 hold on
+
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);
-pwrs = zeros(n_angles,1);
-for i=1:length(angles)
-    h_rot_mount.SetAbsMovePos(0, pol_hor+angles(i));
-    h_rot_mount.MoveAbsolute(0,1);   
-    pause(1)
-    fprintf(pwr_meter, 'MEAS:POW?');
-    pwrs(i) = str2double(fscanf(pwr_meter));
-    pwrs(i) = pwrs(i)/(0.001);
-    plot(angles(i), pwrs(i), 'bo'); 
-    pause(0.5)  
+
+for n=1:3
+    if n==1
+        angles=linspace(0,180,n_angles);
+    elseif n==2
+        angles=linspace(angles(min_angle_index)-10,angles(min_angle_index)+10,n_angles);
+    elseif n==3
+        angles=linspace(angles(min_angle_index)-3,angles(min_angle_index)+3,n_angles);
+    end
+    pwrs = zeros(n_angles,1);
+    for i=1:length(angles)
+        h_rot_mount.SetAbsMovePos(0, pol_hor+angles(i));
+        h_rot_mount.MoveAbsolute(0,1);   
+        pause(1)
+        fprintf(pwr_meter, 'MEAS:POW?');
+        pwrs(i) = str2double(fscanf(pwr_meter));
+        pwrs(i) = pwrs(i)/(0.001);
+        plot(angles(i), pwrs(i), 'bo'); 
+        pause(0.5)  
+    end
+
+    min_angle_index = find(pwrs == min(pwrs(:)));
 end
 
-min_angle_index = find(pwrs == min(pwrs(:)));
-
-%second iteration near min_angle
-angles=linspace(angles(min_angle_index)-10,angles(min_angle_index)+10,n_angles);
-pwrs = zeros(n_angles,1);
-for i=1:length(angles)
-    h_rot_mount.SetAbsMovePos(0, pol_hor+angles(i));
-    h_rot_mount.MoveAbsolute(0,1);    
-    pause(1)
-    fprintf(pwr_meter, 'MEAS:POW?');
-    pwrs(i) = str2double(fscanf(pwr_meter));
-    pwrs(i) = pwrs(i)/(0.001);
-    plot(angles(i), pwrs(i), 'ro'); 
-    pause(0.5)
-end
 hold off
-
 min_angle = angles(find(pwrs == min(pwrs(:))));
+h_rot_mount.SetAbsMovePos(0, pol_hor+min_angle);
+h_rot_mount.MoveAbsolute(0,1);   
 
 %% Finding QWP position
 input('Place QWP between the two polarizers and press return to continue.');
 
-n_angles=30;
-angles=linspace(0,180,n_angles);
-h_rot_mount.SetAbsMovePos(0, pol_hor+min_angle);
-h_rot_mount.MoveAbsolute(0,1);    
-
+n_angles=15;
 figure
 hold on
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);
-pwrs = zeros(n_angles,1);
-for i=1:length(angles)
-    h_rot_mount2.SetAbsMovePos(0, angles(i));
-    h_rot_mount2.MoveAbsolute(0,1);   
-    pause(1)
-    fprintf(pwr_meter, 'MEAS:POW?');
-    pwrs(i) = str2double(fscanf(pwr_meter));
-    pwrs(i) = pwrs(i)/(0.001);
-    plot(angles(i), pwrs(i), 'bo'); 
-    pause(0.5)  
-end
 
-max_angle_index = find(pwrs == max(pwrs(:)));
+for n=1:3
+    if n==1
+        angles=linspace(0,90,n_angles);
+    elseif n==2
+        angles=linspace(angles(max_angle_index)-10,angles(max_angle_index)+10,n_angles);
+    elseif n==3
+        angles=linspace(angles(max_angle_index)-3,angles(max_angle_index)+3,n_angles);
+    end
+    pwrs = zeros(n_angles,1);
+    for i=1:length(angles)
+        h_rot_mount2.SetAbsMovePos(0, angles(i));
+        h_rot_mount2.MoveAbsolute(0,1);   
+        pause(1)
+        fprintf(pwr_meter, 'MEAS:POW?');
+        pwrs(i) = str2double(fscanf(pwr_meter));
+        pwrs(i) = pwrs(i)/(0.001);
+        plot(angles(i), pwrs(i), 'bo'); 
+        pause(0.5)  
+    end
 
-%second iteration near min_angle
-angles=linspace(angles(max_angle_index)-10,angles(max_angle_index)+10,n_angles);
-pwrs = zeros(n_angles,1);
-for i=1:length(angles)
-    h_rot_mount2.SetAbsMovePos(0, angles(i));
-    h_rot_mount2.MoveAbsolute(0,1);    
-    pause(1)
-    fprintf(pwr_meter, 'MEAS:POW?');
-    pwrs(i) = str2double(fscanf(pwr_meter));
-    pwrs(i) = pwrs(i)/(0.001);
-    plot(angles(i), pwrs(i), 'ro'); 
-    pause(0.5)
+    max_angle_index = find(pwrs == max(pwrs(:)));
 end
 hold off
 
 qwp_at_rcp = angles(find(pwrs == max(pwrs(:)))); %Max reading on power meter with qwp between crossed polarizers
 qwp_at_lcp = mod(qwp_at_rcp + 90, 360); %LCP and RCP are arbitray and can be switched
 
-
+h_rot_mount2.SetAbsMovePos(0, qwp_at_rcp);
+h_rot_mount2.MoveAbsolute(0,1); 
 %% Move on to the QWP part of the calibration, RCP
-cd '..';
-input(['Placing the QWP oriented at ', num2str(qwp_at_rcp), ', press return to continue.']);
+input(['Remove second polarizer, with QWP oriented at ', num2str(qwp_at_rcp), ', press return to continue.']);
 
 mkdir('data\calibration2\qwp_R')
 cd 'data\calibration2\qwp_R'; % cd into a new directory for the linear polarization data
@@ -214,7 +203,7 @@ xlim([0 max(qwp_angles)]);
 hold on %hold plot
 for i = 1:length(qwp_angles)
     curr_angle = qwp_angles(i);
-    curr_abs_angle_pol = mod(pol_hor + curr_angle, 360);
+    curr_abs_angle_pol = mod(pol_hor + min_angle + curr_angle, 360);
     curr_abs_angle_qwp = mod(qwp_at_rcp + curr_angle, 360);
     h_rot_mount.SetAbsMovePos(0, curr_abs_angle_pol); % set a move to the angular offset from 0
     h_rot_mount.MoveAbsolute(0,0); % now move the polarizer
@@ -252,7 +241,7 @@ hold on %hold plot
 
 for i = 1:length(qwp_angles)
     curr_angle = qwp_angles(i);
-    curr_abs_angle_pol = mod(pol_hor + curr_angle, 360);
+    curr_abs_angle_pol = mod(pol_hor + min_angle + curr_angle, 360);
     curr_abs_angle_qwp = mod(qwp_at_lcp + curr_angle, 360);
     h_rot_mount.SetAbsMovePos(0, curr_abs_angle_pol); % set a move to the angular offset from 0
     h_rot_mount.MoveAbsolute(0,0); % now move the polarizer

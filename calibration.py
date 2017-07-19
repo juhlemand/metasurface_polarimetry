@@ -169,6 +169,7 @@ fit_parameters=np.array(fit_parameters)
 print('Fit Standard Errors')
 print(fit_errs)
 print('')
+
 #%% move onto the qwpR part of the calibration
 
 # get the data for both qwp sets of measurements
@@ -244,19 +245,21 @@ for i in range(2):
         pd2R = np.mean(pd2_voltageQR)
         pd3R = np.mean(pd3_voltageQR)
         pd4R = np.mean(pd4_voltageQR)
-        pd1R_err = np.sqrt(np.sum(pd1_voltage_err**2))
-        pd2R_err = np.sqrt(np.sum(pd2_voltage_err**2))
-        pd3R_err = np.sqrt(np.sum(pd3_voltage_err**2))
-        pd4R_err = np.sqrt(np.sum(pd4_voltage_err**2))
+        #Error includes the individual measurement errors and the total stdev
+        #since the 4 photodiode voltages should not change 
+        pd1R_err = np.sqrt(np.sum(pd1_voltage_err**2)+np.std(pd1_voltageQR)**2)
+        pd2R_err = np.sqrt(np.sum(pd2_voltage_err**2)+np.std(pd2_voltageQR)**2)
+        pd3R_err = np.sqrt(np.sum(pd3_voltage_err**2)+np.std(pd3_voltageQR)**2)
+        pd4R_err = np.sqrt(np.sum(pd4_voltage_err**2)+np.std(pd4_voltageQR)**2)
     else:
         pd1L = np.mean(pd1_voltageQR)
         pd2L = np.mean(pd2_voltageQR)
         pd3L = np.mean(pd3_voltageQR)
         pd4L = np.mean(pd4_voltageQR)
-        pd1L_err = np.sqrt(np.sum(pd1_voltage_err**2))
-        pd2L_err = np.sqrt(np.sum(pd2_voltage_err**2))
-        pd3L_err = np.sqrt(np.sum(pd3_voltage_err**2))
-        pd4L_err = np.sqrt(np.sum(pd4_voltage_err**2))
+        pd1L_err = np.sqrt(np.sum(pd1_voltage_err**2)+np.std(pd1_voltageQR)**2)
+        pd2L_err = np.sqrt(np.sum(pd2_voltage_err**2)+np.std(pd2_voltageQR)**2)
+        pd3L_err = np.sqrt(np.sum(pd3_voltage_err**2)+np.std(pd3_voltageQR)**2)
+        pd4L_err = np.sqrt(np.sum(pd4_voltage_err**2)+np.std(pd4_voltageQR)**2)
         
 #%% Construct the instrument matrix
 A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
