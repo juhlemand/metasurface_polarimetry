@@ -77,7 +77,7 @@ dark = daq_measure(5, 'data/calibration2/dark.txt');
 %% Carry out the linear part of the calibration
 
 input('Assure that the linear polarizer (no qwp) is in place, and that the system is aligned. Press return to continue.');
-linear_angles = 0:10:359; % range of angles at which to test
+linear_angles = 0:5:359; % range of angles at which to test
 
 default_duration = 0.5; % measurement duration in seconds
 
@@ -149,13 +149,15 @@ for i=1:length(angles)
 end
 hold off
 
-min_angle = min(angles);
+min_angle = angles(find(pwrs == min(pwrs(:))));
 
 %% Finding QWP position
 input('Place QWP between the two polarizers and press return to continue.');
 
 n_angles=30;
 angles=linspace(0,180,n_angles);
+h_rot_mount.SetAbsMovePos(0, pol_hor+min_angle);
+h_rot_mount.MoveAbsolute(0,1);    
 
 figure
 hold on
@@ -190,7 +192,7 @@ for i=1:length(angles)
 end
 hold off
 
-qwp_at_rcp = max(angles); %Max reading on power meter with qwp between crossed polarizers
+qwp_at_rcp = angles(find(pwrs == max(pwrs(:)))); %Max reading on power meter with qwp between crossed polarizers
 qwp_at_lcp = mod(qwp_at_rcp + 90, 360); %LCP and RCP are arbitray and can be switched
 
 
