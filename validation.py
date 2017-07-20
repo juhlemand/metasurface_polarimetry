@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 directory='acquisition\\data\\calibration3\\comparison\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
-N_measurements=100 #number of measurements which have been taken
 os.chdir(directory)
+N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
 #instrument matrix from calibration
 Ainv=np.loadtxt('..\\Ainv.txt')
@@ -117,7 +117,7 @@ axarr[0][0].set_title('DOP')
 axarr[0][0].set_xlabel('Polarimeter measurement')
 axarr[0][0].set_ylabel('Metasurface measurement')
 
-diffs=m_dops-p_dops
+diffs=(m_dops-p_dops)/(0.5*(m_dops+p_dops))
 axarr[1][0].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
@@ -137,17 +137,19 @@ axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimete
 axarr[0][1].set_title('Azimuth $2\psi$')
 axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][1].set_ylabel('Metasurface measurement (radians)')
+
+#diffs=(m_2psi-p_2psi)/(0.5*(m_2psi+p_2psi))
 diffs=m_2psi-p_2psi
-axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 
 axarr[0][2].scatter(-p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].set_title('Altitude $2\chi$')
 axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][2].set_ylabel('Metasurface measurement (radians)')
-diffs=m_2chi+p_2chi
-axarr[1][2].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+#diffs=(m_2chi-p_2chi)/(0.5*(m_2chi+p_2chi))
+diffs=m_2chi-p_2chi
+axarr[1][2].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
-
 
 plt.show()

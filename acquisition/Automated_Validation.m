@@ -53,7 +53,7 @@ else
     fn = string(strsplit(fl(length(fl)-1),'_'));
     fn = str2double(fn(1));
 end
-N_DATA_POINTS = 90;
+N_DATA_POINTS = 295;
 MEAS_DURATION = 1;
 
 meas_points = int32(360*rand(N_DATA_POINTS,2));
