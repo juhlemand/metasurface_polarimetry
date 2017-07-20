@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 	}
 	TXPPAX_SetOperatingMode(instr, TXPPAX_OPMODE_SINGLE_MEAS);
 	TXPPAX_SetWavelength(instr, (wavelength * 1.0E-9));
-	//TXPPAX_SetBasicMeasSpeed(instr, 200.0);
+	TXPPAX_SetBasicMeasSpeed(instr, 200.0);
 	TXPPAX_GetStatus(instr, VI_NULL, &stat);
 
 
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 		//printf(reading);
 		fprintf(file, reading);
 		fclose(file);
-		Sleep(100);
+		Sleep(10);
 	}
 	//printf(reading);
 	
