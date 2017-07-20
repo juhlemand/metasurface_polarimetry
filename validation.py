@@ -2,22 +2,21 @@ import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition\\data\\comparison1.2\\' #data location folder
+directory='acquisition\\data\\calibration2\\comparison\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
-N_measurements=400 #number of measurements which have been taken
+N_measurements=100 #number of measurements which have been taken
 
 #instrument matrix from calibration
-Ainv=np.array([[ 0.0617117 ,  0.07851792,  0.03461167,  0.07703079],
-               [ 0.19654736, -0.11104338, -0.07040607,  0.01178421],
-               [-0.02460813, -0.15807655,  0.11181989, -0.01704692],
-               [ 0.06109838,  0.11286954,  0.02068727, -0.2059895 ]])
+Ainv=np.array([[ 0.03899718,  0.07547504,  0.04148296,  0.09468381],
+               [ 0.12294373, -0.00650341,  0.01732834, -0.19932982],
+               [-0.14517754, -0.01293949,  0.12647456, -0.03865285],
+               [-0.06027172,  0.20364724, -0.02019657, -0.11410314]])
 
-Ainv_err=np.array([[ 0.00517194,  0.00859091,  0.00173998,  0.01621496],
-                   [ 0.00071673,  0.00083473,  0.00023699,  0.0017958 ],
-                   [ 0.00158147,  0.00315179,  0.00053814,  0.00562389],
-                   [ 0.00044367,  0.00023757,  0.00014346,  0.0007576 ]])
+Ainv_err_rel=np.array([[ 0.11481761,  0.15443711,  0.06899178,  0.29425531],
+                       [ 0.0043694 ,  0.00988064,  0.00404934,  0.19303621],
+                       [ 0.03765362,  0.01228509,  0.0028296 ,  0.20038666],
+                       [ 0.01515934,  0.02031602,  0.015486  ,  0.01874301]])
 #https://www.ruhr-uni-bochum.de/ika/forschung/forschungsbereich_kolossa/Daten/Buchkapitel_Uncertainty.pdf
-Ainv_err_rel=Ainv_err/Ainv
 
 os.chdir(directory)
 

@@ -291,8 +291,8 @@ print('')
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf)
 Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv))
-print('Error in Ainv:')
-print(Ainv_err)
+print('Relative error in Ainv:')
+print(abs(Ainv_err/Ainv))
 
 # now let's define a function to reonstruct polarization state
 # measurement is a four vector of measured intensities

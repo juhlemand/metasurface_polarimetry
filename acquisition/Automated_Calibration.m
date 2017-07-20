@@ -1,4 +1,5 @@
 %% Specify values in absolute coordinates for polarization optics.
+mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3');
 clear;
 pol_hor = 0.0; %Reference polarizer position
 %last_polarizer_at_45 = 105;
@@ -72,7 +73,7 @@ ch4.TerminalConfig = 'SingleEnded';
 %% dark current measurement
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);  
-dark = daq_measure(5, 'data/calibration2/dark.txt');
+dark = daq_measure(5, 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\data\calibration3\dark.txt');
 
 %% Carry out the linear part of the calibration
 
@@ -83,8 +84,8 @@ default_duration = 0.5; % measurement duration in seconds
 
 figure % opens new figure window
 
-mkdir('data\calibration2\polarizer_only')
-cd 'data\calibration2\polarizer_only'; % cd into a new directory for the linear polarization data
+mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\polarizer_only')
+cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\polarizer_only'; % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..\..\..')
 xlabel('Linear polarizer angle');
@@ -100,6 +101,7 @@ for i = 1:length(linear_angles)
     pwr = check_beam_power(); % now get the power of the beam
     pwr = pwr/(0.001); % get the power in miliwatts
     file_name = [num2str(curr_angle), 'deg_',num2str(pwr),'.txt']; % file name
+    pause(0.5)
     dat = daq_measure(default_duration, file_name); % measure the voltage on the photodiodes
     dat = dat - dark;
     disp(['Completed linear polarizer measurement ', num2str(i), ' of ', num2str(length(linear_angles)), '.']);
@@ -109,7 +111,7 @@ for i = 1:length(linear_angles)
     plot(curr_angle, dat(4)/pwr, 'ro');
 end
 hold off
-
+cd ..\..\..
 %% Finding crossed polarizer position
 input('Place second polarizer in setup and press return to continue.');
 
@@ -143,10 +145,16 @@ for n=1:3
     min_angle_index = find(pwrs == min(pwrs(:)));
 end
 
-hold off
-min_angle = angles(find(pwrs == min(pwrs(:))));
+angles=transpose(angles);
+p = polyfit(angles,pwrs,2);
+plot(angles, p(1)*angles.*angles+p(2)*angles+p(3));
 h_rot_mount.SetAbsMovePos(0, pol_hor+min_angle);
 h_rot_mount.MoveAbsolute(0,1);   
+
+min_angle = -p(2)/(2*p(1))
+
+hold off
+disp('DONE')
 
 %% Finding QWP position
 input('Place QWP between the two polarizers and press return to continue.');
@@ -157,7 +165,7 @@ hold on
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);
 
-for n=1:3
+for n=1:2
     if n==1
         angles=linspace(0,90,n_angles);
     elseif n==2
@@ -179,19 +187,28 @@ for n=1:3
 
     max_angle_index = find(pwrs == max(pwrs(:)));
 end
-hold off
 
-qwp_at_rcp = angles(find(pwrs == max(pwrs(:)))); %Max reading on power meter with qwp between crossed polarizers
-qwp_at_lcp = mod(qwp_at_rcp + 90, 360); %LCP and RCP are arbitray and can be switched
+angles=transpose(angles);
+p = polyfit(angles,pwrs,2);
+plot(angles, p(1)*angles.*angles+p(2)*angles+p(3));
+
+qwp_at_rcp = -p(2)/(2*p(1)) %Max reading on power meter with qwp between crossed polarizers
+qwp_at_lcp = mod(qwp_at_rcp + 90, 360) %LCP and RCP are arbitray and can be switched
 
 h_rot_mount2.SetAbsMovePos(0, qwp_at_rcp);
 h_rot_mount2.MoveAbsolute(0,1); 
+hold off
+disp('DONE')
+
 %% Move on to the QWP part of the calibration, RCP
 input(['Remove second polarizer, with QWP oriented at ', num2str(qwp_at_rcp), ', press return to continue.']);
 
-mkdir('data\calibration2\qwp_R')
-cd 'data\calibration2\qwp_R'; % cd into a new directory for the linear polarization data
+mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_R')
+cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_R'; % cd into a new directory for the linear polarization data
 addpath('.');
+addpath('..');
+addpath('..\..');
+addpath('..\..\..');
 default_duration = 0.5;
 qwp_angles = 0:5:359;
 
@@ -224,13 +241,13 @@ end
 hold off
 
 % Move on to the second QWP part of the calibration, LCP
-
-default_duration = 0.5;
 %input(['Place the QWP oriented at ', num2str(qwp_at_lcp), ' in front of the linear polarizer and press return to continue.']);
-cd 'data\calibration2\qwp_L'; % cd into a new directory for the linear polarization data
+cd '..\..\..'
+mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_L')
+cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_L'; % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..');
-qwp_angles = 0:5:360;
+qwp_angles = 0:5:359;
 
 figure;
 xlabel('Absolute angle');
@@ -261,23 +278,27 @@ end
 
 hold off
 disp('Calibration completed.');
-
+cd ..\..\..
 %% Partial polarization state measurement
 
 default_duration = 0.5;
-input('Press return to begin partial polarization measurement.');
-cd 'data\calibration2\partial'; % cd into a new directory for the linear polarization data
+input('Remove QWP, make sure interferometer is in beampath and press return to begin partial polarization measurement.');
+mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\partial_pol')
+cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\partial_pol'; % cd into a new directory for the linear polarization data
+addpath('.');
 addpath('..');
-addpath('..');
-pol_angles = 0:5:359;
+addpath('..\..')
+addpath('..\..\..');
+
+pol_angles = 0:2:359;
 %pol_angles = pol_angles - pol_hor;
 
-figure;
+%figure;
 xlabel('First polarizer angle');
 ylabel('Power (a.u.)');
 %title('Partial polarization calibration data.');
 %xlim([0 max(qwp_angles)]);
-hold on %hold plot
+%hold on %hold plot
 
 for i = 1:length(pol_angles)
     curr_angle = pol_angles(i);
@@ -295,6 +316,6 @@ for i = 1:length(pol_angles)
     %plot(curr_angle, dat(3)/pwr, 'go');
     %plot(curr_angle, dat(4)/pwr, 'ro');       
 end
-hold off 
-disp(['Completed partial polarization measurement.']);
-
+%hold off 
+disp('DONE');
+cd ..\..\..

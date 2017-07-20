@@ -42,7 +42,8 @@ ch4.TerminalConfig = 'SingleEnded';
 
 %% measurement using metasurface polarimeter
 addpath('..\..');
-cd 'data\comparison1.2'
+mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\comparison');
+cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\comparison'
 fl=struct2cell(dir());
 fl=natsort(fl(1,:));
 fl=string(fl);
@@ -52,7 +53,7 @@ else
     fn = string(strsplit(fl(length(fl)-1),'_'));
     fn = str2double(fn(1));
 end
-N_DATA_POINTS = 100;
+N_DATA_POINTS = 90;
 MEAS_DURATION = 1;
 
 meas_points = int32(360*rand(N_DATA_POINTS,2));
@@ -83,7 +84,7 @@ end
 
 input('Switch to polarimeter, makes sure that TXP_Server is started and press return to start measurement.');
 
-system('start ..\..\TXP_PAX.exe');
+system('start C:\Users\User\Desktop\"Polarimeter Project"\metasurface_polarimetry\acquisition\TXP_PAX.exe');
 disp('Waiting for polarimeter to warm up');
 pause(1*60)
 for i = 1:length(meas_points)
@@ -128,4 +129,4 @@ for i = 1:length(meas_points)
 end
 system('taskkill /F /IM TXP_PAX.exe');
 disp('DONE')
-
+cd ..\..\..\
