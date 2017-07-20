@@ -85,6 +85,7 @@ end
 input('Switch to polarimeter, makes sure that TXP_Server is started and press return to start measurement.');
 
 system('start C:\Users\User\Desktop\"Polarimeter Project"\metasurface_polarimetry\acquisition\TXP_PAX.exe');
+%cd 'C:\Users\User\Desktop\"Polarimeter Project"\metasurface_polarimetry\acquisition\data\calibration3'
 disp('Waiting for polarimeter to warm up');
 pause(1*60)
 for i = 1:length(meas_points)

@@ -6,7 +6,7 @@ Modified on Sat Jun 24 2017
 
 This is a script to analyze polarimetry calibration data.
 
-@author: Noah
+@contributors: Noah, Ruoping
 """
 import os
 import fnmatch
@@ -24,7 +24,7 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.01
 
-os.chdir('acquisition\\data\\calibration2')
+os.chdir('acquisition\\data\\calibration3')
 
 #%% Extract and fit linear polarizer data.
 
@@ -215,6 +215,7 @@ for i in range(2):
                 pd3_voltage_err.append(np.std(my_data[:, 2]))
                 pd4_voltage_err.append(np.std(my_data[:, 3]))
             except ValueError:  # don't do anything with invalid file name
+                print('file error ', file)
                 pass
     
     pol_anglesR = np.array(pol_anglesR)
@@ -240,7 +241,7 @@ for i in range(2):
     pd4_voltage_err=np.divide(np.sqrt((pd4_voltage_err)**2+power_meter_error**2), qwp_power_incR)
 
   # average all the values in the list    
-    if i == 1:
+    if i == 0:
         pd1R = np.mean(pd1_voltageQR)
         pd2R = np.mean(pd2_voltageQR)
         pd3R = np.mean(pd3_voltageQR)
@@ -251,7 +252,12 @@ for i in range(2):
         pd2R_err = np.sqrt(np.sum(pd2_voltage_err**2)+np.std(pd2_voltageQR)**2)
         pd3R_err = np.sqrt(np.sum(pd3_voltage_err**2)+np.std(pd3_voltageQR)**2)
         pd4R_err = np.sqrt(np.sum(pd4_voltage_err**2)+np.std(pd4_voltageQR)**2)
-    else:
+        plt.scatter(range(0,len(pd1_voltageQR)),pd1_voltageQR,color='red')
+        plt.scatter(range(0,len(pd1_voltageQR)),pd2_voltageQR,color='blue')
+        plt.scatter(range(0,len(pd1_voltageQR)),pd3_voltageQR,color='green')
+        plt.scatter(range(0,len(pd1_voltageQR)),pd4_voltageQR,color='orange')
+        #print(len(pd1_voltageQR))
+    elif i == 1:
         pd1L = np.mean(pd1_voltageQR)
         pd2L = np.mean(pd2_voltageQR)
         pd3L = np.mean(pd3_voltageQR)
@@ -260,7 +266,13 @@ for i in range(2):
         pd2L_err = np.sqrt(np.sum(pd2_voltage_err**2)+np.std(pd2_voltageQR)**2)
         pd3L_err = np.sqrt(np.sum(pd3_voltage_err**2)+np.std(pd3_voltageQR)**2)
         pd4L_err = np.sqrt(np.sum(pd4_voltage_err**2)+np.std(pd4_voltageQR)**2)
-        
+        plt.scatter(range(0,len(pd1_voltageQR)),pd1_voltageQR,color='red',alpha=0.5)
+        plt.scatter(range(0,len(pd1_voltageQR)),pd2_voltageQR,color='blue',alpha=0.5)
+        plt.scatter(range(0,len(pd1_voltageQR)),pd3_voltageQR,color='green',alpha=0.5)
+        plt.scatter(range(0,len(pd1_voltageQR)),pd4_voltageQR,color='orange',alpha=0.5)
+        #print(len(pd1_voltageQR))
+plt.show()
+
 #%% Construct the instrument matrix
 A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
 A3_err=np.array([np.sqrt(pd1R_err**2+pd1L_err**2)/2, np.sqrt(pd2R_err**2+pd2L_err**2)/2,
@@ -288,11 +300,13 @@ Ainv = np.linalg.inv(A) # this is the inverse of the instrument matrix
 print('Inverted matrix Ainv:')
 print(Ainv)
 print('')
+np.savetxt('..\\Ainv.txt', Ainv)
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf)
 Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv))
 print('Relative error in Ainv:')
 print(abs(Ainv_err/Ainv))
+np.savetxt('..\\Ainv_err_rel.txt', abs(Ainv_err/Ainv))
 
 # now let's define a function to reonstruct polarization state
 # measurement is a four vector of measured intensities

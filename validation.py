@@ -2,23 +2,16 @@ import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition\\data\\calibration2\\comparison\\' #data location folder
+directory='acquisition\\data\\calibration3\\comparison\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
 N_measurements=100 #number of measurements which have been taken
+os.chdir(directory)
 
 #instrument matrix from calibration
-Ainv=np.array([[ 0.03899718,  0.07547504,  0.04148296,  0.09468381],
-               [ 0.12294373, -0.00650341,  0.01732834, -0.19932982],
-               [-0.14517754, -0.01293949,  0.12647456, -0.03865285],
-               [-0.06027172,  0.20364724, -0.02019657, -0.11410314]])
+Ainv=np.loadtxt('..\\Ainv.txt')
+Ainv_err_rel=np.loadtxt('..\\Ainv_err_rel.txt')
 
-Ainv_err_rel=np.array([[ 0.11481761,  0.15443711,  0.06899178,  0.29425531],
-                       [ 0.0043694 ,  0.00988064,  0.00404934,  0.19303621],
-                       [ 0.03765362,  0.01228509,  0.0028296 ,  0.20038666],
-                       [ 0.01515934,  0.02031602,  0.015486  ,  0.01874301]])
 #https://www.ruhr-uni-bochum.de/ika/forschung/forschungsbereich_kolossa/Daten/Buchkapitel_Uncertainty.pdf
-
-os.chdir(directory)
 
 class polarimeter:
     def __init__(self, N_measurements):

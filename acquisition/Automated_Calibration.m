@@ -240,13 +240,15 @@ for i = 1:length(qwp_angles)
 end
 hold off
 
-% Move on to the second QWP part of the calibration, LCP
+%% Move on to the second QWP part of the calibration, LCP
 %input(['Place the QWP oriented at ', num2str(qwp_at_lcp), ' in front of the linear polarizer and press return to continue.']);
 cd '..\..\..'
 mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_L')
 cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_L'; % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..');
+
+default_duration=0.5;
 qwp_angles = 0:5:359;
 
 figure;
