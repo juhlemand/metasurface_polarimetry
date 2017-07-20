@@ -4,6 +4,7 @@ clear;
 addpath('..');
 addpath('.');
 addpath('..\..');
+addpath('..\..\..');
 fpos    = get(0,'DefaultFigurePosition'); % figure default position
 fpos(3) = 640; % figure window size;Width
 fpos(4) = 480; % Heights
@@ -43,7 +44,7 @@ ch4.TerminalConfig = 'SingleEnded';
 
 %% Generating random array
 
-N_DATA_POINTS = 100;
+N_DATA_POINTS = 50;
 MEAS_DURATION = 1;
 
 meas_points = int32(360*rand(N_DATA_POINTS,2));

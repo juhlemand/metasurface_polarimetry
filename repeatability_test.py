@@ -106,7 +106,7 @@ axarr[0][2].scatter(p_2chi1, p_2chi2, alpha=0.5,s=2)#,c=np.arange(0,len(polarime
 axarr[0][2].set_title('Altitude $2\chi$')
 axarr[0][2].set_xlabel('First measurement (deg)')
 axarr[0][2].set_ylabel('Second measurement (deg)')
-diffs=p_2chi1+p_2chi2
+diffs=p_2chi1-p_2chi2
 axarr[1][2].hist(diffs,bins=100)#np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 
