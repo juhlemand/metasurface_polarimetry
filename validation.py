@@ -2,7 +2,7 @@ import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition\\data\\calibration3\\comparison\\' #data location folder
+directory='acquisition\\data\\calibration4\\comparison\\' #data location folder
 polarimeter_file='polarimeter.txt' #polarimeter data file
 os.chdir(directory)
 N_measurements=len(os.listdir())-1 #number of measurements which have been taken

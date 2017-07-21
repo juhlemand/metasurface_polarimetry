@@ -1,5 +1,7 @@
 %%Initialize serial communications with motors, the power meter, and the daq
 clear;
+foldername='calibration4';
+
 addpath('..');
 addpath('.');
 addpath('..\..');
@@ -42,8 +44,8 @@ ch4.TerminalConfig = 'SingleEnded';
 
 %% measurement using metasurface polarimeter
 addpath('..\..');
-mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\comparison');
-cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\comparison'
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\comparison']);
+cd (['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\comparison'])
 fl=struct2cell(dir());
 fl=natsort(fl(1,:));
 fl=string(fl);
@@ -53,7 +55,7 @@ else
     fn = string(strsplit(fl(length(fl)-1),'_'));
     fn = str2double(fn(1));
 end
-N_DATA_POINTS = 295;
+N_DATA_POINTS = 290;
 MEAS_DURATION = 1;
 
 meas_points = int32(360*rand(N_DATA_POINTS,2));

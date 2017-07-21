@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 directory='acquisition\\data\\repeatability' #data location folder
-polarimeter_file='polarimeter.txt' #first measurement
+polarimeter_file='polarimeter_with_interferometer2.txt' #first measurement
 os.chdir(directory)
 
 class polarimeter:

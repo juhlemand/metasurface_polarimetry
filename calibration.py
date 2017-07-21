@@ -24,7 +24,7 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.01
 
-os.chdir('acquisition\\data\\calibration3')
+os.chdir('acquisition\\data\\calibration4')
 
 #%% Extract and fit linear polarizer data.
 

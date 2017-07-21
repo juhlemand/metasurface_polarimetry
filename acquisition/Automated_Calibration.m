@@ -1,6 +1,7 @@
 %% Specify values in absolute coordinates for polarization optics.
-mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3');
 clear;
+foldername='calibration4';
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\', foldername]);
 pol_hor = 0.0; %Reference polarizer position
 %last_polarizer_at_45 = 105;
 serial_rotation_mount = 55000517; % serial number of 1st motor 
@@ -73,7 +74,7 @@ ch4.TerminalConfig = 'SingleEnded';
 %% dark current measurement
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);  
-dark = daq_measure(5, 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\data\calibration3\dark.txt');
+dark = daq_measure(5, ['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\dark.txt']);
 
 %% Carry out the linear part of the calibration
 
@@ -84,8 +85,8 @@ default_duration = 0.5; % measurement duration in seconds
 
 figure % opens new figure window
 
-mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\polarizer_only')
-cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\polarizer_only'; % cd into a new directory for the linear polarization data
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\polarizer_only'])
+cd(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\polarizer_only']); % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..\..\..')
 xlabel('Linear polarizer angle');
@@ -115,7 +116,7 @@ cd ..\..\..
 %% Finding crossed polarizer position
 input('Place second polarizer in setup and press return to continue.');
 
-n_angles=15;
+n_angles=18;
 figure
 hold on
 
@@ -148,10 +149,11 @@ end
 angles=transpose(angles);
 p = polyfit(angles,pwrs,2);
 plot(angles, p(1)*angles.*angles+p(2)*angles+p(3));
-h_rot_mount.SetAbsMovePos(0, pol_hor+min_angle);
-h_rot_mount.MoveAbsolute(0,1);   
+
 
 min_angle = -p(2)/(2*p(1))
+h_rot_mount.SetAbsMovePos(0, pol_hor+min_angle);
+h_rot_mount.MoveAbsolute(0,1);   
 
 hold off
 disp('DONE')
@@ -159,7 +161,7 @@ disp('DONE')
 %% Finding QWP position
 input('Place QWP between the two polarizers and press return to continue.');
 
-n_angles=15;
+n_angles=18;
 figure
 hold on
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
@@ -170,8 +172,6 @@ for n=1:2
         angles=linspace(0,90,n_angles);
     elseif n==2
         angles=linspace(angles(max_angle_index)-10,angles(max_angle_index)+10,n_angles);
-    elseif n==3
-        angles=linspace(angles(max_angle_index)-3,angles(max_angle_index)+3,n_angles);
     end
     pwrs = zeros(n_angles,1);
     for i=1:length(angles)
@@ -203,8 +203,8 @@ disp('DONE')
 %% Move on to the QWP part of the calibration, RCP
 input(['Remove second polarizer, with QWP oriented at ', num2str(qwp_at_rcp), ', press return to continue.']);
 
-mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_R')
-cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_R'; % cd into a new directory for the linear polarization data
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\qwp_R'])
+cd(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\qwp_R']); % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..');
 addpath('..\..');
@@ -239,12 +239,13 @@ for i = 1:length(qwp_angles)
     disp(['Completed QWP1 measurement ', num2str(i), ' of ', num2str(length(qwp_angles)), '.']);
 end
 hold off
-
-%% Move on to the second QWP part of the calibration, LCP
-%input(['Place the QWP oriented at ', num2str(qwp_at_lcp), ' in front of the linear polarizer and press return to continue.']);
 cd '..\..\..'
-mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_L')
-cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\qwp_L'; % cd into a new directory for the linear polarization data
+
+% Move on to the second QWP part of the calibration, LCP
+%input(['Place the QWP oriented at ', num2str(qwp_at_lcp), ' in front of the linear polarizer and press return to continue.']);
+
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\qwp_L'])
+cd (['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\qwp_L']); % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..');
 
@@ -285,8 +286,8 @@ cd ..\..\..
 
 default_duration = 0.5;
 input('Remove QWP, make sure interferometer is in beampath and press return to begin partial polarization measurement.');
-mkdir('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\partial_pol')
-cd 'C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\calibration3\partial_pol'; % cd into a new directory for the linear polarization data
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol'])
+cd (['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol']); % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..');
 addpath('..\..')

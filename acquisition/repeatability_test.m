@@ -103,6 +103,7 @@ for i = 1:2
         %end
     end
     system('taskkill /F /IM TXP_PAX.exe');
+    input('Press return to start second measurement set.');
 
 end
 disp('DONE')
