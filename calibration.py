@@ -58,6 +58,7 @@ for file in os.listdir():
             pd2_voltage.append(np.mean(my_data[:, 1]))
             pd3_voltage.append(np.mean(my_data[:, 2]))
             pd4_voltage.append(np.mean(my_data[:, 3]))
+            #Here error is the standard deviation of the individual measurements
             pd1_voltage_err.append(np.std(my_data[:, 0]))
             pd2_voltage_err.append(np.std(my_data[:, 1]))
             pd3_voltage_err.append(np.std(my_data[:, 2]))
@@ -100,15 +101,15 @@ pd4_voltage_err2 = np.array(pd4_voltage_err[(num_angles)//2:])
 inc_powers1 = np.array(inc_powers[:(num_angles)//2])
 inc_powers2 = np.array(inc_powers[(num_angles)//2:])
 
-#adding error from power meter, normalizing with incident power
-pd1_voltage_err1=np.divide(np.sqrt((pd1_voltage_err1)**2+power_meter_error**2), inc_powers1)
-pd2_voltage_err1=np.divide(np.sqrt((pd2_voltage_err1)**2+power_meter_error**2), inc_powers1)
-pd3_voltage_err1=np.divide(np.sqrt((pd3_voltage_err1)**2+power_meter_error**2), inc_powers1)
-pd4_voltage_err1=np.divide(np.sqrt((pd4_voltage_err1)**2+power_meter_error**2), inc_powers1)
-pd1_voltage_err2=np.divide(np.sqrt((pd1_voltage_err2)**2+power_meter_error**2), inc_powers1)
-pd2_voltage_err2=np.divide(np.sqrt((pd2_voltage_err2)**2+power_meter_error**2), inc_powers1)
-pd3_voltage_err2=np.divide(np.sqrt((pd3_voltage_err2)**2+power_meter_error**2), inc_powers1)
-pd4_voltage_err2=np.divide(np.sqrt((pd4_voltage_err2)**2+power_meter_error**2), inc_powers1)
+#adding error from power meter, normalizing with incident power, using partial derivatives
+pd1_voltage_err1=np.sqrt((pd1_voltage_err1/inc_powers1)**2+(power_meter_error*pd1_voltage1/(inc_powers1*inc_powers1))**2)
+pd2_voltage_err1=np.sqrt((pd2_voltage_err1/inc_powers1)**2+(power_meter_error*pd2_voltage1/(inc_powers1*inc_powers1))**2)
+pd3_voltage_err1=np.sqrt((pd3_voltage_err1/inc_powers1)**2+(power_meter_error*pd3_voltage1/(inc_powers1*inc_powers1))**2)
+pd4_voltage_err1=np.sqrt((pd4_voltage_err1/inc_powers1)**2+(power_meter_error*pd4_voltage1/(inc_powers1*inc_powers1))**2)
+pd1_voltage_err2=np.sqrt((pd1_voltage_err2/inc_powers1)**2+(power_meter_error*pd1_voltage2/(inc_powers1*inc_powers1))**2)
+pd2_voltage_err2=np.sqrt((pd2_voltage_err2/inc_powers1)**2+(power_meter_error*pd2_voltage2/(inc_powers1*inc_powers1))**2)
+pd3_voltage_err2=np.sqrt((pd3_voltage_err2/inc_powers1)**2+(power_meter_error*pd3_voltage2/(inc_powers1*inc_powers1))**2)
+pd4_voltage_err2=np.sqrt((pd4_voltage_err2/inc_powers1)**2+(power_meter_error*pd4_voltage2/(inc_powers1*inc_powers1))**2)
 
 # normalize each by the power incident during measurement
 pd1_voltage1 = np.divide(pd1_voltage1, inc_powers1)
