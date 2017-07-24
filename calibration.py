@@ -305,7 +305,7 @@ print('')
 np.savetxt('..\\Ainv.txt', Ainv)
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf)
-Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv))
+Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
 print('Relative error in Ainv:')
 print(abs(Ainv_err/Ainv))
 np.savetxt('..\\Ainv_err_rel.txt', abs(Ainv_err/Ainv))
