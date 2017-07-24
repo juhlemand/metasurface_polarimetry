@@ -149,10 +149,10 @@ fit_errs=[]
 for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
-    err = pd_errs[i, :]
+    err = pd_errs[i, :]t
     popt, variance = curve_fit(fit_function, x, y)
     
-    #standard error
+    #standard error, assuming that the fit parameters are uncorrelated between each other
     standard_err = np.sqrt(np.diag(variance))
     fit_errs.append(standard_err)
     
@@ -236,10 +236,11 @@ for i in range(2):
     pd2_voltageQR = np.divide(np.array(pd2_voltageQR), qwp_power_incR)
     pd3_voltageQR = np.divide(np.array(pd3_voltageQR), qwp_power_incR)
     pd4_voltageQR = np.divide(np.array(pd4_voltageQR), qwp_power_incR)
-    pd1_voltage_err=np.divide(np.sqrt((pd1_voltage_err)**2+power_meter_error**2), qwp_power_incR)
-    pd2_voltage_err=np.divide(np.sqrt((pd2_voltage_err)**2+power_meter_error**2), qwp_power_incR)
-    pd3_voltage_err=np.divide(np.sqrt((pd3_voltage_err)**2+power_meter_error**2), qwp_power_incR)
-    pd4_voltage_err=np.divide(np.sqrt((pd4_voltage_err)**2+power_meter_error**2), qwp_power_incR)
+    #Error from partial derivatives
+    pd1_voltage_err=np.sqrt((pd1_voltage_err/qwp_power_incR)**2+(power_meter_error*pd1_voltage_err/(qwp_power_incR**2))**2)
+    pd2_voltage_err=np.sqrt((pd2_voltage_err/qwp_power_incR)**2+(power_meter_error*pd2_voltage_err/(qwp_power_incR**2))**2)
+    pd3_voltage_err=np.sqrt((pd3_voltage_err/qwp_power_incR)**2+(power_meter_error*pd3_voltage_err/(qwp_power_incR**2))**2)
+    pd4_voltage_err=np.sqrt((pd4_voltage_err/qwp_power_incR)**2+(power_meter_error*pd4_voltage_err/(qwp_power_incR**2))**2)
 
   # average all the values in the list    
     if i == 0:
