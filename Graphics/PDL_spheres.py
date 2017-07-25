@@ -13,6 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.patches import FancyArrowPatch, ArrowStyle
 from mpl_toolkits.mplot3d import proj3d
 
+arrow_len= 1.75
 def add_arrows(axis, arrow_len):
     axis_arrow_length = arrow_len
     arrow = ArrowStyle("Fancy", 	head_length=0.4,head_width=0.2)
@@ -38,20 +39,53 @@ x = np.cos(u)*np.sin(v)
 y = np.sin(u)*np.sin(v)
 z = np.cos(v)
 ax.plot_wireframe(x, y, z, color="k")
-add_arrows(ax)
-ax.set_ylim()
+add_arrows(ax, arrow_len)
+ax.set_xlim(-arrow_len/2, arrow_len/2)
+ax.set_ylim(-arrow_len/2, arrow_len/2)
+ax.set_zlim(-arrow_len/2, arrow_len/2)
 
 
 alpha = 0.345
-direction = [-1, 0, 0]
+gamma = np.tanh(alpha)
+direction = [0, -1, 0]
 
 dot_product = x*direction[0]*np.ones(np.shape(x)) + y*direction[1]*np.ones(np.shape(y)) +z*direction[2]*np.ones(np.shape(x)) 
-trans = 1/(1+np.tanh(alpha)) * (1+np.tanh(alpha)*dot_product)
+trans = 1/(1+gamma) * (1+gamma*dot_product)
 
 ax = fig.add_subplot(222, projection='3d')
 ax.set_axis_off()
 ax.plot_wireframe(trans*x, trans*y, trans*z, color="k")
-add_arrows(ax)
+add_arrows(ax, arrow_len)
+
+
+ax.set_xlim(-arrow_len/2, arrow_len/2)
+ax.set_ylim(-arrow_len/2, arrow_len/2)
+ax.set_zlim(-arrow_len/2, arrow_len/2)
+
+coeff_1 = np.sqrt(1 - gamma**2)/(1+gamma*dot_product)
+coeff_2 = gamma * (1+gamma**(-2)*(1-np.sqrt(1-gamma**2))*gamma*dot_product)/(1+gamma*dot_product)
+
+new_x = coeff_1 * x + coeff_2 * direction[0]
+new_y = coeff_1 * y + coeff_2 * direction[1]
+new_z = coeff_1 * z + coeff_2 * direction[2]
+
+ax = fig.add_subplot(223, projection='3d')
+ax.set_axis_off()
+ax.plot_wireframe(new_x, new_y, new_z, color="k")
+add_arrows(ax, arrow_len)
+ax.set_xlim(-arrow_len/2, arrow_len/2)
+ax.set_ylim(-arrow_len/2, arrow_len/2)
+ax.set_zlim(-arrow_len/2, arrow_len/2)
+
+
+ax = fig.add_subplot(224, projection='3d')
+ax.set_axis_off()
+ax.plot_wireframe(new_x*trans, new_y*trans, new_z*trans, color="k")
+add_arrows(ax, arrow_len)
+ax.set_xlim(-arrow_len/2, arrow_len/2)
+ax.set_ylim(-arrow_len/2, arrow_len/2)
+ax.set_zlim(-arrow_len/2, arrow_len/2)
+
 
 
 class Arrow3D(FancyArrowPatch):
