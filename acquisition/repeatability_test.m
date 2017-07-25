@@ -112,3 +112,43 @@ for i = 1:2
 end
 disp('DONE')
 cd ..\..\..\
+
+%% measurement using metasurface
+addpath('..\..');
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\comparison']);
+cd (['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\comparison'])
+fl=struct2cell(dir());
+fl=natsort(fl(1,:));
+fl=string(fl);
+if length(fl)<=2
+    fn=0;
+else
+    fn = string(strsplit(fl(length(fl)-1),'_'));
+    fn = str2double(fn(1));
+end
+N_DATA_POINTS = 290;
+MEAS_DURATION = 1;
+
+meas_points = int32(360*rand(N_DATA_POINTS,2));
+disp('Annealing travel path...')
+meas_points = min_travel(meas_points, 300000, 10);
+
+input('Make sure polarimeter is not obstructing beam and press return to start measurement.');
+for i = 1:length(meas_points)
+    h_rot_mount.SetAbsMovePos(0, meas_points(i,1)); % set a move to the angular offset from 0
+    h_rot_mount.MoveAbsolute(0,0); % now move the polarizer    
+    h_rot_mount2.SetAbsMovePos(0, meas_points(i,2)); % set a move to the angular offset from 0
+    h_rot_mount2.MoveAbsolute(0,0); % now move the qwp
+    
+    tic;
+    while and(toc<36, or(IsMoving(h_rot_mount)==1, IsMoving(h_rot_mount2)==1))
+       pause(1) 
+    end
+    
+    %wait for motor to stabilize
+    pause(1.0)
+    fname = [num2str(fn+i),'_p', num2str(meas_points(i,1)), 'qwp', num2str(meas_points(i,2)), '.txt'];
+    disp(['Metasurface polarimeter measurement with P at ',num2str(meas_points(i,1)),', QWP at ' ,num2str(meas_points(i,2)),' ',num2str(i),'/',num2str(length(meas_points))]);
+    dat = daq_measure(MEAS_DURATION, fname);
+    pause(0.5)
+end

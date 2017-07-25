@@ -1,3 +1,11 @@
+"""
+Created on Wed Jun 21 09:42:59 2017
+
+This is a script to analyze polarimetry calibration data.
+
+@contributors: Noah, Ruoping
+"""
+
 import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -148,7 +156,7 @@ axarr[0][2].set_title('Altitude $2\chi$')
 axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][2].set_ylabel('Metasurface measurement (radians)')
 #diffs=(m_2chi-p_2chi)/(0.5*(m_2chi+p_2chi))
-diffs=m_2chi-p_2chi
+diffs=m_2chi+p_2chi
 axarr[1][2].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 

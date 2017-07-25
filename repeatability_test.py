@@ -1,9 +1,17 @@
+"""
+Created on Wed Jun 21 09:42:59 2017
+
+This is a script to analyze polarimetry calibration data.
+
+@contributors: Noah, Ruoping
+"""
+
 import csv, os
 import numpy as np
 import matplotlib.pyplot as plt
 
 directory='acquisition\\data\\repeatability' #data location folder
-polarimeter_file='polarimeter_with_interferometer2.txt' #first measurement
+polarimeter_file='polarimeter.txt' #first measurement
 os.chdir(directory)
 
 class polarimeter:
