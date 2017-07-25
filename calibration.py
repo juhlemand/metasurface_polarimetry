@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jun 21 09:42:59 2017
-Modified on Thurs Jun 22 2017
-Modified on Sat Jun 24 2017
 
 This is a script to analyze polarimetry calibration data.
 
@@ -24,7 +22,7 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.01
 
-os.chdir('acquisition\\data\\calibration4')
+os.chdir('acquisition\\data\\calibration2')
 
 #%% Extract and fit linear polarizer data.
 
