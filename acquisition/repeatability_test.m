@@ -1,4 +1,8 @@
 %%Motor repeatability test
+% This code generates an array of locations which the motor will spin to, and goes through the motion twice, 
+% measuring from the polarimeter. This effectively shows the repeatability of the instrument. 
+
+
 %%Initialize serial communications with motors, the power meter, and the daq
 clear;
 addpath('..');

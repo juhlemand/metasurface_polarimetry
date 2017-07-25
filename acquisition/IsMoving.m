@@ -1,4 +1,4 @@
-
+%Function checking if stage is moving, from Thorlabs APT sample code 
 function r = IsMoving(stage)
     s = stage.GetStatusBits_Bits(0);
     % Read StatusBits returned by GetStatusBits_Bits method and determine if
