@@ -13,7 +13,12 @@
 
 
 #declare laser_filter = 0.25; // defines transparency of laser diffraction orders
-#declare move_forward  = 5; // how far arrows and polarization ellipses are translated in z
+#declare move_forward  = 0; // how far arrows and polarization ellipses are translated in z
+#declare ellipse_displacement = 1.45; // dictates how far pol ellipses lie from arrow tips
+#declare sphere_rad = 0.4; // dictates how thick the pol ellipses are
+#declare ellipse_rad = 8; // base size of pol ellipse
+#declare arrow_height = 0.55*ellipse_rad; // height of arrows in pol ellipses
+#declare arrow_rad = 0.15*ellipse_rad; // radius of base of arrows in pol ellipses
 
 background { White }
 #declare row = 0;
@@ -62,7 +67,7 @@ box{
 #declare height = 0.03 * total_height;
 #declare outer_rad = 1.35*total_width;
 #declare inner_rad = 0.95 * outer_rad;
-#declare ang = 40;
+#declare ang = 30;
 #declare arrow_length = 8;
 #declare arrow_width = 9;
 
@@ -91,10 +96,7 @@ box{
         #declare aspect_ratio1 = 0.35;
         #declare alpha1 = 85;                     
         
-        #declare ellipse_rad = 8;
-        #declare sphere_rad = 0.4;
-        #declare arrow_height = 0.45*ellipse_rad;
-        #declare arrow_rad = 0.1*ellipse_rad;
+        
     
         #merge {
             #while(time < 1)
@@ -114,8 +116,9 @@ box{
                 } 
         
             rotate alpha1*z
+            rotate 90*x
             translate <(inner_rad+outer_rad)/2, height/2, 0>
-            rotate 1.2*ang*y
+            rotate ellipse_displacement*ang*y
             texture{
                 pigment { Blue }
                 finish { diffuse 0.75 phong 0.3}
@@ -158,10 +161,6 @@ box{
     #declare time = 0;
     #declare aspect_ratio2 = 0.95;
     #declare alpha2 = 40;                        
-    #declare ellipse_rad = 8;
-    #declare sphere_rad = 0.4;
-    #declare arrow_height = 0.45*ellipse_rad;
-    #declare arrow_rad = 0.1*ellipse_rad;        
             
    #merge {
         #while(time < 1)
@@ -181,8 +180,9 @@ box{
             } 
     
         rotate alpha2*z
+        rotate 90*x
         translate <(inner_rad+outer_rad)/2, height/2, 0>
-        rotate 1.2*ang*y
+        rotate ellipse_displacement*ang*y
         translate <-(outer_rad+inner_rad)/2, -height/2, 0>
         rotate 180*z
         translate <(outer_rad+inner_rad)/2, height/2, 0>
@@ -233,10 +233,7 @@ box{
         #declare time = 0;
         #declare aspect_ratio2 = 1;
         #declare alpha2 = 40*pi/180;                        
-        #declare ellipse_rad = 8;
-        #declare sphere_rad = 0.03*ellipse_rad;
-        #declare arrow_height = 0.45*ellipse_rad;
-        #declare arrow_rad = 0.1*ellipse_rad;
+        
     
          
            
@@ -260,8 +257,9 @@ box{
             } 
      
         rotate alpha2*z
+        rotate 90*x
         translate <(inner_rad+outer_rad)/2, height/2, 0>
-        rotate 1.2*ang*y
+        rotate ellipse_displacement*ang*y
         texture {
             pigment { Magenta }
             finish{ diffuse 0.75 phong 0.1 }
@@ -296,11 +294,7 @@ box{
     #declare time = 0;
         #declare aspect_ratio2 = 0.1;
         #declare alpha2 = 40*pi/180;                        
-        #declare ellipse_rad = 8;
-        #declare sphere_rad = 0.4;
-        #declare arrow_height = 0.45*ellipse_rad;
-        #declare arrow_rad = 0.1*ellipse_rad;
-    
+        
          
            
             
@@ -323,8 +317,9 @@ box{
             } 
      
         rotate alpha2*z
+        rotate 90*x
         translate <(inner_rad+outer_rad)/2, height/2, 0>
-        rotate 1.2*ang*y
+        rotate ellipse_displacement*ang*y
         texture{
             pigment{ Cyan }
             finish{ diffuse 0.75 phong 0.1 }
@@ -344,7 +339,7 @@ box{
 
   
   camera {
-    location <-10, total_height*1.35, -125>
+    location <-20, total_height*1.35, -125>
     look_at  <total_width/2, total_height/2,  0.0>
   //  focal_point <-6, 1, 30>    // blue cylinder in focus
   //  focal_point < 0, 1,  0>    // green box in focus
