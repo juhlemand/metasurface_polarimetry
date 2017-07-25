@@ -6,7 +6,7 @@ This is a script to analyze polarimetry calibration data.
 
 @contributors: Noah, Ruoping
 """
-import os
+import os,re
 import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
@@ -20,9 +20,33 @@ qwp_L = 'qwp_L'  # folder for qwp at second configuration
 partial_pol = 'partial_pol'  # folder location of partial pol data
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
-power_meter_error = 0.01
+power_meter_error = 0.005 #Error in power meter reading from ambient light, unit in mW
 
-os.chdir('acquisition\\data\\calibration2')
+os.chdir('acquisition/data/calibration1')
+
+def qwp_err(pd_arr):
+    '''function calculating error from 4th column of instrument matrix
+
+    pd_arr: 1xn array with photodiode voltages, spanning the entire 360 degrees
+    '''
+    avg_90deg=[]
+    assert (len(pd_arr)/4) % 1 < 1e-12
+    offset=int(len(pd_arr)/4)
+    for i in range(len(pd_arr)):
+        avg_90deg.append(0.5*(pd_arr[i]+pd_arr[(i+offset)%len(pd_arr)]))
+    return avg_90deg
+    
+def sorted_nicely( l ):
+    """ From Mark Byers. Sorts the given iterable in the way that is expected.
+ 
+    Required arguments:
+    l -- The iterable to be sorted.
+ 
+    """
+    convert = lambda text: int(text) if text.isdigit() else text
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(l, key = alphanum_key)
+
 
 #%% Extract and fit linear polarizer data.
 
@@ -42,7 +66,7 @@ variances = []
 
 os.chdir(linear_pol_extension)  # go get the linear pol data
 
-for file in os.listdir():
+for file in sorted_nicely(os.listdir()):
     if fnmatch.fnmatch(file, '*.txt'):
         params = file.split('_')
         try:  # if file name matches format do stuff with it
@@ -147,7 +171,7 @@ fit_errs=[]
 for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
-    err = pd_errs[i, :]t
+    err = pd_errs[i, :]
     popt, variance = curve_fit(fit_function, x, y)
     
     #standard error, assuming that the fit parameters are uncorrelated between each other
@@ -192,7 +216,7 @@ for i in range(2):
         file = qwp_L
     
     os.chdir(file)  # go get the qwp+pol data
-    for file in os.listdir():
+    for file in sorted_nicely(os.listdir()):
         if fnmatch.fnmatch(file, '*.txt'):
             params = file.split('_')
             try:  # if file name matches format do stuff with it
@@ -214,7 +238,7 @@ for i in range(2):
                 pd3_voltage_err.append(np.std(my_data[:, 2]))
                 pd4_voltage_err.append(np.std(my_data[:, 3]))
             except ValueError:  # don't do anything with invalid file name
-                print('file error ', file)
+                print('file skipped ', file)
                 pass
     
     pol_anglesR = np.array(pol_anglesR)
@@ -234,7 +258,8 @@ for i in range(2):
     pd2_voltageQR = np.divide(np.array(pd2_voltageQR), qwp_power_incR)
     pd3_voltageQR = np.divide(np.array(pd3_voltageQR), qwp_power_incR)
     pd4_voltageQR = np.divide(np.array(pd4_voltageQR), qwp_power_incR)
-    #Error from partial derivatives
+    
+    # adding in the error from power meter
     pd1_voltage_err=np.sqrt((pd1_voltage_err/qwp_power_incR)**2+(power_meter_error*pd1_voltage_err/(qwp_power_incR**2))**2)
     pd2_voltage_err=np.sqrt((pd2_voltage_err/qwp_power_incR)**2+(power_meter_error*pd2_voltage_err/(qwp_power_incR**2))**2)
     pd3_voltage_err=np.sqrt((pd3_voltage_err/qwp_power_incR)**2+(power_meter_error*pd3_voltage_err/(qwp_power_incR**2))**2)
@@ -246,30 +271,29 @@ for i in range(2):
         pd2R = np.mean(pd2_voltageQR)
         pd3R = np.mean(pd3_voltageQR)
         pd4R = np.mean(pd4_voltageQR)
-        #Error includes the individual measurement errors and the total stdev
-        #since the 4 photodiode voltages should not change 
-        pd1R_err = np.sqrt(np.sum(pd1_voltage_err**2)+np.std(pd1_voltageQR)**2)
-        pd2R_err = np.sqrt(np.sum(pd2_voltage_err**2)+np.std(pd2_voltageQR)**2)
-        pd3R_err = np.sqrt(np.sum(pd3_voltage_err**2)+np.std(pd3_voltageQR)**2)
-        pd4R_err = np.sqrt(np.sum(pd4_voltage_err**2)+np.std(pd4_voltageQR)**2)
-        plt.scatter(range(0,len(pd1_voltageQR)),pd1_voltageQR,color='red')
-        plt.scatter(range(0,len(pd1_voltageQR)),pd2_voltageQR,color='blue')
-        plt.scatter(range(0,len(pd1_voltageQR)),pd3_voltageQR,color='green')
-        plt.scatter(range(0,len(pd1_voltageQR)),pd4_voltageQR,color='orange')
+        #taking the measurement error as the difference between measurements 90 degrees apart
+        pd1R_err = np.std(qwp_err(pd1_voltageQR))
+        pd2R_err = np.std(qwp_err(pd2_voltageQR))
+        pd3R_err = np.std(qwp_err(pd3_voltageQR))
+        pd4R_err = np.std(qwp_err(pd4_voltageQR))
+        plt.errorbar(pol_anglesR,pd1_voltageQR,yerr=pd1_voltage_err, fmt=' ', color='red')
+        plt.errorbar(pol_anglesR,pd2_voltageQR,yerr=pd2_voltage_err, fmt=' ', color='blue')
+        plt.errorbar(pol_anglesR,pd3_voltageQR,yerr=pd3_voltage_err, fmt=' ', color='green')
+        plt.errorbar(pol_anglesR,pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
         #print(len(pd1_voltageQR))
     elif i == 1:
         pd1L = np.mean(pd1_voltageQR)
         pd2L = np.mean(pd2_voltageQR)
         pd3L = np.mean(pd3_voltageQR)
         pd4L = np.mean(pd4_voltageQR)
-        pd1L_err = np.sqrt(np.sum(pd1_voltage_err**2)+np.std(pd1_voltageQR)**2)
-        pd2L_err = np.sqrt(np.sum(pd2_voltage_err**2)+np.std(pd2_voltageQR)**2)
-        pd3L_err = np.sqrt(np.sum(pd3_voltage_err**2)+np.std(pd3_voltageQR)**2)
-        pd4L_err = np.sqrt(np.sum(pd4_voltage_err**2)+np.std(pd4_voltageQR)**2)
-        plt.scatter(range(0,len(pd1_voltageQR)),pd1_voltageQR,color='red',alpha=0.5)
-        plt.scatter(range(0,len(pd1_voltageQR)),pd2_voltageQR,color='blue',alpha=0.5)
-        plt.scatter(range(0,len(pd1_voltageQR)),pd3_voltageQR,color='green',alpha=0.5)
-        plt.scatter(range(0,len(pd1_voltageQR)),pd4_voltageQR,color='orange',alpha=0.5)
+        pd1L_err = np.std(qwp_err(pd1_voltageQR))
+        pd2L_err = np.std(qwp_err(pd2_voltageQR))
+        pd3L_err = np.std(qwp_err(pd3_voltageQR))
+        pd4L_err = np.std(qwp_err(pd4_voltageQR))
+        plt.errorbar(pol_anglesR,pd1_voltageQR,yerr=pd1_voltage_err, fmt=' ', color='red',alpha=0.5)
+        plt.errorbar(pol_anglesR,pd2_voltageQR,yerr=pd2_voltage_err, fmt=' ', color='blue',alpha=0.5)
+        plt.errorbar(pol_anglesR,pd3_voltageQR,yerr=pd3_voltage_err, fmt=' ', color='green',alpha=0.5)
+        plt.errorbar(pol_anglesR,pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange',alpha=0.5)
         #print(len(pd1_voltageQR))
 plt.show()
 
@@ -302,8 +326,13 @@ print(Ainv)
 print('')
 np.savetxt('..\\Ainv.txt', Ainv)
 
-#Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf)
-Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
+#Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf, http://sci-hub.io/10.1364/ao.47.002541)
+#Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
+
+#Assuming elements in A have no covariance between each other
+A_inv_cov=np.zeros((4,4,4,4))
+
+
 print('Relative error in Ainv:')
 print(abs(Ainv_err/Ainv))
 np.savetxt('..\\Ainv_err_rel.txt', abs(Ainv_err/Ainv))
