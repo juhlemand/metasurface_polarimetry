@@ -41,12 +41,16 @@ class polarimeter:
         self.N_measurements=N_measurements
         self.data=np.zeros((N_measurements,4))
         self.stdev=np.zeros((N_measurements,4))
+        self.poincare=np.zeros((N_measurements,3))
+        self.poincare_std=np.zeros((N_measurements,3))
         
-    def add(self, index, stokes_vector, stokes_stdev):
+    def add(self, index, stokes_vector, stokes_stdev, poincare,poincare_std):
         assert stokes_vector.shape==(4,)
         assert stokes_stdev.shape==(4,)
         self.data[index]=stokes_vector
         self.stdev[index]=stokes_stdev
+        self.poincare[index]=poincare
+        self.poincare_std[index]=poincare_std
 
     def __str__(self):
         print(self.data)
@@ -73,8 +77,10 @@ for row in polarimeter_raw:
     elif row[:13]==['#####END#####']:
         is_measurement=0
         s_v=np.array([0.01*np.mean(np.array(p),0)[-2], np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
-        s_std=0.01*np.array([np.std(np.array(p),0)[-2], np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
-        polarimeter_data.add(index, s_v, s_std)
+        s_std=np.array([0.01*np.std(np.array(p),0)[-2], np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
+        poincare=np.array([0.01*np.mean(np.array(p),0)[-2],np.mean(np.array(p),0)[3],np.mean(np.array(p),0)[4]])
+        poincare_std=np.array([0.01*np.std(np.array(p),0)[-2],np.std(np.array(p),0)[3],np.std(np.array(p),0)[4]])
+        polarimeter_data.add(index, s_v, s_std, poincare, poincare_std)
         index+=1
         p=[]
         
@@ -120,14 +126,45 @@ metasurface_data=np.array(metasurface_data)
 ###############################################################
 #%% Analysing and plotting comparison
 
+S3=metasurface_data.transpose()[3]
+S2=metasurface_data.transpose()[2]
+S1=metasurface_data.transpose()[1]
+S0=metasurface_data.transpose()[0]
+dS3=np.sqrt(cov_m[:,3,3])
+dS2=np.sqrt(cov_m[:,2,2])
+dS1=np.sqrt(cov_m[:,1,1])
+dS0=np.sqrt(cov_m[:,0,0])
+cov_S0_S1=cov_m[:,0,1]
+cov_S0_S2=cov_m[:,0,2]
+cov_S0_S3=cov_m[:,0,3]
+cov_S2_S1=cov_m[:,2,1]
+cov_S3_S1=cov_m[:,3,1]
+cov_S3_S2=cov_m[:,3,2]
+
 for i in range(len(metasurface_data)):
     metasurface_data[i]=np.dot(Ainv, metasurface_data[i].transpose())
 
 m_dops=np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
 p_dops=polarimeter_data.data.transpose()[0]
 
-plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, label='metasurface',fmt='.')
-plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=polarimeter_data.stdev.transpose()[0], label='thorlabs',fmt='.')
+#error in dop
+# dop = sqrt(S1**2+S2**2+S3**2)/S0
+#https://www.wolframalpha.com/input/?i=derivative+of+sqrt(x1**2%2Bx2**2%2Bx3**2)%2Fx0
+m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
+                   +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +(dS2*S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +2*cov_S0_S1*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S0_S2*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S0_S3*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S2_S1*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S1*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S2*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   )
+p_dops_err=polarimeter_data.stdev.transpose()[0]
+
+plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, yerr=m_dops_err, label='metasurface',fmt='.')
+plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=p_dops_err, label='thorlabs',fmt='.')
 plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
 plt.ylim([0,1.1])
 plt.legend()
@@ -135,6 +172,7 @@ plt.show()
 
 f, axarr  = plt.subplots(2,3)
 axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][0].plot([0,1],[0,1],alpha=0.3,color='black')
 axarr[0][0].set_title('DOP')
 axarr[0][0].set_xlabel('Polarimeter measurement')
@@ -148,34 +186,20 @@ axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 ##############################################################
 #poincare sphere coordinates in radians
 
-S3=metasurface_data.transpose()[3]
-S2=metasurface_data.transpose()[2]
-S1=metasurface_data.transpose()[1]
-S0=metasurface_data.transpose()[0]
-dS3=np.sqrt(cov_m[:,3,3])
-dS2=np.sqrt(cov_m[:,2,2])
-dS1=np.sqrt(cov_m[:,1,1])
-dS0=np.sqrt(cov_m[:,0,0])
-cov_S2_S1=cov_m[:,2,1]
-cov_S3_S1=cov_m[:,3,1]
-cov_S3_S2=cov_m[:,3,2]
-
-#error in dop
-# dop = sqrt(S1**2+S2**2+S3**2)/S0
-#https://www.wolframalpha.com/input/?i=derivative+of+sqrt(x1**2%2Bx2**2%2Bx3**2)%2Fx0
-
-
 # azimuth psi
 m_2psi=np.arctan(S2/S1)
-p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
-#p_2psi_err=np.
+#p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
+p_2psi=2*np.pi*polarimeter_data.poincare.transpose()[1]/180
 #stdev error in S2/S1:
 #http://123.physics.ucdavis.edu/week_9_files/taylor_209-226.pdf
-m_2psi_err=np.sqrt((S1*dS2/(S1**2+S2**2))**2+(S2*dS1/(S1**2+S2**2))**2
+p_2psi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[1]/180
+m_2psi_err=np.sqrt((S1*dS2/(S1**2+S2**2))**2
+                   +(S2*dS1/(S1**2+S2**2))**2
                    -2*S1*S2*cov_S2_S1/(S1**2+S2**2)**2)
 
 # altitude chi
-p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
+#p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
+p_2chi=2*np.pi*polarimeter_data.poincare.transpose()[2]/180
 m_2chi=np.arctan(S3/np.sqrt(S1**2+S2**2))
 #https://www.wolframalpha.com/input/?i=derivative+of+atan(x3%2Fsqrt(x1**2%2Bx2**2))
 m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
@@ -185,13 +209,13 @@ m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
                    +2*cov_S3_S1*(np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))*(-S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
                    +2*cov_S3_S2*(np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))*(-S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
                    )
-
+p_2chi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[2]/180
 
 #taking the first few points as azimuth normalization
 az_offset = np.mean(p_2psi[:int(0.05*N_measurements)]-m_2psi[:int(0.05*N_measurements)])
 
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][1].errorbar(p_2psi, m_2psi, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][1].set_title('Azimuth $2\psi$')
 axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][1].set_ylabel('Metasurface measurement (radians)')
@@ -202,7 +226,7 @@ axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 
 axarr[0][2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][2].errorbar(p_2chi, m_2chi, yerr=m_2chi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].set_title('Altitude $2\chi$')
 axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][2].set_ylabel('Metasurface measurement (radians)')
