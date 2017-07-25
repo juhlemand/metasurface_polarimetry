@@ -6,7 +6,7 @@ This is a script to analyze polarimetry calibration data.
 
 @contributors: Noah, Ruoping
 """
-import os,re
+import os,re,pickle
 import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
@@ -330,12 +330,23 @@ np.savetxt('..\\Ainv.txt', Ainv)
 #Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
 
 #Assuming elements in A have no covariance between each other
-A_inv_cov=np.zeros((4,4,4,4))
+Ainv_cov=np.zeros((4,4,4,4))
 
+for aa in range(4):
+    for bb in range(4):
+        for a in range(4):
+            for b in range(4):
+                # sum over i and j
+                s=0.
+                for i in range(4):
+                    for j in range(4):
+                        s += Ainv[aa][i]*Ainv[j][bb]*Ainv[a][i]*Ainv[j][b]*(A_err[i][j])**2
+                Ainv_cov[aa][bb][a][b] = s
 
-print('Relative error in Ainv:')
-print(abs(Ainv_err/Ainv))
-np.savetxt('..\\Ainv_err_rel.txt', abs(Ainv_err/Ainv))
+print('Covariance in Ainv:')
+print(Ainv_cov)
+#np.savetxt('..\\Ainv_cov.txt', Ainv_cov)
+pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
 
 # now let's define a function to reonstruct polarization state
 # measurement is a four vector of measured intensities
@@ -367,7 +378,6 @@ L = np.array([pd1L, pd2L, pd3L, pd4L])
 stokes=np.dot(Ainv, L)
 
 #%% Extract and analyze the partial pol data
-
 pol_angles2=[]
 pd1_partialV = []
 pd2_partialV = []
@@ -410,7 +420,6 @@ partial_dops = np.zeros(len(pol_angles2))
 for i in range(len(pol_angles2)):
     i_measured = np.array([pd1_partialV[i], pd2_partialV[i], pd3_partialV[i], pd4_partialV[i]])
     stokes_temp = np.dot(Ainv, i_measured)
-    
     partial_dops[i] = np.sqrt(stokes_temp[1]**2 + stokes_temp[2]**2 + stokes_temp[3]**2)/stokes_temp[0]
 
 plt.figure(3)
