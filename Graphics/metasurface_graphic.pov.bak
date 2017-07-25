@@ -12,9 +12,6 @@
 #declare column_width = 5*separation;
 
 
-#declare laser_filter = 0.25; // defines transparency of laser diffraction orders
-#declare move_forward  = 5; // how far arrows and polarization ellipses are translated in z
-
 background { White }
 #declare row = 0;
 #while (row < num_rows)
@@ -125,8 +122,8 @@ box{
         
         }
         
-        translate <0.9*total_width/2 - outer_rad, total_height/2, move_forward>
-        pigment { Green filter laser_filter }
+        translate <0.9*total_width/2 - outer_rad, total_height/2, 15>
+        pigment { Green filter 0.5 }
         no_shadow
            
 }
@@ -194,8 +191,8 @@ box{
     
     }
     
-        translate <0.9*total_width/2 - outer_rad, total_height/2, move_forward>
-        pigment { Green filter laser_filter }
+        translate <0.9*total_width/2 - outer_rad, total_height/2, 15>
+        pigment { Green filter 0.5 }
         no_shadow  
     
 }       
@@ -269,8 +266,8 @@ box{
     
     }
         
-        translate <0.9*total_width/2 - outer_rad, total_height/2, move_forward>
-        pigment { Green filter laser_filter }
+        translate <0.9*total_width/2 - outer_rad, total_height/2, 15>
+        pigment { Green filter 0.5 }
         no_shadow   
 }
        
@@ -335,8 +332,8 @@ box{
     translate <-(outer_rad+inner_rad)/2, -height/2, 0>
     rotate 180*z
     translate <(outer_rad+inner_rad)/2, height/2, 0>
-    translate <0.9*total_width/2 - outer_rad, total_height/2, move_forward>
-    pigment { Green filter laser_filter }
+    translate <0.9*total_width/2 - outer_rad, total_height/2, 15>
+    pigment { Green filter 0.5 }
     no_shadow   
        }              
  }
