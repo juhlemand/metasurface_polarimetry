@@ -46,7 +46,19 @@ def wireframe_plot(x, y, z, subplot, figure):
     ax.set_xlim(-arrow_len/2, arrow_len/2)
     ax.set_ylim(-arrow_len/2, arrow_len/2)
     ax.set_zlim(-arrow_len/2, arrow_len/2)
+    ax.view_init(azim=-55, elev=30)
     return ax
+
+#%% Define a function to put a spherical dot at the end of Stokes vectors
+
+def sphere(pos, rad, col, ax, res): 
+    u = np.linspace(0, 2 * np.pi, res)
+    v = np.linspace(0, np.pi, res)
+    x = rad * np.outer(np.cos(u), np.sin(v)) + pos[0]
+    y = rad * np.outer(np.sin(u), np.sin(v)) + pos[1]
+    z = rad * np.outer(np.ones(np.size(u)), np.cos(v)) + pos[2]
+    ax.plot_surface(x, y, z, color=col, edgecolor = (0,0,0,0))
+
 
 #%% Generate data for a normal Poincare Sphere
 
@@ -59,16 +71,19 @@ arrow = ArrowStyle("Fancy", head_length=1, head_width=0.8)
 
 init_state_vec = Arrow3D([0, initial_state[0]], [0, initial_state[1]], [0, initial_state[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 
-u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:20j]
+u, v = np.mgrid[0:2*np.pi:15j, 0:np.pi:15j]
 x = np.cos(u)*np.sin(v)
 y = np.sin(u)*np.sin(v)
 z = np.cos(v)
 
 ax1 = wireframe_plot(x, y, z, 231, fig)  # plot the data
 ax1.add_artist(init_state_vec)
+
+sphere(initial_state, 0.05, 'b', ax1, 100)
+
 #%% Now consider spherical plot of intensities under diattenuation
-tx = 0.75
-ty = 0.5
+tx = np.cos(np.pi/3)
+ty = np.sin(np.pi/3)
 
 # construct the Jones matrix of the diattenuator
 diattenuator = np.array([[tx, 0], [0, ty]])
@@ -85,13 +100,15 @@ unit_matrix = np.ones(np.shape(x))
 dot_product = (x*direction[0] + y*direction[1]+        
                z*direction[2])
 
-trans = 1/(1+gamma) * (1+gamma*dot_product)
-initial_trans = 1/(1+gamma) * (1+gamma*np.dot(initial_state,  direction)) * initial_state
+trans = tx**2/(1+gamma) * (1+gamma*dot_product)
+initial_trans = tx**2/(1+gamma) * (1+gamma*np.dot(initial_state,  direction)) * initial_state
 
 # now plot the result
 ax2 = wireframe_plot(trans*x, trans*y, trans*z, 232, fig)
 init_trans = Arrow3D([0, initial_trans[0]], [0, initial_trans[1]], [0, initial_trans[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax2.add_artist(init_trans)
+
+sphere(initial_trans, 0.05, 'b', ax2, 100)
 
 #%% Now compute the change in polarization state plot
 
@@ -116,6 +133,8 @@ initial_trans2 = coeff_1*initial_state + coeff_2*direction
 init_trans2 = Arrow3D([0, initial_trans2[0]], [0, initial_trans2[1]], [0, initial_trans2[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax3.add_artist(init_trans2)
 
+sphere(initial_trans2, 0.05, 'b', ax3, 100)
+
 #%% Show a plot which shows polarization change, as well as the change in intensity
 
 fin_x = trans*new_x
@@ -124,14 +143,17 @@ fin_z = trans*new_z
 
 ax4 = wireframe_plot(fin_x, fin_y, fin_z, 234, fig)
 
-initial_trans3 = 1/(1+gamma) * (1+gamma*np.dot(initial_state,  direction)) * initial_trans2
+initial_trans3 = tx**2/(1+gamma) * (1+gamma*np.dot(initial_state,  direction)) * initial_trans2
 init_trans3 = Arrow3D([0, initial_trans3[0]], [0, initial_trans3[1]], [0, initial_trans3[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax4.add_artist(init_trans3)
+
+
+sphere(initial_trans3, 0.05, 'b', ax4, 100)
  
 
 #%% Now simulate the effect of a retarder by rotating the resultant sphere
 
-retardance = np.pi/2
+retardance = 2*np.pi/3
 ret_axis = [1, 0, 0] # retards about the x axis
 ret_axis = ret_axis/np.linalg.norm(ret_axis)
 
@@ -165,6 +187,11 @@ ax5 = wireframe_plot(rot_x, rot_y, rot_z, 235, fig)
 initial_trans4 = rotate(ret_axis, retardance, initial_trans3)
 init_trans4 = Arrow3D([0, initial_trans4[0]], [0, initial_trans4[1]], [0, initial_trans4[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax5.add_artist(init_trans4)
+
+sphere(initial_trans4, 0.05, 'b', ax5, 100)
+
+# show the new poincare sphere that the sphere lies on, speculative feature
+#sphere([0,0,0], np.linalg.norm(initial_trans4), (0,1,0,0.15), ax5, 300)
 
 #%% A class found on StackExchange for drawing 3D arrows in matplotlib
 
