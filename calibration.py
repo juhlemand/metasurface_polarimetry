@@ -433,7 +433,8 @@ pd1_partialV = np.divide(pd1_partialV[:num_angles//2] + pd1_partialV[num_angles/
 pd2_partialV = np.divide(pd2_partialV[:num_angles//2] + pd2_partialV[num_angles//2:], 2)
 pd3_partialV = np.divide(pd3_partialV[:num_angles//2] + pd3_partialV[num_angles//2:], 2)
 pd4_partialV = np.divide(pd4_partialV[:num_angles//2] + pd4_partialV[num_angles//2:], 2)
-            
+i_cov = 0.25*(i_cov[:num_angles//2]+icov[num_angles//2:])
+
 partial_dops = np.zeros(len(pol_angles2))
 stokes_temp = np.zeros((len(pol_angles2),4))
 partial_dops_err =  np.zeros(len(pol_angles2))
