@@ -193,6 +193,10 @@ sphere(initial_trans4, 0.05, 'b', ax5, 100)
 # show the new poincare sphere that the sphere lies on, speculative feature
 #sphere([0,0,0], np.linalg.norm(initial_trans4), (0,1,0,0.15), ax5, 300)
 
+#%% Prepare the figure for export
+
+fig.savefig('poincare_sphere_mods.svg', format='svg', transparent=True)
+
 #%% A class found on StackExchange for drawing 3D arrows in matplotlib
 
 class Arrow3D(FancyArrowPatch):
