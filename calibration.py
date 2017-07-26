@@ -24,6 +24,21 @@ power_meter_error = 0.005 #Error in power meter reading from ambient light, unit
 
 os.chdir('acquisition/data/calibration1')
 
+def covS(i,j, D, I, Dcov, Icov):
+    ''' This function returns the covariance matrix of the result of Ainv*I
+    '''
+    assert len(I)==4
+    assert D.shape==(4,4)
+    assert Dcov.shape==(4,4,4,4)
+    s=0.0
+    for a in range(4):
+        for b in range(4):            
+            s+=I[a]*I[b]*Dcov[i][a][j][b]
+    for k in range(4):
+        for l in range(4):
+            s+=D[i][k]*D[j][l]*Icov[k][l]
+    return s
+
 def qwp_err(pd_arr):
     '''function calculating error from 4th column of instrument matrix
 
@@ -383,6 +398,7 @@ pd1_partialV = []
 pd2_partialV = []
 pd3_partialV = []
 pd4_partialV = []
+i_cov=[]
 
 os.chdir('..')  # move up a level
 os.chdir(partial_pol)  # go get the qwp+pol data
@@ -399,9 +415,11 @@ for file in os.listdir():
             pd2_partialV.append(np.mean(data[:, 1]))
             pd3_partialV.append(np.mean(data[:, 2]))
             pd4_partialV.append(np.mean(data[:, 3]))
+            i_cov.append(np.diag(np.std(data,0)**2))
         except ValueError:  # don't do anything with invalid file name
             pass
         
+i_cov=np.array(i_cov)        
 # rearrange all data as sorted by pol_angles2
 sorted_lists = sorted(zip(pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV, pd4_partialV))
 
@@ -417,13 +435,49 @@ pd3_partialV = np.divide(pd3_partialV[:num_angles//2] + pd3_partialV[num_angles/
 pd4_partialV = np.divide(pd4_partialV[:num_angles//2] + pd4_partialV[num_angles//2:], 2)
             
 partial_dops = np.zeros(len(pol_angles2))
+stokes_temp = np.zeros((len(pol_angles2),4))
+partial_dops_err =  np.zeros(len(pol_angles2))
+cov_stokes = []
 for i in range(len(pol_angles2)):
     i_measured = np.array([pd1_partialV[i], pd2_partialV[i], pd3_partialV[i], pd4_partialV[i]])
-    stokes_temp = np.dot(Ainv, i_measured)
-    partial_dops[i] = np.sqrt(stokes_temp[1]**2 + stokes_temp[2]**2 + stokes_temp[3]**2)/stokes_temp[0]
+    stokes_temp[i] = np.dot(Ainv, i_measured)
+    partial_dops[i] = np.sqrt(stokes_temp[i][1]**2 + stokes_temp[i][2]**2 + stokes_temp[i][3]**2)/stokes_temp[i][0]
+    cov_stokes_temp = np.zeros((4,4))
+    for i in range(4):
+        for j in range(4):
+            cov_stokes_temp[i][j]=covS(i,j, Ainv, i_measured, Ainv_cov, i_cov[i])
+    cov_stokes.append(cov_stokes_temp)
+cov_stokes=np.array(cov_stokes)
+# error in dop
+S3=stokes_temp.transpose()[3]
+S2=stokes_temp.transpose()[2]
+S1=stokes_temp.transpose()[1]
+S0=stokes_temp.transpose()[0]
+dS3=np.sqrt(cov_stokes[:,3,3])
+dS2=np.sqrt(cov_stokes[:,2,2])
+dS1=np.sqrt(cov_stokes[:,1,1])
+dS0=np.sqrt(cov_stokes[:,0,0])
+cov_S0_S1=cov_stokes[:,0,1]
+cov_S0_S2=cov_stokes[:,0,2]
+cov_S0_S3=cov_stokes[:,0,3]
+cov_S2_S1=cov_stokes[:,2,1]
+cov_S3_S1=cov_stokes[:,3,1]
+cov_S3_S2=cov_stokes[:,3,2]
+
+partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
+                   +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +(dS2*S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +2*cov_S0_S1*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S0_S2*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S0_S3*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S2_S1*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S1*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S2*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   )
 
 plt.figure(3)
-plt.plot(pol_angles2, partial_dops, ".", markersize=5)
+plt.errorbar(pol_angles2, partial_dops, yerr=partial_dops_err, fmt=".", markersize=5)
 plt.plot([0,180],[1,1],color='black',alpha=0.25)
 plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
 plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
