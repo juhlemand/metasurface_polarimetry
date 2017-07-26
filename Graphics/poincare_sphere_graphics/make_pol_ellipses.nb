@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     32344,        686]
-NotebookOptionsPosition[     31777,        663]
-NotebookOutlinePosition[     32125,        678]
-CellTagsIndexPosition[     32082,        675]
+NotebookDataLength[     33279,        708]
+NotebookOptionsPosition[     32712,        685]
+NotebookOutlinePosition[     33060,        700]
+CellTagsIndexPosition[     33017,        697]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -596,16 +596,16 @@ Cell[BoxData[
    RowBox[{
     RowBox[{"length", " ", "=", " ", "1.5"}], ";"}], "\[IndentingNewLine]", 
    RowBox[{
-    RowBox[{"height", " ", "=", " ", "5"}], ";"}], "\[IndentingNewLine]", 
+    RowBox[{"height", " ", "=", " ", "4.75"}], ";"}], "\[IndentingNewLine]", 
    RowBox[{
     RowBox[{"basez", " ", "=", " ", "7"}], ";"}], "\[IndentingNewLine]", 
    RowBox[{
-    RowBox[{"basexy", "=", "5"}], ";"}], "\[IndentingNewLine]", 
+    RowBox[{"basexy", "=", "5.5"}], ";"}], "\[IndentingNewLine]", 
    RowBox[{"Graphics3D", "[", 
     RowBox[{
      RowBox[{"{", 
       RowBox[{"Cyan", ",", 
-       RowBox[{"Opacity", "[", "0.75", "]"}], ",", " ", 
+       RowBox[{"Opacity", "[", "0.95", "]"}], ",", " ", 
        RowBox[{"Cuboid", "[", 
         RowBox[{
          RowBox[{"{", 
@@ -619,7 +619,7 @@ Cell[BoxData[
            RowBox[{"width", "/", "2"}], ",", " ", 
            RowBox[{"length", "/", "2"}], ",", " ", "height"}], "}"}]}], "]"}],
         ",", " ", 
-       RowBox[{"Opacity", "[", "0.6", "]"}], ",", "Blue", ",", " ", 
+       RowBox[{"Opacity", "[", "0.65", "]"}], ",", "Blue", ",", " ", 
        RowBox[{"Cuboid", "[", 
         RowBox[{
          RowBox[{"{", 
@@ -637,28 +637,50 @@ Cell[BoxData[
      RowBox[{"Boxed", "\[Rule]", "True"}], ",", " ", 
      RowBox[{"BoxStyle", "\[Rule]", 
       RowBox[{"Directive", "[", 
-       RowBox[{"Gray", ",", " ", "Dashed"}], "]"}]}]}], "]"}]}]}]], "Input",
+       RowBox[{"Gray", ",", " ", "Dashed"}], "]"}]}], ",", " ", 
+     RowBox[{"Lighting", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{"{", 
+        RowBox[{"\"\<Directional\>\"", ",", "White", ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"{", 
+            RowBox[{"1.5", ",", 
+             RowBox[{"-", "1"}], ",", "1.25"}], "}"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"0", ",", "1", ",", "0"}], "}"}]}], "}"}]}], "}"}], 
+       "}"}]}], ",", " ", 
+     RowBox[{"ViewPoint", "\[Rule]", 
+      RowBox[{"{", 
+       RowBox[{"0.75", ",", " ", 
+        RowBox[{"-", "1.5"}], ",", " ", "1"}], "}"}]}]}], "]"}]}]}]], "Input",
  CellChangeTimes->{{3.710097489371561*^9, 3.7100974992976465`*^9}, {
   3.710097545194626*^9, 3.710097874178521*^9}, {3.710097934662842*^9, 
-  3.7100979544609547`*^9}, {3.710098004608947*^9, 3.7100980248145313`*^9}}],
+  3.7100979544609547`*^9}, {3.710098004608947*^9, 3.7100980248145313`*^9}, {
+  3.710098833322427*^9, 3.7100988563142786`*^9}, {3.710098892997852*^9, 
+  3.710099204753684*^9}}],
 
 Cell[BoxData[
  Graphics3DBox[{
-   {RGBColor[0, 1, 1], Opacity[0.75], 
+   {RGBColor[0, 1, 1], Opacity[0.95], 
     CuboidBox[NCache[{Rational[-3, 2], -0.75, 0}, {-1.5, -0.75, 0}], 
-     NCache[{Rational[3, 2], 0.75, 5}, {1.5, 0.75, 5}]]}, 
-   {RGBColor[0, 0, 1], Opacity[0.6], 
-    CuboidBox[
-     NCache[{Rational[-5, 2], Rational[-5, 2], -7}, {-2.5, -2.5, -7}], 
-     NCache[{Rational[5, 2], Rational[5, 2], 0}, {2.5, 2.5, 0}]]}},
+     NCache[{Rational[3, 2], 0.75, 4.75}, {1.5, 0.75, 4.75}]]}, 
+   {RGBColor[0, 0, 1], Opacity[0.65], 
+    CuboidBox[{-2.75, -2.75, -7}, {2.75, 2.75, 0}]}},
   BoxStyle->Directive[
     GrayLevel[0.5], 
     Dashing[{Small, Small}]],
-  Boxed->True]], "Output",
+  Boxed->True,
+  Lighting->{{"Directional", 
+     GrayLevel[1], {{1.5, -1, 1.25}, {0, 1, 0}}}},
+  ViewPoint->{0.75, -1.5, 1},
+  ViewVertical->{0., 0., 1.}]], "Output",
  CellChangeTimes->{{3.7100976240971413`*^9, 3.7100976522613535`*^9}, 
    3.7100977179291525`*^9, {3.710097771810384*^9, 3.7100978745498714`*^9}, {
    3.710097941425414*^9, 3.710097955061507*^9}, {3.710098008652935*^9, 
-   3.710098025175459*^9}}]
+   3.710098025175459*^9}, {3.7100988432177644`*^9, 3.710098856752589*^9}, {
+   3.710098893851476*^9, 3.710098993755292*^9}, {3.710099031519602*^9, 
+   3.7100990525474973`*^9}, {3.7100990923040557`*^9, 3.7100992051396065`*^9}}]
 }, Open  ]]
 },
 WindowSize->{1280, 685},
@@ -685,8 +707,8 @@ Cell[11945, 288, 16275, 276, 375, "Output"]
 }, Open  ]],
 Cell[28235, 567, 690, 19, 104, "Input"],
 Cell[CellGroupData[{
-Cell[28950, 590, 2070, 52, 164, "Input"],
-Cell[31023, 644, 738, 16, 480, "Output"]
+Cell[28950, 590, 2758, 70, 183, "Input"],
+Cell[31711, 662, 985, 20, 480, "Output"]
 }, Open  ]]
 }
 ]
