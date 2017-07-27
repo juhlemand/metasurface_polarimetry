@@ -76,8 +76,8 @@ for row in polarimeter_raw:
               
     elif row[:13]==['#####END#####']:
         is_measurement=0
-        s_v=np.array([0.01*np.mean(np.array(p),0)[-2], np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
-        s_std=np.array([0.01*np.std(np.array(p),0)[-2], np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
+        s_v=np.array([1./(0.01*np.mean(np.array(p),0)[-2]), np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
+        s_std=np.array([0.01*np.std(np.array(p),0)[-2]/(s_v[0])**2, np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
         poincare=np.array([0.01*np.mean(np.array(p),0)[-2],np.mean(np.array(p),0)[3],np.mean(np.array(p),0)[4]])
         poincare_std=np.array([0.01*np.std(np.array(p),0)[-2],np.std(np.array(p),0)[3],np.std(np.array(p),0)[4]])
         polarimeter_data.add(index, s_v, s_std, poincare, poincare_std)
@@ -126,6 +126,29 @@ metasurface_data=np.array(metasurface_data)
 ###############################################################
 #%% Analysing and plotting comparison
 
+for i in range(len(metasurface_data)):
+    metasurface_data[i]=np.dot(Ainv, metasurface_data[i].transpose())
+
+m_dops=np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
+p_dops=np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2+polarimeter_data.data.transpose()[3]**2)/polarimeter_data.data.transpose()[0]
+
+#error in dop
+# dop = sqrt(S1**2+S2**2+S3**2)/S0
+
+S3=polarimeter_data.data.transpose()[3]
+S2=polarimeter_data.data.transpose()[2]
+S1=polarimeter_data.data.transpose()[1]
+S0=polarimeter_data.data.transpose()[0]
+dS3=polarimeter_data.stdev.transpose()[3]
+dS2=polarimeter_data.stdev.transpose()[2]
+dS1=polarimeter_data.stdev.transpose()[1]
+dS0=polarimeter_data.stdev.transpose()[0]
+p_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
+                   +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +(dS2*S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
+                   +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2)
+
+#metasurface
 S3=metasurface_data.transpose()[3]
 S2=metasurface_data.transpose()[2]
 S1=metasurface_data.transpose()[1]
@@ -140,15 +163,6 @@ cov_S0_S3=cov_m[:,0,3]
 cov_S2_S1=cov_m[:,2,1]
 cov_S3_S1=cov_m[:,3,1]
 cov_S3_S2=cov_m[:,3,2]
-
-for i in range(len(metasurface_data)):
-    metasurface_data[i]=np.dot(Ainv, metasurface_data[i].transpose())
-
-m_dops=np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
-p_dops=polarimeter_data.data.transpose()[0]
-
-#error in dop
-# dop = sqrt(S1**2+S2**2+S3**2)/S0
 #https://www.wolframalpha.com/input/?i=derivative+of+sqrt(x1**2%2Bx2**2%2Bx3**2)%2Fx0
 m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
@@ -161,7 +175,7 @@ m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +2*cov_S3_S1*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
                    +2*cov_S3_S2*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
                    )
-p_dops_err=polarimeter_data.stdev.transpose()[0]
+
 
 plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, yerr=m_dops_err, label='metasurface',fmt='.')
 plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=p_dops_err, label='thorlabs',fmt='.')
@@ -177,6 +191,8 @@ axarr[0][0].plot([0,1],[0,1],alpha=0.3,color='black')
 axarr[0][0].set_title('DOP')
 axarr[0][0].set_xlabel('Polarimeter measurement')
 axarr[0][0].set_ylabel('Metasurface measurement')
+axarr[0][0].set_xlim([-0.1,1.1])
+axarr[0][0].set_ylim([-0.1,1.1])
 
 diffs=(m_dops-p_dops)/(0.5*(m_dops+p_dops))
 axarr[1][0].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
@@ -188,8 +204,8 @@ axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 
 # azimuth psi
 m_2psi=np.arctan(S2/S1)
-#p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
-p_2psi=2*np.pi*polarimeter_data.poincare.transpose()[1]/180
+p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
+#p_2psi=np.pi*polarimeter_data.poincare.transpose()[1]/180
 #stdev error in S2/S1:
 #http://123.physics.ucdavis.edu/week_9_files/taylor_209-226.pdf
 p_2psi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[1]/180
