@@ -46,7 +46,7 @@ def wireframe_plot(x, y, z, subplot, figure):
     ax.set_xlim(-arrow_len/2, arrow_len/2)
     ax.set_ylim(-arrow_len/2, arrow_len/2)
     ax.set_zlim(-arrow_len/2, arrow_len/2)
-    ax.view_init(azim=-55, elev=30)
+    ax.view_init(azim=-155, elev=30)
     return ax
 
 #%% Define a function to put a spherical dot at the end of Stokes vectors
@@ -62,6 +62,8 @@ def sphere(pos, rad, col, ax, res):
 
 #%% Generate data for a normal Poincare Sphere
 
+dot_rad = 0.07
+
 fig = plt.figure()  # open a figure to hold all future plots
 
 # the initial Stokes vector
@@ -71,7 +73,7 @@ arrow = ArrowStyle("Fancy", head_length=1, head_width=0.8)
 
 init_state_vec = Arrow3D([0, initial_state[0]], [0, initial_state[1]], [0, initial_state[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 
-u, v = np.mgrid[0:2*np.pi:15j, 0:np.pi:15j]
+u, v = np.mgrid[0:2*np.pi:19j, 0:np.pi:19j]
 x = np.cos(u)*np.sin(v)
 y = np.sin(u)*np.sin(v)
 z = np.cos(v)
@@ -79,7 +81,7 @@ z = np.cos(v)
 ax1 = wireframe_plot(x, y, z, 231, fig)  # plot the data
 ax1.add_artist(init_state_vec)
 
-sphere(initial_state, 0.05, 'b', ax1, 100)
+sphere(initial_state, dot_rad, 'b', ax1, 100)
 
 #%% Now consider spherical plot of intensities under diattenuation
 tx = np.cos(np.pi/3)
@@ -108,7 +110,7 @@ ax2 = wireframe_plot(trans*x, trans*y, trans*z, 232, fig)
 init_trans = Arrow3D([0, initial_trans[0]], [0, initial_trans[1]], [0, initial_trans[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax2.add_artist(init_trans)
 
-sphere(initial_trans, 0.05, 'b', ax2, 100)
+sphere(initial_trans, dot_rad, 'b', ax2, 100)
 
 #%% Now compute the change in polarization state plot
 
@@ -133,7 +135,7 @@ initial_trans2 = coeff_1*initial_state + coeff_2*direction
 init_trans2 = Arrow3D([0, initial_trans2[0]], [0, initial_trans2[1]], [0, initial_trans2[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax3.add_artist(init_trans2)
 
-sphere(initial_trans2, 0.05, 'b', ax3, 100)
+sphere(initial_trans2, dot_rad, 'b', ax3, 100)
 
 #%% Show a plot which shows polarization change, as well as the change in intensity
 
@@ -148,39 +150,52 @@ init_trans3 = Arrow3D([0, initial_trans3[0]], [0, initial_trans3[1]], [0, initia
 ax4.add_artist(init_trans3)
 
 
-sphere(initial_trans3, 0.05, 'b', ax4, 100)
+sphere(initial_trans3, dot_rad, 'b', ax4, 100)
  
 
-#%% Now simulate the effect of a retarder by rotating the resultant sphere
-
-retardance = 2*np.pi/3
-ret_axis = [1, 0, 0] # retards about the x axis
-ret_axis = ret_axis/np.linalg.norm(ret_axis)
-
-shape_array = np.shape(fin_x)
-rot_x = np.zeros(shape_array)
-rot_y = np.zeros(shape_array)
-rot_z = np.zeros(shape_array)
+#%% Define some functions for rotations
 
 def rotate(axis, angle, vector):
-    vect = np.array([curr_x, curr_y, curr_z])
     first_term = np.dot(axis, vector)*axis
     second_term = np.sin(angle)*np.cross(axis, vector)
     third_term = -np.cos(angle)*np.cross(axis, np.cross(axis, vector))
     return (first_term + second_term + third_term)
 
+def rotate_dataset(axis, angle, data_x, data_y, data_z):
+    if (np.shape(data_x) != np.shape(data_z)) & (np.shape(data_x) != np.shape(data_z)):
+        raise Exception('Input data arrays must be of identical shape.')
+    
+    shape_array = np.shape(data_x)
+    rot_x = np.zeros(shape_array)
+    rot_y = np.zeros(shape_array)
+    rot_z = np.zeros(shape_array)
 
-for i in range(shape_array[0]):
-    for j in range(shape_array[1]):
-      curr_x = fin_x[i, j]
-      curr_y = fin_y[i, j]
-      curr_z = fin_z[i, j]
-      curr_vect = np.array([curr_x, curr_y, curr_z])
-      
-      final_vect = rotate(ret_axis, retardance, curr_vect)
-      rot_x[i,j] = final_vect[0]
-      rot_y[i,j] = final_vect[1]
-      rot_z[i,j] = final_vect[2]
+
+    for i in range(shape_array[0]):
+        for j in range(shape_array[1]):
+          curr_x = data_x[i, j]
+          curr_y = data_y[i, j]
+          curr_z = data_z[i, j]
+          curr_vect = np.array([curr_x, curr_y, curr_z])
+          
+          final_vect = rotate(axis, angle, curr_vect)
+          rot_x[i,j] = final_vect[0]
+          rot_y[i,j] = final_vect[1]
+          rot_z[i,j] = final_vect[2]
+    
+    return np.array([rot_x, rot_y, rot_z])
+
+#%% Rotate the polarization/intensity sphere
+
+retardance = 2*np.pi/3
+ret_axis = [1, 0, 0] # retards about the x axis
+ret_axis = ret_axis/np.linalg.norm(ret_axis)
+
+rotated = rotate_dataset(ret_axis, retardance, fin_x, fin_y, fin_z)
+
+rot_x = rotated[0, :, :]
+rot_y = rotated[1, :, :]
+rot_z = rotated[2, :, :]
 
 ax5 = wireframe_plot(rot_x, rot_y, rot_z, 235, fig)
 
@@ -188,10 +203,26 @@ initial_trans4 = rotate(ret_axis, retardance, initial_trans3)
 init_trans4 = Arrow3D([0, initial_trans4[0]], [0, initial_trans4[1]], [0, initial_trans4[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
 ax5.add_artist(init_trans4)
 
-sphere(initial_trans4, 0.05, 'b', ax5, 100)
+sphere(initial_trans4, dot_rad, 'b', ax5, 100)
 
 # show the new poincare sphere that the sphere lies on, speculative feature
 #sphere([0,0,0], np.linalg.norm(initial_trans4), (0,1,0,0.15), ax5, 300)
+
+#%% Perform rotation on the polarization transformed sphere
+
+rotated2 = rotate_dataset(ret_axis, retardance, new_x, new_y, new_z)
+rot_x2 = rotated2[0, :, :]
+rot_y2 = rotated2[1, :, :]
+rot_z2 = rotated2[2, :, :]
+
+ax6 = wireframe_plot(rot_x2, rot_y2, rot_z2, 236, fig)
+
+initial_trans5 = rotate(ret_axis, retardance, initial_trans2)
+init_trans5 = Arrow3D([0, initial_trans5[0]], [0, initial_trans5[1]], [0, initial_trans5[2]], lw=3, arrowstyle=arrow, color="r", mutation_scale=10)
+
+ax6.add_artist(init_trans5)
+
+sphere(initial_trans5, dot_rad, 'b', ax6, 100)
 
 #%% Prepare the figure for export
 
