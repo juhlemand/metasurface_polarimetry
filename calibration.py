@@ -424,7 +424,7 @@ i_cov=np.array(i_cov)
 sorted_lists = sorted(zip(pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV, pd4_partialV))
 
 # now recover each individual list
-pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV, pd4_partialV =  [[x[i] for x in sorted_lists] for i in range(5)]
+pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV, pd4_partialV = [[x[i] for x in sorted_lists] for i in range(5)]
 
 num_angles = len(pol_angles2)
 pol_angles2 = pol_angles2[:num_angles//2]
@@ -433,7 +433,7 @@ pd1_partialV = np.divide(pd1_partialV[:num_angles//2] + pd1_partialV[num_angles/
 pd2_partialV = np.divide(pd2_partialV[:num_angles//2] + pd2_partialV[num_angles//2:], 2)
 pd3_partialV = np.divide(pd3_partialV[:num_angles//2] + pd3_partialV[num_angles//2:], 2)
 pd4_partialV = np.divide(pd4_partialV[:num_angles//2] + pd4_partialV[num_angles//2:], 2)
-i_cov = 0.25*(i_cov[:num_angles//2]+icov[num_angles//2:])
+i_cov = 0.25*(i_cov[:num_angles//2]+i_cov[num_angles//2:])
 
 partial_dops = np.zeros(len(pol_angles2))
 stokes_temp = np.zeros((len(pol_angles2),4))
