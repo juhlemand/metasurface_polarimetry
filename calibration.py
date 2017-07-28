@@ -10,7 +10,6 @@ import os,re,pickle
 import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
-import matplotlib
 import matplotlib.pyplot as plt
 from itertools import compress
 
@@ -24,31 +23,49 @@ power_meter_error = 0.005 #Error in power meter reading from ambient light, unit
 
 os.chdir('acquisition/data/calibration1')
 
-def covS(i,j, D, I, Dcov, Icov):
-    ''' This function returns the covariance matrix of the result of Ainv*I
+#%% Collect some error analysis functions
+
+
+def covS(i, j, D, I, Dcov, Icov):
+    ''' This function returns the element (i,j) of the covariance matrix of the result of Ainv*I
+        D: the inverse instrument matrix
+        I: the measured intensity vector
+        Dcov: the covariance tensor for D
+        Icov: the covariance matrix for I.
     '''
-    assert len(I)==4
-    assert D.shape==(4,4)
-    assert Dcov.shape==(4,4,4,4)
-    s=0.0
+    assert len(I) == 4  # the measured intensity must have only four elements
+    assert D.shape == (4, 4)  # the inverse instrument matrix is accordingly 4x4
+    # the instrument matrix has is 4x4 so the covariance will be 4x4x4x4
+    # because it is the covariance between two matrix elements, it requires four
+    # inputs to fully specify each of which can range from 1-4     
+    assert Dcov.shape == (4, 4, 4, 4)
+    s = 0.0  # running total for covariance
+    
+    # add the first term from Eq. 22 in Ramos and Collados 
     for a in range(4):
         for b in range(4):            
-            s+=I[a]*I[b]*Dcov[i][a][j][b]
+            s += I[a] * I[b] * Dcov[i][a][j][b]
+    # add the second term
     for k in range(4):
-        for l in range(4):
-            s+=D[i][k]*D[j][l]*Icov[k][l]
+        for p in range(4):
+            s += D[i][k] * D[j][p] * Icov[k][p]
     return s
 
+
 def qwp_err(pd_arr):
-    '''function calculating error from 4th column of instrument matrix
+    '''function returning list of qwp measurement averages for error analysis
 
     pd_arr: 1xn array with photodiode voltages, spanning the entire 360 degrees
     '''
-    avg_90deg=[]
-    assert (len(pd_arr)/4) % 1 < 1e-12
-    offset=int(len(pd_arr)/4)
+    # must be an even # of measurements in the end and we divide total number by two                                     so it must be an even multiple of 4
+    assert (len(pd_arr)/4) % 1 < 1e-12    
+    avg_90deg = np.zeros(len(pd_arr))  # a vector to store the averages    
+    offset = int(len(pd_arr)/4)  # number of steps to +90 deg measurement
+    
     for i in range(len(pd_arr)):
-        avg_90deg.append(0.5*(pd_arr[i]+pd_arr[(i+offset)%len(pd_arr)]))
+        # % is so that measurements wrap around appropriately
+        avg_90deg[i] = 0.5*(pd_arr[i]+pd_arr[(i+offset) % len(pd_arr)])
+    
     return avg_90deg
     
 def sorted_nicely( l ):
@@ -81,6 +98,7 @@ variances = []
 
 os.chdir(linear_pol_extension)  # go get the linear pol data
 
+# iterate through the files in the directory which have been 'nicely' sorted
 for file in sorted_nicely(os.listdir()):
     if fnmatch.fnmatch(file, '*.txt'):
         params = file.split('_')
@@ -90,7 +108,7 @@ for file in sorted_nicely(os.listdir()):
             inc_powers.append(power)
             angles.append(angle)
             # make file into array
-            my_data = np.genfromtxt(file, delimiter=',')
+            my_data = np.genfromtxt(file, delimiter=',')            
             pd1_voltage.append(np.mean(my_data[:, 0]))
             pd2_voltage.append(np.mean(my_data[:, 1]))
             pd3_voltage.append(np.mean(my_data[:, 2]))
@@ -110,9 +128,8 @@ sorted_lists = sorted(zip(angles, inc_powers, pd1_voltage, pd2_voltage, pd3_volt
 angles, inc_powers, pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage =  [[x[i] for x in sorted_lists] for i in range(6)]
         
 # begin plotting of obtained data
-        
 num_angles = len(angles) # number of angular test points
-angles = angles[:(num_angles)//2] # cut out part of array from 0 to 170 deg
+angles = angles[:(num_angles)//2] # cut out part of array from 180 to 360 deg
 
 # split the photodiode powers into two separate lists
 
@@ -138,25 +155,35 @@ pd4_voltage_err2 = np.array(pd4_voltage_err[(num_angles)//2:])
 inc_powers1 = np.array(inc_powers[:(num_angles)//2])
 inc_powers2 = np.array(inc_powers[(num_angles)//2:])
 
-#adding error from power meter, normalizing with incident power, using partial derivatives
-pd1_voltage_err1=np.sqrt((pd1_voltage_err1/inc_powers1)**2+(power_meter_error*pd1_voltage1/(inc_powers1*inc_powers1))**2)
-pd2_voltage_err1=np.sqrt((pd2_voltage_err1/inc_powers1)**2+(power_meter_error*pd2_voltage1/(inc_powers1*inc_powers1))**2)
-pd3_voltage_err1=np.sqrt((pd3_voltage_err1/inc_powers1)**2+(power_meter_error*pd3_voltage1/(inc_powers1*inc_powers1))**2)
-pd4_voltage_err1=np.sqrt((pd4_voltage_err1/inc_powers1)**2+(power_meter_error*pd4_voltage1/(inc_powers1*inc_powers1))**2)
-pd1_voltage_err2=np.sqrt((pd1_voltage_err2/inc_powers1)**2+(power_meter_error*pd1_voltage2/(inc_powers1*inc_powers1))**2)
-pd2_voltage_err2=np.sqrt((pd2_voltage_err2/inc_powers1)**2+(power_meter_error*pd2_voltage2/(inc_powers1*inc_powers1))**2)
-pd3_voltage_err2=np.sqrt((pd3_voltage_err2/inc_powers1)**2+(power_meter_error*pd3_voltage2/(inc_powers1*inc_powers1))**2)
-pd4_voltage_err2=np.sqrt((pd4_voltage_err2/inc_powers1)**2+(power_meter_error*pd4_voltage2/(inc_powers1*inc_powers1))**2)
-
 # normalize each by the power incident during measurement
-pd1_voltage1 = np.divide(pd1_voltage1, inc_powers1)
-pd2_voltage1 = np.divide(pd2_voltage1, inc_powers1)
-pd3_voltage1 = np.divide(pd3_voltage1, inc_powers1)
-pd4_voltage1 = np.divide(pd4_voltage1, inc_powers1)
-pd1_voltage2 = np.divide(pd1_voltage2, inc_powers2)
-pd2_voltage2 = np.divide(pd2_voltage2, inc_powers2)
-pd3_voltage2 = np.divide(pd3_voltage2, inc_powers2)
-pd4_voltage2 = np.divide(pd4_voltage2, inc_powers2)
+pd1_voltage1 = pd1_voltage1/inc_powers1
+pd2_voltage1 = pd2_voltage1/inc_powers1
+pd3_voltage1 = pd3_voltage1/inc_powers1
+pd4_voltage1 = pd4_voltage1/inc_powers1
+pd1_voltage2 = pd1_voltage2/inc_powers2
+pd2_voltage2 = pd2_voltage2/inc_powers2
+pd3_voltage2 = pd3_voltage2/inc_powers2
+pd4_voltage2 = pd4_voltage2/inc_powers2
+
+# adding error from power meter, propagating error through normalization
+pd1_voltage_err1 = pd1_voltage1 * np.sqrt((pd1_voltage_err1/pd1_voltage1)**2 + (power_meter_error/inc_powers1)**2)
+pd2_voltage_err1 = pd2_voltage1 * np.sqrt((pd2_voltage_err1/pd2_voltage1)**2 + (power_meter_error/inc_powers1)**2)
+pd3_voltage_err1 = pd3_voltage1 * np.sqrt((pd3_voltage_err1/pd3_voltage1)**2 + (power_meter_error/inc_powers1)**2)
+pd4_voltage_err1 = pd1_voltage1 * np.sqrt((pd4_voltage_err1/pd4_voltage1)**2 + (power_meter_error/inc_powers1)**2)
+pd1_voltage_err2 = pd1_voltage2 * np.sqrt((pd1_voltage_err2/pd1_voltage2)**2 + (power_meter_error/inc_powers2)**2)
+pd2_voltage_err2 = pd2_voltage2 * np.sqrt((pd2_voltage_err2/pd2_voltage2)**2 + (power_meter_error/inc_powers2)**2)
+pd3_voltage_err2 = pd3_voltage2 * np.sqrt((pd3_voltage_err2/pd3_voltage2)**2 + (power_meter_error/inc_powers2)**2)
+pd4_voltage_err2 = pd4_voltage2 * np.sqrt((pd4_voltage_err2/pd4_voltage2)**2 + (power_meter_error/inc_powers2)**2)
+
+
+#pd1_voltage_err1=np.sqrt((pd1_voltage_err1/inc_powers1)**2+(power_meter_error*pd1_voltage1/(inc_powers1*inc_powers1))**2)
+#pd2_voltage_err1=np.sqrt((pd2_voltage_err1/inc_powers1)**2+(power_meter_error*pd2_voltage1/(inc_powers1*inc_powers1))**2)
+#pd3_voltage_err1=np.sqrt((pd3_voltage_err1/inc_powers1)**2+(power_meter_error*pd3_voltage1/(inc_powers1*inc_powers1))**2)
+#pd4_voltage_err1=np.sqrt((pd4_voltage_err1/inc_powers1)**2+(power_meter_error*pd4_voltage1/(inc_powers1*inc_powers1))**2)
+#pd1_voltage_err2=np.sqrt((pd1_voltage_err2/inc_powers1)**2+(power_meter_error*pd1_voltage2/(inc_powers1*inc_powers1))**2)
+#pd2_voltage_err2=np.sqrt((pd2_voltage_err2/inc_powers1)**2+(power_meter_error*pd2_voltage2/(inc_powers1*inc_powers1))**2)
+#pd3_voltage_err2=np.sqrt((pd3_voltage_err2/inc_powers1)**2+(power_meter_error*pd3_voltage2/(inc_powers1*inc_powers1))**2)
+#pd4_voltage_err2=np.sqrt((pd4_voltage_err2/inc_powers1)**2+(power_meter_error*pd4_voltage2/(inc_powers1*inc_powers1))**2)
 
 # now average the two
 pd1_voltage = (pd1_voltage1+pd1_voltage2)/2
