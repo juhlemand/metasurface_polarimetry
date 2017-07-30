@@ -324,19 +324,21 @@ for i in range(2):
 
   # average all the values in the list    
     if i == 0:
+        # compute the mean value measured on each photodiode
         pd1R = np.mean(pd1_voltageQR)
         pd2R = np.mean(pd2_voltageQR)
         pd3R = np.mean(pd3_voltageQR)
         pd4R = np.mean(pd4_voltageQR)
-        #taking the measurement error as the difference between measurements 90 degrees apart
+        # measurement error is standard deviation of sets of 90 deg apart measurements
         pd1R_err = np.std(qwp_err(pd1_voltageQR))
         pd2R_err = np.std(qwp_err(pd2_voltageQR))
         pd3R_err = np.std(qwp_err(pd3_voltageQR))
         pd4R_err = np.std(qwp_err(pd4_voltageQR))
-        plt.errorbar(pol_anglesR,pd1_voltageQR,yerr=pd1_voltage_err, fmt=' ', color='red')
-        plt.errorbar(pol_anglesR,pd2_voltageQR,yerr=pd2_voltage_err, fmt=' ', color='blue')
-        plt.errorbar(pol_anglesR,pd3_voltageQR,yerr=pd3_voltage_err, fmt=' ', color='green')
-        plt.errorbar(pol_anglesR,pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
+        
+        plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red')
+        plt.errorbar(pol_anglesR,pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue')
+        plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green')
+        plt.errorbar(pol_anglesR, pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
         #print(len(pd1_voltageQR))
     elif i == 1:
         pd1L = np.mean(pd1_voltageQR)
@@ -347,10 +349,10 @@ for i in range(2):
         pd2L_err = np.std(qwp_err(pd2_voltageQR))
         pd3L_err = np.std(qwp_err(pd3_voltageQR))
         pd4L_err = np.std(qwp_err(pd4_voltageQR))
-        plt.errorbar(pol_anglesR,pd1_voltageQR,yerr=pd1_voltage_err, fmt=' ', color='red',alpha=0.5)
-        plt.errorbar(pol_anglesR,pd2_voltageQR,yerr=pd2_voltage_err, fmt=' ', color='blue',alpha=0.5)
-        plt.errorbar(pol_anglesR,pd3_voltageQR,yerr=pd3_voltage_err, fmt=' ', color='green',alpha=0.5)
-        plt.errorbar(pol_anglesR,pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange',alpha=0.5)
+        plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', alpha=0.5)
+        plt.errorbar(pol_anglesR, pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', alpha=0.5)
+        plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', alpha=0.5)
+        plt.errorbar(pol_anglesR, pd4_voltageQR, yerr=pd4_voltage_err, fmt=' ', color='orange', alpha=0.5)
         #print(len(pd1_voltageQR))
 plt.show()
 
@@ -362,23 +364,23 @@ A3_err=np.array([np.sqrt(pd1R_err**2+pd1L_err**2)/2, np.sqrt(pd2R_err**2+pd2L_er
 A3 = np.matrix.transpose(np.array([A3]))
 A3_err = np.matrix.transpose(np.array([A3_err]))
 
-A02 = np.array(fit_parameters) # data from linear calibration
+A02 = np.array(fit_parameters)  s# data from linear calibration
 A02_err = np.array(fit_errs)
 
-A = np.hstack((A02, A3)) # This is the instrument matrix!
+A = np.hstack((A02, A3))  # This is the instrument matrix!
 A_err = np.hstack((A02_err, A3_err))
 
-print('Instrument matrix A:')
+print('Instrument matrix A: ')
 print(A)
 print('')
 
-A_cond=np.linalg.cond(A, p=2)#condition number
-print('Condition number of A:')
+A_cond=np.linalg.cond(A, p = 2)  # condition number with the standard 2-norm
+print('Condition number of A: ')
 print(A_cond)
 print('')
 
-Ainv = np.linalg.inv(A) # this is the inverse of the instrument matrix
-print('Inverted matrix Ainv:')
+Ainv = np.linalg.inv(A)  # this is the inverse of the instrument matrix
+print('Inverted matrix Ainv: ')
 print(Ainv)
 print('')
 np.savetxt('..\\Ainv.txt', Ainv)
