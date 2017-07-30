@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 directory='acquisition/data/calibration1/comparison1.2' #data location folder
-polarimeter_file='polarimeter.txt' #polarimeter data file
+polarimeter_file = 'polarimeter.txt' #polarimeter data file
 os.chdir(directory)
 N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
@@ -97,45 +97,45 @@ for row in polarimeter_raw:
 
 ###############################################################
 #%% Parsing metasurface data
-fnames=os.listdir()
+fnames = os.listdir()
 fnames.remove(polarimeter_file)
-fnames=sorted(fnames, key=lambda item: (int(item.partition('_')[0])
+fnames = sorted(fnames, key=lambda item: (int(item.partition('_')[0])
                                if item[0].isdigit() else float('inf'), item))
 
-if len(fnames)!=polarimeter_data.N_measurements:
+if len(fnames) != polarimeter_data.N_measurements:
     raise ValueError
 
-metasurface_data, cov_m,=[],[]
-cov_m=[]
+metasurface_data, cov_m,= [], []
+cov_m = []
 for n in range(len(fnames)):
-    temp=[]
+    temp = []
     with open(fnames[n], 'r') as csvfile:
-        reader=csv.reader(csvfile, delimiter=',')
+        reader = csv.reader(csvfile, delimiter=',')
         for row in reader:
             temp.append([])
             for el in row:
                 temp[-1].append(float(el))
-    temp=np.array(temp)
+    temp = np.array(temp)
     metasurface_data.append(np.average(temp,0))
-    I=np.average(temp,0)
+    I = np.average(temp, 0)
     # assume covariance matrix is diagonal
-    Icov = np.diag(np.std(temp,0)**2)
+    Icov = np.diag(np.std(temp, 0)**2)
     #covariance of stokes vector
     cov_stokes = np.zeros((4,4))
     for i in range(4):
         for j in range(4):
-            cov_stokes[i][j]=covS(i,j, Ainv, I, Ainv_cov, Icov)
+            cov_stokes[i][j]=covS(i, j, Ainv, I, Ainv_cov, Icov)
     #taking the diagonal as standard error of stokes vector
     cov_m.append(cov_stokes)
         
-cov_m=np.array(cov_m)
-metasurface_data=np.array(metasurface_data)
+cov_m = np.array(cov_m)  # cov_m is a list of covariance matrices
+metasurface_data = np.array(metasurface_data)
 
 ###############################################################
-#%% Analysing and plotting comparison
+#%% Analyzing and plotting comparison
 
 for i in range(len(metasurface_data)):
-    metasurface_data[i]=np.dot(Ainv, metasurface_data[i].transpose())
+    metasurface_data[i] = np.dot(Ainv, metasurface_data[i].transpose())
 
 m_dops=np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
 p_dops=np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2+polarimeter_data.data.transpose()[3]**2)/polarimeter_data.data.transpose()[0]
@@ -143,34 +143,34 @@ p_dops=np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.tra
 #error in dop
 # dop = sqrt(S1**2+S2**2+S3**2)/S0
 
-S3=polarimeter_data.data.transpose()[3]
-S2=polarimeter_data.data.transpose()[2]
-S1=polarimeter_data.data.transpose()[1]
-S0=polarimeter_data.data.transpose()[0]
-dS3=polarimeter_data.stdev.transpose()[3]
-dS2=polarimeter_data.stdev.transpose()[2]
-dS1=polarimeter_data.stdev.transpose()[1]
-dS0=polarimeter_data.stdev.transpose()[0]
-p_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
+S3 = polarimeter_data.data.transpose()[3]
+S2 = polarimeter_data.data.transpose()[2]
+S1 = polarimeter_data.data.transpose()[1]
+S0 = polarimeter_data.data.transpose()[0]
+dS3 = polarimeter_data.stdev.transpose()[3]
+dS2 = polarimeter_data.stdev.transpose()[2]
+dS1 = polarimeter_data.stdev.transpose()[1]
+dS0 = polarimeter_data.stdev.transpose()[0]
+p_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
                    +(dS2*S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
                    +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2)
 
 #metasurface
-S3=metasurface_data.transpose()[3]
-S2=metasurface_data.transpose()[2]
-S1=metasurface_data.transpose()[1]
-S0=metasurface_data.transpose()[0]
-dS3=np.sqrt(cov_m[:,3,3])
-dS2=np.sqrt(cov_m[:,2,2])
-dS1=np.sqrt(cov_m[:,1,1])
-dS0=np.sqrt(cov_m[:,0,0])
-cov_S0_S1=cov_m[:,0,1]
-cov_S0_S2=cov_m[:,0,2]
-cov_S0_S3=cov_m[:,0,3]
-cov_S2_S1=cov_m[:,2,1]
-cov_S3_S1=cov_m[:,3,1]
-cov_S3_S2=cov_m[:,3,2]
+S3 = metasurface_data.transpose()[3]
+S2 = metasurface_data.transpose()[2]
+S1 = metasurface_data.transpose()[1]
+S0 = metasurface_data.transpose()[0]
+dS3 = np.sqrt(cov_m[:,3,3])
+dS2 = np.sqrt(cov_m[:,2,2])
+dS1 = np.sqrt(cov_m[:,1,1])
+dS0 = np.sqrt(cov_m[:,0,0])
+cov_S0_S1 = cov_m[:,0,1]
+cov_S0_S2 = cov_m[:,0,2]
+cov_S0_S3 = cov_m[:,0,3]
+cov_S2_S1 = cov_m[:,2,1]
+cov_S3_S1 = cov_m[:,3,1]
+cov_S3_S2 = cov_m[:,3,2]
 #https://www.wolframalpha.com/input/?i=derivative+of+sqrt(x1**2%2Bx2**2%2Bx3**2)%2Fx0
 m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
@@ -202,8 +202,8 @@ axarr[0][0].set_ylabel('Metasurface measurement')
 axarr[0][0].set_xlim([-0.1,1.1])
 axarr[0][0].set_ylim([-0.1,1.1])
 
-diffs=(m_dops-p_dops)/(0.5*(m_dops+p_dops))
-axarr[1][0].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+diffs=(m_dops-p_dops)/(0.5*(m_dops+p_dops))  # relative dop error
+axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
 
