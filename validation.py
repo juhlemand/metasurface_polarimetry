@@ -22,7 +22,11 @@ Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
 #https://www.ruhr-uni-bochum.de/ika/forschung/forschungsbereich_kolossa/Daten/Buchkapitel_Uncertainty.pdf
 
 def covS(i,j, D, I, Dcov, Icov):
-    ''' This function returns the covariance matrix of the result of Ainv*I
+    ''' This function returns the element (i,j) of the covariance matrix of the result of Ainv*I
+        D: the inverse instrument matrix
+        I: the measured intensity vector
+        Dcov: the covariance tensor for D
+        Icov: the covariance matrix for I.
     '''
     assert len(I)==4
     assert D.shape==(4,4)
@@ -30,58 +34,62 @@ def covS(i,j, D, I, Dcov, Icov):
     s=0.0
     for a in range(4):
         for b in range(4):            
-            s+=I[a]*I[b]*Dcov[i][a][j][b]
+            s += I[a]*I[b]*Dcov[i][a][j][b]
     for k in range(4):
         for l in range(4):
-            s+=D[i][k]*D[j][l]*Icov[k][l]
+            s += D[i][k]*D[j][l]*Icov[k][l]
     return s
 
 class polarimeter:
     def __init__(self, N_measurements):
-        self.N_measurements=N_measurements
-        self.data=np.zeros((N_measurements,4))
-        self.stdev=np.zeros((N_measurements,4))
-        self.poincare=np.zeros((N_measurements,3))
-        self.poincare_std=np.zeros((N_measurements,3))
+        self.N_measurements = N_measurements
+        self.data = np.zeros((N_measurements,4))
+        self.stdev = np.zeros((N_measurements,4))
+        self.poincare = np.zeros((N_measurements,3))
+        self.poincare_std = np.zeros((N_measurements,3))
         
-    def add(self, index, stokes_vector, stokes_stdev, poincare,poincare_std):
-        assert stokes_vector.shape==(4,)
-        assert stokes_stdev.shape==(4,)
-        self.data[index]=stokes_vector
-        self.stdev[index]=stokes_stdev
-        self.poincare[index]=poincare
-        self.poincare_std[index]=poincare_std
+    def add(self, index, stokes_vector, stokes_stdev, poincare, poincare_std):
+        assert stokes_vector.shape ==(4,)
+        assert stokes_stdev.shape ==(4,)
+        self.data[index] = stokes_vector
+        self.stdev[index] = stokes_stdev
+        self.poincare[index] = poincare
+        self.poincare_std[index] = poincare_std
 
     def __str__(self):
         print(self.data)
         return str(self.stdev)
         
-polarimeter_raw=[]
+polarimeter_raw = []
 with open(polarimeter_file, 'r') as csvfile:
-    reader = csv.reader(csvfile,delimiter=',')
+    reader = csv.reader(csvfile, delimiter = ',')
     for row in reader:
         #print(', '.join(row))
         polarimeter_raw.append(row)
-polarimeter_raw=np.array(polarimeter_raw)
+polarimeter_raw = np.array(polarimeter_raw)
 
 #####################################################
 #%% Parsing polarimeter file
-polarimeter_data=polarimeter(N_measurements)
-p=[]
-is_measurement=0
-index=0
+polarimeter_data = polarimeter(N_measurements)
+p = []
+is_measurement = 0
+index = 0
+
 for row in polarimeter_raw:
-    if row[:15]==['#####START#####']:
-        is_measurement=1
-              
-    elif row[:13]==['#####END#####']:
-        is_measurement=0
+    # measurements begin with this start flag in text file
+    if row[:15] == ['#####START#####']:
+        is_measurement = 1
+    # measurements end with this end flag in the text file
+    elif row[:13] == ['#####END#####']:
+        is_measurement = 0
+        
+        # these are tasks to carry out once all the data in a given file has been extracted
         s_v=np.array([1./(0.01*np.mean(np.array(p),0)[-2]), np.mean(np.array(p),0)[0],np.mean(np.array(p),0)[1],np.mean(np.array(p),0)[2]])
         s_std=np.array([0.01*np.std(np.array(p),0)[-2]/(s_v[0])**2, np.std(np.array(p),0)[0],np.std(np.array(p),0)[1],np.std(np.array(p),0)[2]])
         poincare=np.array([0.01*np.mean(np.array(p),0)[-2],np.mean(np.array(p),0)[3],np.mean(np.array(p),0)[4]])
         poincare_std=np.array([0.01*np.std(np.array(p),0)[-2],np.std(np.array(p),0)[3],np.std(np.array(p),0)[4]])
         polarimeter_data.add(index, s_v, s_std, poincare, poincare_std)
-        index+=1
+        index += 1
         p=[]
         
     elif is_measurement:
