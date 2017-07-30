@@ -185,7 +185,7 @@ pd4_voltage_err2 = pd4_voltage2 * np.sqrt((pd4_voltage_err2/pd4_voltage2)**2 + (
 #pd3_voltage_err2=np.sqrt((pd3_voltage_err2/inc_powers1)**2+(power_meter_error*pd3_voltage2/(inc_powers1*inc_powers1))**2)
 #pd4_voltage_err2=np.sqrt((pd4_voltage_err2/inc_powers1)**2+(power_meter_error*pd4_voltage2/(inc_powers1*inc_powers1))**2)
 
-# now average the two
+# now average the two and propagate the error through the averaging
 pd1_voltage = (pd1_voltage1+pd1_voltage2)/2
 pd2_voltage = (pd2_voltage1+pd2_voltage2)/2
 pd3_voltage = (pd3_voltage1+pd3_voltage2)/2
@@ -198,6 +198,7 @@ pd4_voltage_err = np.sqrt((pd4_voltage_err1**2+pd4_voltage_err2**2))/2
 # construct a larger matrix to hold the voltages
 pd_voltages = np.vstack((pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage))
 pd_errs = np.vstack((pd1_voltage_err,pd2_voltage_err,pd3_voltage_err,pd4_voltage_err))
+# convert these lists to proper numpy arrays
 angles = np.array(angles)
 inc_powers = np.array(inc_powers)
 
@@ -206,7 +207,7 @@ def fit_function(theta, a, b, c):
     return a + b*np.cos(2*theta*np.pi/180) + c*np.sin(2*theta*np.pi/180)
 
 plt.figure
-plt.yticks([]) # y units are arbitrary
+plt.yticks([]) # y units are arbitrary, so no ticks
 
 thetas = np.linspace(0, 180, 1000)
 fit_errs=[]
@@ -214,7 +215,7 @@ for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
     err = pd_errs[i, :]
-    popt, variance = curve_fit(fit_function, x, y)
+    popt, variance = curve_fit(fit_function, x, y)  # fit a curve
     
     #standard error, assuming that the fit parameters are uncorrelated between each other
     standard_err = np.sqrt(np.diag(variance))
