@@ -10,9 +10,9 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="2452.0713mm"
-   height="1548.5204mm"
-   viewBox="0 0 8688.4416 5486.8832"
+   width="1700mm"
+   height="800mm"
+   viewBox="0 0 6023.6222 2834.6457"
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
@@ -67,8 +67,8 @@
        sodipodi:type="inkscape:persp3d"
        inkscape:vp_x="0 : 2743.4416 : 1"
        inkscape:vp_y="0 : 1000 : 0"
-       inkscape:vp_z="8589.4113 : 2743.4416 : 1"
-       inkscape:persp3d-origin="4294.7057 : 1828.9611 : 1"
+       inkscape:vp_z="8589.4112 : 2743.4416 : 1"
+       inkscape:persp3d-origin="4294.7057 : 1828.9612 : 1"
        id="perspective17948" />
     <marker
        inkscape:stockid="Arrow2Lend"
@@ -1205,6 +1205,43 @@
          d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
          transform="matrix(-1.1,0,0,-1.1,-1.1,0)" />
     </marker>
+    <filter
+       style="color-interpolation-filters:sRGB;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000"
+       inkscape:label="Drop Shadow"
+       id="filter13170">
+      <feFlood
+         flood-opacity="0.498039"
+         flood-color="rgb(0,0,0)"
+         result="flood"
+         id="feFlood13172"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite13174"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="3"
+         result="blur"
+         id="feGaussianBlur13176"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+      <feOffset
+         dx="6"
+         dy="6"
+         result="offset"
+         id="feOffset13178"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite13180"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -1213,11 +1250,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.088388348"
-     inkscape:cx="5353.3087"
-     inkscape:cy="2479.4473"
+     inkscape:zoom="0.125"
+     inkscape:cx="3086.9287"
+     inkscape:cy="1677.2372"
      inkscape:document-units="px"
-     inkscape:current-layer="surface28"
+     inkscape:current-layer="g5333"
      showgrid="false"
      inkscape:window-width="1280"
      inkscape:window-height="705"
@@ -1227,7 +1264,8 @@
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
-     fit-margin-bottom="0" />
+     fit-margin-bottom="0"
+     height="1000mm" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -1244,11 +1282,11 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(5535.6358,1826.371)"
+     transform="translate(5535.6358,-825.86659)"
      style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
     <g
        id="surface28"
-       transform="matrix(1.25,0,0,1.25,-621.83513,-389.38549)"
+       transform="matrix(1.25,0,0,1.25,-3367.8351,1202.6145)"
        style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
       <image
          y="-215.40158"
@@ -5364,7 +5402,7 @@
                id="g5333">
               <g
                  id="g18316"
-                 transform="translate(-27.042325,-1.7446666)"
+                 transform="matrix(0.7601909,0,0,0.7601909,420.04872,-11.255349)"
                  style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
                 <path
                    d="m 1842.1262,-44.582589 a 10.606602,10.606602 0 0 1 -11.5875,9.188983 10.606602,10.606602 0 0 1 -9.5094,-11.326126 10.606602,10.606602 0 0 1 11.0558,-9.822319 10.606602,10.606602 0 0 1 10.1276,10.776879"
