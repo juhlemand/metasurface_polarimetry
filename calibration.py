@@ -211,6 +211,7 @@ plt.yticks([]) # y units are arbitrary, so no ticks
 
 thetas = np.linspace(0, 180, 1000)
 fit_errs=[]
+# for photodiodes 1-4, fit data and store fitting parameters
 for i in range(0,4):
     x = angles
     y = pd_voltages[i, :]
@@ -253,7 +254,7 @@ for i in range(2):
     pd4_voltage_err = []
     
     os.chdir('..')  # move up a level
-    if i == 1:
+    if i == 1:  # determine which directory to cd into
         file = qwp_R
     else:
         file = qwp_L
@@ -296,17 +297,30 @@ for i in range(2):
     pd3_voltage_err=np.array(pd3_voltage_err)
     pd4_voltage_err=np.array(pd4_voltage_err)
     
+    # convert arrays to numpy format
+    pd1_voltageQR = np.array(pd1_voltageQR)
+    pd2_voltageQR = np.array(pd2_voltageQR)
+    pd3_voltageQR = np.array(pd3_voltageQR)
+    pd4_voltageQR = np.array(pd4_voltageQR)
+    qwp_power_incR = np.array(qwp_power_incR)
+    
     # normalize the photodiode voltages
-    pd1_voltageQR = np.divide(np.array(pd1_voltageQR), qwp_power_incR)
-    pd2_voltageQR = np.divide(np.array(pd2_voltageQR), qwp_power_incR)
-    pd3_voltageQR = np.divide(np.array(pd3_voltageQR), qwp_power_incR)
-    pd4_voltageQR = np.divide(np.array(pd4_voltageQR), qwp_power_incR)
+    pd1_voltageQR = pd1_voltageQR/qwp_power_incR
+    pd2_voltageQR = pd2_voltageQR/qwp_power_incR
+    pd3_voltageQR = pd3_voltageQR/qwp_power_incR
+    pd4_voltageQR = pd4_voltageQR/qwp_power_incR
+    
+    # add in voltage from the power meter
+    pd1_voltage_err = pd1_voltageQR * np.sqrt((pd1_voltage_err/pd1_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
+    pd2_voltage_err = pd2_voltageQR * np.sqrt((pd2_voltage_err/pd2_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
+    pd3_voltage_err = pd3_voltageQR * np.sqrt((pd3_voltage_err/pd3_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
+    pd4_voltage_err = pd4_voltageQR * np.sqrt((pd4_voltage_err/pd4_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
     
     # adding in the error from power meter
-    pd1_voltage_err=np.sqrt((pd1_voltage_err/qwp_power_incR)**2+(power_meter_error*pd1_voltage_err/(qwp_power_incR**2))**2)
-    pd2_voltage_err=np.sqrt((pd2_voltage_err/qwp_power_incR)**2+(power_meter_error*pd2_voltage_err/(qwp_power_incR**2))**2)
-    pd3_voltage_err=np.sqrt((pd3_voltage_err/qwp_power_incR)**2+(power_meter_error*pd3_voltage_err/(qwp_power_incR**2))**2)
-    pd4_voltage_err=np.sqrt((pd4_voltage_err/qwp_power_incR)**2+(power_meter_error*pd4_voltage_err/(qwp_power_incR**2))**2)
+#    pd1_voltage_err=np.sqrt((pd1_voltage_err/qwp_power_incR)**2+(power_meter_error*pd1_voltage_err/(qwp_power_incR**2))**2)
+#    pd2_voltage_err=np.sqrt((pd2_voltage_err/qwp_power_incR)**2+(power_meter_error*pd2_voltage_err/(qwp_power_incR**2))**2)
+#    pd3_voltage_err=np.sqrt((pd3_voltage_err/qwp_power_incR)**2+(power_meter_error*pd3_voltage_err/(qwp_power_incR**2))**2)
+#    pd4_voltage_err=np.sqrt((pd4_voltage_err/qwp_power_incR)**2+(power_meter_error*pd4_voltage_err/(qwp_power_incR**2))**2)
 
   # average all the values in the list    
     if i == 0:
