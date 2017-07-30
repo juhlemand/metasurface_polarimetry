@@ -21,7 +21,7 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.005 #Error in power meter reading from ambient light, unit in mW
 
-os.chdir('acquisition/data/calibration1')
+os.chdir('acquisition\data\calibration1')
 
 #%% Collect some error analysis functions
 
@@ -364,7 +364,7 @@ A3_err=np.array([np.sqrt(pd1R_err**2+pd1L_err**2)/2, np.sqrt(pd2R_err**2+pd2L_er
 A3 = np.matrix.transpose(np.array([A3]))
 A3_err = np.matrix.transpose(np.array([A3_err]))
 
-A02 = np.array(fit_parameters)  s# data from linear calibration
+A02 = np.array(fit_parameters)  # data from linear calibration
 A02_err = np.array(fit_errs)
 
 A = np.hstack((A02, A3))  # This is the instrument matrix!
@@ -383,6 +383,8 @@ Ainv = np.linalg.inv(A)  # this is the inverse of the instrument matrix
 print('Inverted matrix Ainv: ')
 print(Ainv)
 print('')
+
+# save the instrument matrix as a text file for use in other scripts
 np.savetxt('..\\Ainv.txt', Ainv)
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf, http://sci-hub.io/10.1364/ao.47.002541)
@@ -391,24 +393,26 @@ np.savetxt('..\\Ainv.txt', Ainv)
 #Assuming elements in A have no covariance between each other
 Ainv_cov=np.zeros((4,4,4,4))
 
+# outer four sums to compute the whole covariance array
 for aa in range(4):
     for bb in range(4):
         for a in range(4):
             for b in range(4):
                 # sum over i and j
                 s=0.
+                # inner two summations just for one element
                 for i in range(4):
                     for j in range(4):
                         s += Ainv[aa][i]*Ainv[j][bb]*Ainv[a][i]*Ainv[j][b]*(A_err[i][j])**2
                 Ainv_cov[aa][bb][a][b] = s
 
-print('Covariance in Ainv:')
+print('Covariance in Ainv: ')
 print(Ainv_cov)
 #np.savetxt('..\\Ainv_cov.txt', Ainv_cov)
+# save the covariance matrix to a text-like file?
 pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
 
-# now let's define a function to reonstruct polarization state
-# measurement is a four vector of measured intensities
+#%% Define functions to reconstruct Stokes vector and compute DOP
 def determine_stokes(measurement):
     try:
         return np.dot(Ainv, measurement)
@@ -418,7 +422,8 @@ def determine_stokes(measurement):
 def determine_dop(pol_state):
     return np.sqrt(pol_state[1]**2+pol_state[2]**2+pol_state[3]**2)/pol_state[0]
         
-#%% Now check to see that results of instrument matrix make sense
+#%% Now check to see that results of instrument matrix make sense by performing 
+##  consistency check on linear states
 
 dops = []
 stokes_list = []
@@ -445,7 +450,7 @@ pd4_partialV = []
 i_cov=[]
 
 os.chdir('..')  # move up a level
-os.chdir(partial_pol)  # go get the qwp+pol data
+os.chdir(partial_pol)  # cd into directory with partial pol data
 for file in os.listdir():
     if fnmatch.fnmatch(file, '*.txt'):
         params = file.split('_')
@@ -459,10 +464,11 @@ for file in os.listdir():
             pd2_partialV.append(np.mean(data[:, 1]))
             pd3_partialV.append(np.mean(data[:, 2]))
             pd4_partialV.append(np.mean(data[:, 3]))
-            i_cov.append(np.diag(np.std(data,0)**2))
+            i_cov.append(np.diag(np.std(data, 0)**2))  # need to check with Ruoping about this
         except ValueError:  # don't do anything with invalid file name
             pass
-        
+
+# make intensity uncertainties a numpy array        
 i_cov=np.array(i_cov)        
 # rearrange all data as sorted by pol_angles2
 sorted_lists = sorted(zip(pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV, pd4_partialV))
@@ -477,37 +483,39 @@ pd1_partialV = np.divide(pd1_partialV[:num_angles//2] + pd1_partialV[num_angles/
 pd2_partialV = np.divide(pd2_partialV[:num_angles//2] + pd2_partialV[num_angles//2:], 2)
 pd3_partialV = np.divide(pd3_partialV[:num_angles//2] + pd3_partialV[num_angles//2:], 2)
 pd4_partialV = np.divide(pd4_partialV[:num_angles//2] + pd4_partialV[num_angles//2:], 2)
-i_cov = 0.25*(i_cov[:num_angles//2]+i_cov[num_angles//2:])
+i_cov = 0.25*(i_cov[:num_angles//2]+i_cov[num_angles//2:])  # not appropriate error propagation
 
 partial_dops = np.zeros(len(pol_angles2))
-stokes_temp = np.zeros((len(pol_angles2),4))
+stokes_temp = np.zeros((len(pol_angles2), 4))
 partial_dops_err =  np.zeros(len(pol_angles2))
 cov_stokes = []
 for i in range(len(pol_angles2)):
     i_measured = np.array([pd1_partialV[i], pd2_partialV[i], pd3_partialV[i], pd4_partialV[i]])
     stokes_temp[i] = np.dot(Ainv, i_measured)
-    partial_dops[i] = np.sqrt(stokes_temp[i][1]**2 + stokes_temp[i][2]**2 + stokes_temp[i][3]**2)/stokes_temp[i][0]
-    cov_stokes_temp = np.zeros((4,4))
+    partial_dops[i] = determine_dop(stokes_temp[i, :])
+    #partial_dops[i] = np.sqrt(stokes_temp[i][1]**2 + stokes_temp[i][2]**2 + stokes_temp[i][3]**2)/stokes_temp[i][0]
+    cov_stokes_temp = np.zeros((4, 4))
     for i in range(4):
         for j in range(4):
-            cov_stokes_temp[i][j]=covS(i,j, Ainv, i_measured, Ainv_cov, i_cov[i])
+            cov_stokes_temp[i][j]=covS(i, j, Ainv, i_measured, Ainv_cov, i_cov[i])
     cov_stokes.append(cov_stokes_temp)
+# convet to a numpy array
 cov_stokes=np.array(cov_stokes)
-# error in dop
-S3=stokes_temp.transpose()[3]
-S2=stokes_temp.transpose()[2]
-S1=stokes_temp.transpose()[1]
-S0=stokes_temp.transpose()[0]
-dS3=np.sqrt(cov_stokes[:,3,3])
-dS2=np.sqrt(cov_stokes[:,2,2])
-dS1=np.sqrt(cov_stokes[:,1,1])
-dS0=np.sqrt(cov_stokes[:,0,0])
-cov_S0_S1=cov_stokes[:,0,1]
-cov_S0_S2=cov_stokes[:,0,2]
-cov_S0_S3=cov_stokes[:,0,3]
-cov_S2_S1=cov_stokes[:,2,1]
-cov_S3_S1=cov_stokes[:,3,1]
-cov_S3_S2=cov_stokes[:,3,2]
+# compute error in dop
+S3 = stokes_temp.transpose()[3]
+S2 = stokes_temp.transpose()[2]
+S1 = stokes_temp.transpose()[1]
+S0 = stokes_temp.transpose()[0]
+dS3 = np.sqrt(cov_stokes[:,3,3])
+dS2 = np.sqrt(cov_stokes[:,2,2])
+dS1 = np.sqrt(cov_stokes[:,1,1])
+dS0 = np.sqrt(cov_stokes[:,0,0])
+cov_S0_S1 = cov_stokes[:,0,1]
+cov_S0_S2 = cov_stokes[:,0,2]
+cov_S0_S3 = cov_stokes[:,0,3]
+cov_S2_S1 = cov_stokes[:,2,1]
+cov_S3_S1 = cov_stokes[:,3,1]
+cov_S3_S2 = cov_stokes[:,3,2]
 
 partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
@@ -523,11 +531,11 @@ partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
 
 plt.figure(3)
 plt.errorbar(pol_angles2, partial_dops, yerr=partial_dops_err, fmt=".", markersize=5)
-plt.plot([0,180],[1,1],color='black',alpha=0.25)
+plt.plot([0,180], [1,1], color='black', alpha=0.25)
 plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
 plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
 partial_pol_fig = plt.gca()
-partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length=5)
+partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length = 5)
 partial_pol_fig.set_ylim([0, 1.05])
 
 thetas = np.linspace(0, np.max(pol_angles2), 1000)
