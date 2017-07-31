@@ -9,15 +9,23 @@ This is a script to analyze polarimetry calibration data.
 import csv, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from sys import platform
 
-directory='acquisition/data/calibration1/comparison1.2' #data location folder
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
-os.chdir(directory)
-N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
 #instrument matrix from calibration
-Ainv=np.loadtxt('../Ainv.txt')
-Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
+if 'linux' in platform:
+    directory='acquisition/data/calibration1/comparison1.2' #data location folder
+    os.chdir(directory)
+    Ainv=np.loadtxt('../Ainv.txt')
+    Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
+else:
+    directory='acquisition\data\calibration1\comparison1.2' #data location folder
+    os.chdir(directory)
+    Ainv=np.loadtxt('..\Ainv.txt')
+    Ainv_cov=pickle.load(open( "..\Ainv_cov.p", "rb" ))
+
+N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
 #https://www.ruhr-uni-bochum.de/ika/forschung/forschungsbereich_kolossa/Daten/Buchkapitel_Uncertainty.pdf
 
@@ -203,7 +211,7 @@ axarr[0][0].set_ylabel('Metasurface measurement')
 axarr[0][0].set_xlim([-0.1,1.1])
 axarr[0][0].set_ylim([-0.1,1.1])
 
-diffs=(m_dops-p_dops)/(0.5*(m_dops+p_dops))  # relative dop error
+diffs=m_dops-p_dops  # relative dop error
 axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')

@@ -390,7 +390,11 @@ print(Ainv)
 print('')
 
 # save the instrument matrix as a text file for use in other scripts
-np.savetxt('..\\Ainv.txt', Ainv)
+
+if 'linux' in platform:
+    np.savetxt('../Ainv.txt', Ainv)
+else:
+    np.savetxt('..\\Ainv.txt', Ainv)
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf, http://sci-hub.io/10.1364/ao.47.002541)
 #Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
@@ -415,8 +419,11 @@ print('Covariance in Ainv: ')
 print(Ainv_cov)
 #np.savetxt('..\\Ainv_cov.txt', Ainv_cov)
 # save the covariance matrix to a text-like file?
-pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
-
+if 'linux' in platform:
+    pickle.dump( Ainv_cov, open( "../Ainv_cov.p", "wb" ) )
+else:
+    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
+    
 #%% Define functions to reconstruct Stokes vector and compute DOP
 def determine_stokes(measurement):
     try:
