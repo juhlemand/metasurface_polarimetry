@@ -124,13 +124,13 @@ cov_m=np.array(cov_m)
 metasurface_data=np.array(metasurface_data)
 
 ###############################################################
-#%% Analysing and plotting comparison
+#%% Analyzing and plotting comparison
 
 for i in range(len(metasurface_data)):
-    metasurface_data[i]=np.dot(Ainv, metasurface_data[i].transpose())
+    metasurface_data[i] = np.dot(Ainv, metasurface_data[i].transpose())
 
-m_dops=np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
-p_dops=np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2+polarimeter_data.data.transpose()[3]**2)/polarimeter_data.data.transpose()[0]
+m_dops = np.sqrt(metasurface_data.transpose()[1]**2+metasurface_data.transpose()[2]**2+metasurface_data.transpose()[3]**2)/metasurface_data.transpose()[0]
+p_dops = np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2+polarimeter_data.data.transpose()[3]**2)/polarimeter_data.data.transpose()[0]
 
 #error in dop
 # dop = sqrt(S1**2+S2**2+S3**2)/S0
@@ -163,17 +163,17 @@ cov_S0_S3=cov_m[:,0,3]
 cov_S2_S1=cov_m[:,2,1]
 cov_S3_S1=cov_m[:,3,1]
 cov_S3_S2=cov_m[:,3,2]
-#https://www.wolframalpha.com/input/?i=derivative+of+sqrt(x1**2%2Bx2**2%2Bx3**2)%2Fx0
+# https://www.wolframalpha.com/input/?i=derivative+of+sqrt(x1**2%2Bx2**2%2Bx3**2)%2Fx0
 m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS1*S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
                    +(dS2*S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
                    +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2
-                   +2*cov_S0_S1*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
-                   +2*cov_S0_S2*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
-                   +2*cov_S0_S3*(-np.sqrt(S1**2+S2**2+S3**2)/S0**2)*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))
-                   +2*cov_S2_S1*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
-                   +2*cov_S3_S1*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S1/(S0*np.sqrt(S1**2+S2**2+S3**2)))
-                   +2*cov_S3_S2*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
+                   +2*cov_S0_S1*(-S1/S0**3)
+                   +2*cov_S0_S2*(-S2/S0**3)
+                   +2*cov_S0_S3*(-S3/S0**3)
+                   +2*cov_S2_S1*(S2*S1/(S0**2 * (S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S1*(S3*S1/(S0**2 * (S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S2*(S3*S2/(S0**2 * (S1**2+S2**2+S3**2)))
                    )
 
 
