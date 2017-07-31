@@ -12,6 +12,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from itertools import compress
+from sys import platform
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
@@ -21,7 +22,11 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.005 #Error in power meter reading from ambient light, unit in mW
 
-os.chdir('acquisition\data\calibration1')
+if 'linux' in platform:
+    os.chdir('acquisition/data/calibration1')
+else:
+    os.chdir('acquisition\data\calibration1')
+
 
 #%% Collect some error analysis functions
 
