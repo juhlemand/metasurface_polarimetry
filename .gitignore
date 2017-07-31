@@ -3,6 +3,7 @@ acquisition/data/calibration3/*
 acquisition/TXP_PAX/.vs/TXP_PAX/v15/Browse.VC.db
 acquisition/TXP_PAX/TXP_PAX/Debug/TXP_PAX.tlog/link.write.1.tlog
 acquisition/TXP_PAX/TXP_PAX/Debug/TXP_PAX.log
+acquisition/data/calibration1/Ainv.txt
 *.opendb
 *.log
 *.tlog
