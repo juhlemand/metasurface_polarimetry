@@ -276,8 +276,8 @@ axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 
 #fixing small line segment
 for i in range(len(m_2psi)):
-    if m_2psi[i] > 1 and p_2psi[i] < -1:
-        m_2psi[i]=m_2psi[i]-2*np.pi
+    if m_2psi[i] < -2 and p_2psi[i] > 2:
+        m_2psi[i]=m_2psi[i]+2*np.pi
 
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
