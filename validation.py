@@ -11,7 +11,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sys import platform
 from scipy.optimize import curve_fit
+
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
+DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
 if 'linux' in platform:
@@ -199,6 +201,63 @@ m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
 #plt.ylim([0,1.1])
 #plt.legend()
 #plt.show()
+        
+
+##############################################################
+#plotting code
+
+#poincare sphere coordinates in radians
+# azimuth psi
+m_2psi=np.arctan2(S2, S1)
+p_2psi=np.arctan2(polarimeter_data.data.transpose()[2], polarimeter_data.data.transpose()[1])
+#p_2psi=np.pi*polarimeter_data.poincare.transpose()[1]/180
+#stdev error in S2/S1:
+#http://123.physics.ucdavis.edu/week_9_files/taylor_209-226.pdf
+p_2psi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[1]/180
+m_2psi_err=np.sqrt((S1*dS2/(S1**2+S2**2))**2
+                   +(S2*dS1/(S1**2+S2**2))**2
+                   -2*S1*S2*cov_S2_S1/(S1**2+S2**2)**2)
+
+# altitude chi
+#p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
+p_2chi=2*np.pi*polarimeter_data.poincare.transpose()[2]/180
+m_2chi=-np.arctan2(S3, np.sqrt(S1**2+S2**2))
+#https://www.wolframalpha.com/input/?i=derivative+of+atan(x3%2Fsqrt(x1**2%2Bx2**2))
+m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
+                   +(dS2*S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
+                   +(dS3*np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))**2
+                   +2*cov_S2_S1*(-S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))*(-S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S1*(np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))*(-S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
+                   +2*cov_S3_S2*(np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))*(-S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
+                   )
+p_2chi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[2]/180
+
+#removing from DOP_CUTOFF
+for i in range(len(m_dops)):
+    if m_dops[i]<DOP_CUTOFF and p_dops[i]<DOP_CUTOFF:
+        for arr in [m_dops,p_dops,m_dops_err,p_dops_err,
+                    m_2psi,p_2psi,m_2psi_err,p_2psi_err,
+                    m_2chi,p_2chi,m_2chi_err,p_2chi_err]:
+            arr[i]=9e999-9e999 #nan
+
+data_arr=[m_dops,p_dops,m_dops_err,p_dops_err,
+          m_2psi,p_2psi,m_2psi_err,p_2psi_err,
+          m_2chi,p_2chi,m_2chi_err,p_2chi_err]
+for i in range(len(data_arr)):
+    data_arr[i]=data_arr[i][~np.isnan(data_arr[i])]
+m_dops=data_arr[0]
+p_dops=data_arr[1]
+m_dops_err=data_arr[2]
+p_dops_err=data_arr[3]
+m_2psi=data_arr[4]
+p_2psi=data_arr[5]
+m_2psi_err=data_arr[6]
+p_2psi_err=data_arr[7]
+m_2chi=data_arr[8]
+p_2chi=data_arr[9]
+m_2chi_err=data_arr[10]
+p_2chi_err=data_arr[11]
+
 
 f, axarr  = plt.subplots(2,3)
 axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
@@ -215,38 +274,10 @@ axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
 
-##############################################################
-#poincare sphere coordinates in radians
-
-# azimuth psi
-m_2psi=np.arctan2(S2, S1)
-p_2psi=np.arctan2(polarimeter_data.data.transpose()[2], polarimeter_data.data.transpose()[1])
-#p_2psi=np.pi*polarimeter_data.poincare.transpose()[1]/180
-#stdev error in S2/S1:
-#http://123.physics.ucdavis.edu/week_9_files/taylor_209-226.pdf
-p_2psi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[1]/180
-m_2psi_err=np.sqrt((S1*dS2/(S1**2+S2**2))**2
-                   +(S2*dS1/(S1**2+S2**2))**2
-                   -2*S1*S2*cov_S2_S1/(S1**2+S2**2)**2)
-
-# altitude chi
-#p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
-p_2chi=2*np.pi*polarimeter_data.poincare.transpose()[2]/180
-m_2chi=np.arctan2(S3, np.sqrt(S1**2+S2**2))
-#https://www.wolframalpha.com/input/?i=derivative+of+atan(x3%2Fsqrt(x1**2%2Bx2**2))
-m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
-                   +(dS2*S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
-                   +(dS3*np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))**2
-                   +2*cov_S2_S1*(-S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))*(-S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
-                   +2*cov_S3_S1*(np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))*(-S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
-                   +2*cov_S3_S2*(np.sqrt(S1**2+S2**2)/(S1**2+S2**2+S3**2))*(-S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))
-                   )
-p_2chi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[2]/180
-
 #fixing small line segment
 for i in range(len(m_2psi)):
-    if m_2psi[i]<-1.5 and p_2psi[i]>2:
-        m_2psi[i]=m_2psi[i]+2*np.pi
+    if m_2psi[i] > 1 and p_2psi[i] < -1:
+        m_2psi[i]=m_2psi[i]-2*np.pi
 
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
@@ -254,6 +285,8 @@ axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5
 axarr[0][1].set_title('Azimuth $2\psi$')
 axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][1].set_ylabel('Metasurface measurement (radians)')
+axarr[0][1].set_xlim([-1.1*np.pi,1.1*np.pi])
+axarr[0][1].set_ylim([-1.1*np.pi,1.1*np.pi])
 
 #diffs=(m_2psi-p_2psi)/(0.5*(m_2psi+p_2psi))
 diffs=m_2psi-p_2psi
@@ -263,6 +296,10 @@ axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 az_offset=np.mean(diffs)
 axarr[0][1].plot([-np.pi,np.pi],[-np.pi+az_offset, np.pi+az_offset], color='black')
 
+popt = np.polyfit(p_2chi, m_2chi, 1)
+if popt[0]<0:
+    m_2chi=-m_2chi
+    
 axarr[0][2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].plot([np.min(p_2chi), np.max(p_2chi)],[np.min(p_2chi),np.max(p_2chi)],alpha=0.75,color='black')
@@ -287,8 +324,8 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
-phi = np.linspace(0, np.pi, 100)
-theta = np.linspace(0, 2*np.pi, 100)
+phi = np.linspace(0, np.pi, 200)
+theta = np.linspace(0, 2*np.pi, 200)
 
 #equatorial circle
 xe=np.sin(theta)
@@ -322,28 +359,28 @@ light = LightSource(30, 45)
 c = np.ones((z.shape[0], z.shape[1], 3))*np.array([1,0,0]) #[0xeb,0xe3,0xe8])
 cm=light.shade(z, cmap=cm.coolwarm)
 
-ax.plot_surface(x, y, z,  rstride=3, cstride=3, color='#EBE3E8',
-                linewidth=5, antialiased=True, alpha=0.5)#, facecolors=cm)
+ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
+                antialiased=True, alpha=0.5)#, facecolors=cm)
 
-ax.add_artist(Arrow3D([0, 0], [-0.03,1.5], 
+ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
                 [0,0], mutation_scale=15, 
                 lw=0.25, arrowstyle="-|>", color="black"))
-ax.add_artist(Arrow3D([-0.03, 1.5], [0,0], 
+ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
                 [0,0], mutation_scale=15, 
                 lw=0.25, arrowstyle="-|>", color="black"))
 ax.add_artist(Arrow3D([0, 0], [0,0], 
                 [-0.03,1.5], mutation_scale=15, 
                 lw=0.25, arrowstyle="-|>", color="black"))
-ax.text(0,0,1.6, '$S_3$',fontweight='bold')
-ax.text(1.6,0,0, '$S_1$', fontweight='bold')
-ax.text(0,1.6,0, '$S_2$', fontweight='bold')
+ax.text(0,0,1.5, '$S_3$',fontweight='bold')
+ax.text(1.75,0,0, '$S_1$', fontweight='bold')
+ax.text(0,1.5,0, '$S_2$', fontweight='bold')
 ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
 # Plotting selected datapoints
 npoints=3
 dpoints=[]
 for n in range(npoints):
-    dpoints.append(int(random.random()*len(S1)))
+    dpoints.append(int(random.random()*len(m_dops)))
 dpoints=np.array(dpoints)
 
 for n in range(npoints):
@@ -386,7 +423,6 @@ for n in range(npoints):
     z=np.linspace(np.sin(p_2chi[dpoints[n]]),
                   np.sin(p_2chi[dpoints[n]]))
     ax.plot(x,y,z, lw=0.25, color='orange', alpha=1)
-
 
     x=np.linspace(np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]]-p_2chi_err[dpoints[n]]),
                   np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]]+p_2chi_err[dpoints[n]]))
