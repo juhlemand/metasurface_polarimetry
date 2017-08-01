@@ -10,7 +10,7 @@ import csv, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-directory='acquisition/data/calibration1/comparison1.2' #data location folder
+directory='acquisition/data/calibration4/comparison' #data location folder
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
 os.chdir(directory)
 N_measurements=len(os.listdir())-1 #number of measurements which have been taken
@@ -203,7 +203,7 @@ axarr[0][0].set_ylabel('Metasurface measurement')
 axarr[0][0].set_xlim([-0.1,1.1])
 axarr[0][0].set_ylim([-0.1,1.1])
 
-diffs=(m_dops-p_dops)/(0.5*(m_dops+p_dops))  # relative dop error
+diffs=100*(m_dops-p_dops)  # relative dop error
 axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
