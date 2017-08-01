@@ -23,9 +23,9 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 power_meter_error = 0.005 #Error in power meter reading from ambient light, unit in mW
 
 if 'linux' in platform:
-    os.chdir('acquisition/data/calibration1')
+    os.chdir('acquisition/data/calibration4')
 else:
-    os.chdir('acquisition\data\calibration1')
+    os.chdir('acquisition\data\calibration4')
 
 
 #%% Collect some error analysis functions

@@ -165,7 +165,6 @@ p_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2)
 
 #metasurface
-
 S3 = metasurface_data.transpose()[3]
 S2 = metasurface_data.transpose()[2]
 S1 = metasurface_data.transpose()[1]
@@ -220,8 +219,8 @@ axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #poincare sphere coordinates in radians
 
 # azimuth psi
-m_2psi=np.arctan(S2/S1)
-p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
+m_2psi=np.arctan2(S2, S1)
+p_2psi=np.arctan2(polarimeter_data.data.transpose()[2], polarimeter_data.data.transpose()[1])
 #p_2psi=np.pi*polarimeter_data.poincare.transpose()[1]/180
 #stdev error in S2/S1:
 #http://123.physics.ucdavis.edu/week_9_files/taylor_209-226.pdf
@@ -233,7 +232,7 @@ m_2psi_err=np.sqrt((S1*dS2/(S1**2+S2**2))**2
 # altitude chi
 #p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
 p_2chi=2*np.pi*polarimeter_data.poincare.transpose()[2]/180
-m_2chi=np.arctan(S3/np.sqrt(S1**2+S2**2))
+m_2chi=np.arctan2(S3, np.sqrt(S1**2+S2**2))
 #https://www.wolframalpha.com/input/?i=derivative+of+atan(x3%2Fsqrt(x1**2%2Bx2**2))
 m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
                    +(dS2*S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
@@ -277,9 +276,19 @@ plt.show()
 
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
+from scipy.special import sph_harm
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+from matplotlib.colors import LightSource
+import random
 
 phi = np.linspace(0, np.pi, 100)
 theta = np.linspace(0, 2*np.pi, 100)
+
+#equatorial circle
+xe=np.sin(theta)
+ye=np.cos(theta)
+
 phi, theta = np.meshgrid(phi, theta)
 
 # The Cartesian coordinates of the unit sphere
@@ -289,15 +298,74 @@ z = np.cos(phi)
 
 m, l = 2, 3
 
-# Calculate the spherical harmonic Y(l,m) and normalize to [0,1]
-fcolors = sph_harm(m, l, theta, phi).real
-fmax, fmin = fcolors.max(), fcolors.min()
-fcolors = (fcolors - fmin)/(fmax - fmin)
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)
 
 # Set the aspect ratio to 1 so our sphere looks spherical
 fig = plt.figure(figsize=plt.figaspect(1.))
 ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(x, y, z,  rstride=1, cstride=1, facecolors=cm.seismic(fcolors))
+
+light = LightSource(30, 45)
+c = np.ones((z.shape[0], z.shape[1], 3))*np.array([1,0,0]) #[0xeb,0xe3,0xe8])
+cm=light.shade(z, cmap=cm.coolwarm)
+
+ax.plot_surface(x, y, z,  rstride=3, cstride=3, color='#EBE3E8',
+                linewidth=5, antialiased=True, alpha=0.5)#, facecolors=cm)
+
+ax.add_artist(Arrow3D([0, 0], [-0.03,1.5], 
+                [0,0], mutation_scale=15, 
+                lw=0.25, arrowstyle="-|>", color="black"))
+ax.add_artist(Arrow3D([-0.03, 1.5], [0,0], 
+                [0,0], mutation_scale=15, 
+                lw=0.25, arrowstyle="-|>", color="black"))
+ax.add_artist(Arrow3D([0, 0], [0,0], 
+                [-0.03,1.5], mutation_scale=15, 
+                lw=0.25, arrowstyle="-|>", color="black"))
+ax.text(0,0,1.6, '$S_3$',fontweight='bold')
+ax.text(1.6,0,0, '$S_1$', fontweight='bold')
+ax.text(0,1.6,0, '$S_2$', fontweight='bold')
+ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
+
+# Plotting selected datapoints
+npoints=1
+dpoints=[]
+for n in range(npoints):
+    dpoints.append(int(random.random()*len(S1)))
+dpoints=np.array(dpoints)
+
+S3 = metasurface_data.transpose()[3]
+S2 = metasurface_data.transpose()[2]
+S1 = metasurface_data.transpose()[1]
+S0 = metasurface_data.transpose()[1]
+for n in range(npoints):
+    xval=S1[dpoints[n]]/np.sqrt(S1[dpoints[n]]**2+S2[dpoints[n]]**2+S3[dpoints[n]]**2)
+    yval=S2[dpoints[n]]/np.sqrt(S1[dpoints[n]]**2+S2[dpoints[n]]**2+S3[dpoints[n]]**2)
+    zval=S3[dpoints[n]]/np.sqrt(S1[dpoints[n]]**2+S2[dpoints[n]]**2+S3[dpoints[n]]**2)
+    ax.add_artist(Arrow3D([0, xval],
+                          [0, yval],
+                          [-np.sign(zval)*0.03, zval], mutation_scale=5,
+                          lw=0.5, arrowstyle="-|>", color="blue"))
+
+S3 = polarimeter_data.data.transpose()[3]
+S2 = polarimeter_data.data.transpose()[2]
+S1 = polarimeter_data.data.transpose()[1]
+S0 = polarimeter_data.data.transpose()[1]
+for n in range(npoints):
+    xval=S1[dpoints[n]]/np.sqrt(S1[dpoints[n]]**2+S2[dpoints[n]]**2+S3[dpoints[n]]**2)
+    yval=S2[dpoints[n]]/np.sqrt(S1[dpoints[n]]**2+S2[dpoints[n]]**2+S3[dpoints[n]]**2)
+    zval=S3[dpoints[n]]/np.sqrt(S1[dpoints[n]]**2+S2[dpoints[n]]**2+S3[dpoints[n]]**2)
+    ax.add_artist(Arrow3D([0, xval],
+                          [0, yval],
+                          [-np.sign(zval)*0.03, zval], mutation_scale=5,
+                          lw=0.5, arrowstyle="-|>", color="orange"))
 # Turn off the axis planes
 ax.set_axis_off()
 plt.show()
