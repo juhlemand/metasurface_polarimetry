@@ -20,12 +20,12 @@ qwp_L = 'qwp_L'  # folder for qwp at second configuration
 partial_pol = 'partial_pol'  # folder location of partial pol data
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
-power_meter_error = 0.005 #Error in power meter reading from ambient light, unit in mW
+power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
 if 'linux' in platform:
     os.chdir('acquisition/data/calibration4')
 else:
-    os.chdir('acquisition\data\calibration4')
+    os.chdir('acquisition\data\calibration6')
 
 
 #%% Collect some error analysis functions
@@ -454,7 +454,7 @@ L = np.array([pd1L, pd2L, pd3L, pd4L])
 stokes=np.dot(Ainv, L)
 
 #%% Extract and analyze the partial pol data
-pol_angles2=[]
+pol_angles2 = []
 pd1_partialV = []
 pd2_partialV = []
 pd3_partialV = []
@@ -489,12 +489,12 @@ sorted_lists = sorted(zip(pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV,
 pol_angles2, pd1_partialV, pd2_partialV, pd3_partialV, pd4_partialV = [[x[i] for x in sorted_lists] for i in range(5)]
 
 num_angles = len(pol_angles2)
-pol_angles2 = pol_angles2[:num_angles//2]
 
-pd1_partialV = np.divide(pd1_partialV[:num_angles//2] + pd1_partialV[num_angles//2:], 2)
-pd2_partialV = np.divide(pd2_partialV[:num_angles//2] + pd2_partialV[num_angles//2:], 2)
-pd3_partialV = np.divide(pd3_partialV[:num_angles//2] + pd3_partialV[num_angles//2:], 2)
-pd4_partialV = np.divide(pd4_partialV[:num_angles//2] + pd4_partialV[num_angles//2:], 2)
+#pol_angles2 = pol_angles2[:num_angles//2]
+#pd1_partialV = np.divide(pd1_partialV[:num_angles//2] + pd1_partialV[num_angles//2:], 2)
+#pd2_partialV = np.divide(pd2_partialV[:num_angles//2] + pd2_partialV[num_angles//2:], 2)
+#pd3_partialV = np.divide(pd3_partialV[:num_angles//2] + pd3_partialV[num_angles//2:], 2)
+#pd4_partialV = np.divide(pd4_partialV[:num_angles//2] + pd4_partialV[num_angles//2:], 2)
 i_cov = 0.25*(i_cov[:num_angles//2]+i_cov[num_angles//2:])  # not appropriate error propagation
 
 partial_dops = np.zeros(len(pol_angles2))
@@ -543,7 +543,7 @@ partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
 
 plt.figure(3)
 plt.errorbar(pol_angles2, partial_dops, yerr=partial_dops_err, fmt=".", markersize=5)
-plt.plot([0,180], [1,1], color='black', alpha=0.25)
+plt.plot([0,np.max(pol_angles2)], [1,1], color='black', alpha=0.25)
 plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
 plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
 partial_pol_fig = plt.gca()

@@ -324,22 +324,6 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
-phi = np.linspace(0, np.pi, 200)
-theta = np.linspace(0, 2*np.pi, 200)
-
-#equatorial circle
-xe=np.sin(theta)
-ye=np.cos(theta)
-
-phi, theta = np.meshgrid(phi, theta)
-
-# The Cartesian coordinates of the unit sphere
-x = np.sin(phi) * np.cos(theta)
-y = np.sin(phi) * np.sin(theta)
-z = np.cos(phi)
-
-m, l = 2, 3
-
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
         FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
@@ -355,27 +339,41 @@ class Arrow3D(FancyArrowPatch):
 fig = plt.figure(figsize=plt.figaspect(1.))
 ax = fig.add_subplot(111, projection='3d')
 
-light = LightSource(30, 45)
-c = np.ones((z.shape[0], z.shape[1], 3))*np.array([1,0,0]) #[0xeb,0xe3,0xe8])
-cm=light.shade(z, cmap=cm.coolwarm)
+def plot_sphere(ax,arrows='xyz'):
+    phi = np.linspace(0, np.pi, 200)
+    theta = np.linspace(0, 2*np.pi, 200)
 
-ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
+    #equatorial circle
+    xe=np.sin(theta)
+    ye=np.cos(theta)
+
+    phi, theta = np.meshgrid(phi, theta)
+
+    # The Cartesian coordinates of the unit sphere
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+
+    ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
                 antialiased=True, alpha=0.5)#, facecolors=cm)
+    if 'y' in arrows:
+        ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
+                        [0,0], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(0,1.5,0, '$S_2$', fontweight='bold')        
+    if 'x' in arrows:
+        ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
+                        [0,0], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(1.75,0,0, '$S_1$', fontweight='bold')        
+    if 'z' in arrows:        
+        ax.add_artist(Arrow3D([0, 0], [0,0], 
+                        [-0.03,1.5], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(0,0,1.5, '$S_3$',fontweight='bold')
+    ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
-ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
-                [0,0], mutation_scale=15, 
-                lw=0.25, arrowstyle="-|>", color="black"))
-ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
-                [0,0], mutation_scale=15, 
-                lw=0.25, arrowstyle="-|>", color="black"))
-ax.add_artist(Arrow3D([0, 0], [0,0], 
-                [-0.03,1.5], mutation_scale=15, 
-                lw=0.25, arrowstyle="-|>", color="black"))
-ax.text(0,0,1.5, '$S_3$',fontweight='bold')
-ax.text(1.75,0,0, '$S_1$', fontweight='bold')
-ax.text(0,1.5,0, '$S_2$', fontweight='bold')
-ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
-
+plot_sphere(ax)
 # Plotting selected datapoints
 npoints=3
 dpoints=[]
@@ -434,4 +432,20 @@ for n in range(npoints):
     
 # Turn off the axis planes
 ax.set_axis_off()
+plt.show()
+
+#############################################################################
+# plotting hemispheres
+
+fig = plt.figure()
+ax = fig.add_subplot(1,2,1, projection='3d')
+plot_sphere(ax, arrows='xy')
+
+ax2 = fig.add_subplot(1,2,2, projection='3d')
+plot_sphere(ax2, arrows='xy')
+
+ax.set_axis_off()
+ax.view_init(90, 0)
+ax2.set_axis_off()
+ax2.view_init(-90, 0)
 plt.show()
