@@ -19,7 +19,7 @@ DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
 if 'linux' in platform:
-    directory='acquisition/data/calibration1/comparison1.2' #data location folder
+    directory='acquisition/data/calibration4/comparison' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
@@ -203,22 +203,6 @@ plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
 plt.ylim([0,1.1])
 plt.legend()
 plt.show()
-
-f, axarr  = plt.subplots(2,3)
-axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][0].plot([0,1],[0,1],alpha=0.75,color='black')
-axarr[0][0].set_title('DOP')
-axarr[0][0].set_xlabel('Polarimeter measurement')
-axarr[0][0].set_ylabel('Metasurface measurement')
-axarr[0][0].set_xlim([-0.1,1.1])
-axarr[0][0].set_ylim([-0.1,1.1])
-
-diffs=100*(m_dops-p_dops)  # relative dop error
-axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
-axarr[1][0].axvline(0.0,color='black', alpha=0.25)
-#axarr[1][0].set_title('DOP error metasurface-polarimeter')
-
 
 ##############################################################
 #plotting code
