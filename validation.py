@@ -480,7 +480,7 @@ ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='black', lw=5,
                 antialiased=True, shade=0, alpha=1)#, facecolors=cm)
 
 ax2.plot_surface(x, y, z,  rstride=10, cstride=10, color='black', lw=5,
-                antialiased=True, shade=0, alpha=1)#, facecolors=cm)
+                 antialiased=True, shade=0, alpha=1)#, facecolors=cm)
 
 ax.set_axis_off()
 ax.view_init(90, 0)
