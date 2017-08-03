@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from sys import platform
 from scipy.optimize import curve_fit
 
+directory='acquisition/data/calibration4/comparison' #data location folder
+
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
 DOP_CUTOFF=0.5
 
@@ -195,13 +197,28 @@ m_dops_err=np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    )
 
 
-#plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, yerr=m_dops_err, label='metasurface',fmt='.')
-#plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=p_dops_err, label='thorlabs',fmt='.')
-#plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
-#plt.ylim([0,1.1])
-#plt.legend()
-#plt.show()
-        
+plt.errorbar(range(0,len(fnames)),m_dops, alpha=0.5, yerr=m_dops_err, label='metasurface',fmt='.')
+plt.errorbar(range(0,len(fnames)),p_dops, alpha=0.5, yerr=p_dops_err, label='thorlabs',fmt='.')
+plt.plot((0,len(fnames)), (1.0,1.0), color='gray', alpha=0.5)
+plt.ylim([0,1.1])
+plt.legend()
+plt.show()
+
+f, axarr  = plt.subplots(2,3)
+axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].plot([0,1],[0,1],alpha=0.75,color='black')
+axarr[0][0].set_title('DOP')
+axarr[0][0].set_xlabel('Polarimeter measurement')
+axarr[0][0].set_ylabel('Metasurface measurement')
+axarr[0][0].set_xlim([-0.1,1.1])
+axarr[0][0].set_ylim([-0.1,1.1])
+
+diffs=100*(m_dops-p_dops)  # relative dop error
+axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+axarr[1][0].axvline(0.0,color='black', alpha=0.25)
+#axarr[1][0].set_title('DOP error metasurface-polarimeter')
+
 
 ##############################################################
 #plotting code
