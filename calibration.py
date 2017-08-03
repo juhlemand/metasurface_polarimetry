@@ -6,12 +6,12 @@ This is a script to analyze polarimetry calibration data.
 
 @contributors: Noah, Ruoping
 """
-import os,re,pickle
+import os, re, pickle
 import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from itertools import compress
+from matplotlib.ticker import AutoMinorLocator
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
@@ -21,7 +21,9 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.005 #Error in power meter reading from ambient light, unit in mW
 
-os.chdir('acquisition\data\calibration1')
+data_dir = 'acquisition\data\calibration1'
+
+os.chdir(data_dir)
 
 #%% Collect some error analysis functions
 
@@ -529,22 +531,61 @@ partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +2*cov_S3_S2*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
                    )
 
+
+def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
+    min_index = int(np.floor(min_angle/180) * len(xdata))
+    max_index = int(np.ceil(max_angle/180 * len(xdata))) 
+    axes.errorbar(xdata[min_index:max_index], ydata[min_index:max_index], yerr=yerror[min_index:max_index], fmt = ".", markersize = 6, ecolor = 'r', color = 'r')
+    axes.plot([0, 1.05*max_angle], [1,1], color = 'black', alpha = 0.25)
+    minor_locator = AutoMinorLocator(2)
+    axes.xaxis.set_minor_locator(minor_locator)
+    axes.yaxis.set_minor_locator(minor_locator)
+    axes.tick_params(axis='x', labelsize = 14, direction='in', length = 5, which = 'major', top='off')
+    axes.tick_params(axis='x', labelsize = 14, direction='in', length = 3, which = 'minor', top='off')
+    axes.tick_params(axis='y', labelsize = 14, direction='in', length = 5, which = 'major', top='off')
+    axes.tick_params(axis='y', labelsize = 14, direction='in', length = 3, which = 'minor', top='off')
+    axes.set_xlim([min_angle, 1.*max_angle])
+
+    def partial_pol_func(x, offset):
+        return np.abs(np.cos(2*(x-offset)*np.pi/180))
+    
+    popt2, variance2 = curve_fit(partial_pol_func, pol_angles2[:len(pol_angles2)//2], partial_dops[:len(pol_angles2)//2])
+    
+    thetas = np.linspace(min_angle, max_angle, 1000)    
+    curve = partial_pol_func(thetas, *popt2)    
+    
+    axes.plot(thetas, curve, linewidth = 1.0, color = 'blue')
+    
+    axes.set_ylim([np.min(curve), 1.05 * np.max(curve)])    
+    
+    plt.show()
+
+
+
+# plot points and error bars over whole range first
 plt.figure(3)
-plt.errorbar(pol_angles2, partial_dops, yerr=partial_dops_err, fmt=".", markersize=5)
-plt.plot([0,180], [1,1], color='black', alpha=0.25)
-plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
-plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
-partial_pol_fig = plt.gca()
-partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length = 5)
-partial_pol_fig.set_ylim([0, 1.05])
+min_angle= 0
+max_angle = 90
+partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
+file_name = 'partial_pol.svg'
+os.chdir('../../../../Graphics')
+plt.savefig(file_name, format='svg')
+os.chdir('..\\' + data_dir + '\\' + partial_pol)
 
-thetas = np.linspace(0, np.max(pol_angles2), 1000)
-def partial_pol_func(x, scale, offset):
-    return scale * np.abs(np.cos(2*(x-offset)*np.pi/180))
 
-popt2, variance2 = curve_fit(partial_pol_func, pol_angles2, partial_dops)
-plt.plot(thetas, partial_pol_func(thetas, *popt2), linewidth = 1, alpha=0.5)
-plt.show()
+
+# put horizontal line at 1.0
+
+#plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
+#plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
+
+
+# now generate inset plots for the maximum and minimum positions
+
+
+
+
+
 # now save the figure
 #file_name = os.getcwd() + 'partial_pol.svg'
 #plt.savefig(file_name, format='svg')
