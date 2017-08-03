@@ -20,18 +20,17 @@ from matplotlib.ticker import AutoMinorLocator
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
 qwp_L = 'qwp_L'  # folder for qwp at second configuration
-partial_pol = 'partial_pol'  # folder location of partial pol data
+partial_pol = 'partial_pol3'  # folder location of partial pol data
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
-if 'linux' in platform:
-    os.chdir('acquisition/data/calibration4')
-else:
-    os.chdir('acquisition\data\calibration6')
+#if 'linux' in platform:
+#    os.chdir('acquisition/data/calibration6')
+#else:
+#    os.chdir('acquisition\data\calibration6')
 
-
-data_dir = 'acquisition\data\calibration1'
+data_dir = 'acquisition\data\calibration6'
 
 os.chdir(data_dir)
 
@@ -400,10 +399,12 @@ print('')
 
 # save the instrument matrix as a text file for use in other scripts
 
-if 'linux' in platform:
-    np.savetxt('../Ainv.txt', Ainv)
-else:
-    np.savetxt('..\\Ainv.txt', Ainv)
+#if 'linux' in platform:
+    #np.savetxt('../Ainv.txt', Ainv)
+#else:
+    #np.savetxt('..\\Ainv.txt', Ainv)
+
+np.savetxt('..\\Ainv.txt', Ainv)
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf, http://sci-hub.io/10.1364/ao.47.002541)
 #Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
@@ -428,10 +429,12 @@ print('Covariance in Ainv: ')
 print(Ainv_cov)
 #np.savetxt('..\\Ainv_cov.txt', Ainv_cov)
 # save the covariance matrix to a text-like file?
-if 'linux' in platform:
-    pickle.dump( Ainv_cov, open( "../Ainv_cov.p", "wb" ) )
-else:
-    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
+#if 'linux' in platform:
+#    pickle.dump( Ainv_cov, open( "../Ainv_cov.p", "wb" ) )
+#else:
+#    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
+
+pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
     
 #%% Define functions to reconstruct Stokes vector and compute DOP
 def determine_stokes(measurement):
@@ -561,32 +564,32 @@ def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
     offset = popt2[0]
     xdata = xdata - (offset) 
     xdata = np.mod(xdata, 360)
-    
+
     mask = np.where((xdata>=min_angle) & (xdata<=max_angle))
     xdata = xdata[mask]
     ydata = ydata[mask]
     yerror = yerror[mask]
-    
-    
+
+
     thetas = np.linspace(min_angle, max_angle, 1000)    
     curve = partial_pol_func(thetas, 0)    
-    
+
     axes.plot(thetas, curve, linewidth = 1.0, color = 'blue')
-    
+
     axes.set_ylim([np.min(curve), 1.05 * np.max(curve)])  
     axes.errorbar(xdata, ydata, yerr=yerror, fmt = ".", markersize = 6, ecolor = 'r', color = 'r')
     axes.plot([0, max_angle], [1,1], color = 'black', alpha = 0.25)
     minor_locatorx = AutoMinorLocator(2)
     minor_locatory = AutoMinorLocator(2)
-    
+
     axes.xaxis.set_minor_locator(minor_locatorx)
     axes.yaxis.set_minor_locator(minor_locatory)
-    
+
     major_length = 7
     major_width = 1.5
     minor_length = 5
     minor_width = 1.5    
-    
+
     axes.tick_params(axis='x', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
     axes.tick_params(axis='x', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
     axes.tick_params(axis='y', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
@@ -601,7 +604,7 @@ def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
 plt.figure(3)
 
 min_angle= 0
-max_angle = 90
+max_angle = 360
 partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
 file_name = 'partial_pol.svg'
 os.chdir('../../../../Graphics')
@@ -612,8 +615,8 @@ plt.show()
 # now make inset graphs
 plt.figure(4)
 
-min_angle= 40
-max_angle = 50
+min_angle= 80
+max_angle = 90
 partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
 
 #plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
