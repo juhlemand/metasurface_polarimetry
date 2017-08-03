@@ -366,7 +366,7 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
         ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
                         [0,0], mutation_scale=15, 
                         lw=0.25, arrowstyle="-|>", color="black"))
-        ax.text(1.75,0,0, '$S_1$', fontweight='bold')        
+        ax.text(1.6,0,0, '$S_1$', fontweight='bold')        
     if 'z' in arrows:        
         ax.add_artist(Arrow3D([0, 0], [0,0], 
                         [-0.03,1.5], mutation_scale=15, 
@@ -439,7 +439,7 @@ plt.show()
 #############################################################################
 # plotting hemispheres
 
-fig = plt.figure()
+fig = plt.figure(figsize=plt.figaspect(0.5))
 ax = fig.add_subplot(1,2,1, projection='3d')
 plot_sphere(ax, arrows='xy', equatorial=False)
 
@@ -471,20 +471,28 @@ for n in range(npoints):
         ax2.scatter(S1, S2, S3, color='orange', s=0.5)
 
 #mesh on sphere
-phi = np.linspace(0, 0.5*np.pi, 100)
-theta = np.linspace(0, 2*np.pi, 100)
-x = np.sin(phi) * np.cos(theta)
-y = np.sin(phi) * np.sin(theta)
-z = np.cos(phi)
+for phi in [np.pi/2, (np.pi/2)/3, 2*(np.pi/2)/3]:
+    theta = np.linspace(0, 2*np.pi, 100)
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+    ax.plot(x, y, -z, '--', dashes=(10, 10), color='red', lw=0.5)
+    ax2.plot(x, y, z, '--', dashes=(10, 10), color='red', lw=0.5)
 
-ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='black', lw=5,
-                antialiased=True, shade=0, alpha=1)#, facecolors=cm)
-
-ax2.plot_surface(x, y, z,  rstride=10, cstride=10, color='black', lw=5,
-                 antialiased=True, shade=0, alpha=1)#, facecolors=cm)
+for theta in np.linspace(0, 2*np.pi, 12+1):
+    phi = np.linspace(np.pi/2, np.pi, 100)
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+    ax.plot(x, y, z, '--', dashes=(10, 10), color='red', lw=0.5)
+    ax2.plot(x, y, z, '--', dashes=(10, 10), color='red', lw=0.5)
 
 ax.set_axis_off()
 ax.view_init(90, 0)
+ax.scatter(0,0,1.1,s=10,color='black')
+ax.text(0, 0.1, 1.1, '$S_3$', fontweight='bold')
 ax2.set_axis_off()
 ax2.view_init(-90, 0)
+ax2.scatter(0,0,-1.1,marker="x", s=30,color='black')
+ax2.text(0, 0.1, 1.1, '$S_3$', fontweight='bold')
 plt.show()
