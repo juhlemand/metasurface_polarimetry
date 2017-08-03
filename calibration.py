@@ -17,7 +17,7 @@ from sys import platform
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
 qwp_L = 'qwp_L'  # folder for qwp at second configuration
-partial_pol = 'partial_pol'  # folder location of partial pol data
+partial_pol = 'partial_pol8'  # folder location of partial pol data
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
@@ -25,7 +25,7 @@ power_meter_error = 0.001 #Error in power meter reading from ambient light, unit
 if 'linux' in platform:
     os.chdir('acquisition/data/calibration4')
 else:
-    os.chdir('acquisition\data\calibration1')
+    os.chdir('acquisition\data\calibration8')
 
 
 #%% Collect some error analysis functions
