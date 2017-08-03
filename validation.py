@@ -9,15 +9,27 @@ This is a script to analyze polarimetry calibration data.
 import csv, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
+from sys import platform
+from scipy.optimize import curve_fit
 
 directory='acquisition/data/calibration4/comparison' #data location folder
+
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
-os.chdir(directory)
-N_measurements=len(os.listdir())-1 #number of measurements which have been taken
+DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
-Ainv=np.loadtxt('../Ainv.txt')
-Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
+if 'linux' in platform:
+    directory='acquisition/data/calibration1/comparison1.2' #data location folder
+    os.chdir(directory)
+    Ainv=np.loadtxt('../Ainv.txt')
+    Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
+else:
+    directory='acquisition\data\calibration1\comparison1.2' #data location folder
+    os.chdir(directory)
+    Ainv=np.loadtxt('..\Ainv.txt')
+    Ainv_cov=pickle.load(open( "..\Ainv_cov.p", "rb" ))
+
+N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
 #https://www.ruhr-uni-bochum.de/ika/forschung/forschungsbereich_kolossa/Daten/Buchkapitel_Uncertainty.pdf
 
@@ -157,7 +169,6 @@ p_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +(dS3*S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))**2)
 
 #metasurface
-
 S3 = metasurface_data.transpose()[3]
 S2 = metasurface_data.transpose()[2]
 S1 = metasurface_data.transpose()[1]
@@ -208,12 +219,14 @@ axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
 
-##############################################################
-#poincare sphere coordinates in radians
 
+##############################################################
+#plotting code
+
+#poincare sphere coordinates in radians
 # azimuth psi
-m_2psi=np.arctan(S2/S1)
-p_2psi=np.arctan(polarimeter_data.data.transpose()[2]/polarimeter_data.data.transpose()[1])
+m_2psi=np.arctan2(S2, S1)
+p_2psi=np.arctan2(polarimeter_data.data.transpose()[2], polarimeter_data.data.transpose()[1])
 #p_2psi=np.pi*polarimeter_data.poincare.transpose()[1]/180
 #stdev error in S2/S1:
 #http://123.physics.ucdavis.edu/week_9_files/taylor_209-226.pdf
@@ -225,7 +238,7 @@ m_2psi_err=np.sqrt((S1*dS2/(S1**2+S2**2))**2
 # altitude chi
 #p_2chi=np.arctan(polarimeter_data.data.transpose()[3]/np.sqrt(polarimeter_data.data.transpose()[1]**2+polarimeter_data.data.transpose()[2]**2))
 p_2chi=2*np.pi*polarimeter_data.poincare.transpose()[2]/180
-m_2chi=np.arctan(S3/np.sqrt(S1**2+S2**2))
+m_2chi=-np.arctan2(S3, np.sqrt(S1**2+S2**2))
 #https://www.wolframalpha.com/input/?i=derivative+of+atan(x3%2Fsqrt(x1**2%2Bx2**2))
 m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
                    +(dS2*S2*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
@@ -236,21 +249,74 @@ m_2chi_err=np.sqrt((dS1*S1*S3/(np.sqrt(S1**2+S2**2)*(S1**2+S2**2+S3**2)))**2
                    )
 p_2chi_err=2*np.pi*polarimeter_data.poincare_std.transpose()[2]/180
 
-#taking the first few points as azimuth normalization
-az_offset = np.mean(p_2psi[:int(0.05*N_measurements)]-m_2psi[:int(0.05*N_measurements)])
+#removing from DOP_CUTOFF
+for i in range(len(m_dops)):
+    if m_dops[i]<DOP_CUTOFF and p_dops[i]<DOP_CUTOFF:
+        for arr in [m_dops,p_dops,m_dops_err,p_dops_err,
+                    m_2psi,p_2psi,m_2psi_err,p_2psi_err,
+                    m_2chi,p_2chi,m_2chi_err,p_2chi_err]:
+            arr[i]=9e999-9e999 #nan
+
+data_arr=[m_dops,p_dops,m_dops_err,p_dops_err,
+          m_2psi,p_2psi,m_2psi_err,p_2psi_err,
+          m_2chi,p_2chi,m_2chi_err,p_2chi_err]
+for i in range(len(data_arr)):
+    data_arr[i]=data_arr[i][~np.isnan(data_arr[i])]
+m_dops=data_arr[0]
+p_dops=data_arr[1]
+m_dops_err=data_arr[2]
+p_dops_err=data_arr[3]
+m_2psi=data_arr[4]
+p_2psi=data_arr[5]
+m_2psi_err=data_arr[6]
+p_2psi_err=data_arr[7]
+m_2chi=data_arr[8]
+p_2chi=data_arr[9]
+m_2chi_err=data_arr[10]
+p_2chi_err=data_arr[11]
+
+
+f, axarr  = plt.subplots(2,3)
+axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].plot([0,1],[0,1],alpha=0.75,color='black')
+axarr[0][0].set_title('DOP')
+axarr[0][0].set_xlabel('Polarimeter measurement')
+axarr[0][0].set_ylabel('Metasurface measurement')
+axarr[0][0].set_xlim([-0.1,1.1])
+axarr[0][0].set_ylim([-0.1,1.1])
+
+diffs=m_dops-p_dops  # relative dop error
+axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+axarr[1][0].axvline(0.0,color='black', alpha=0.25)
+#axarr[1][0].set_title('DOP error metasurface-polarimeter')
+
+#fixing small line segment
+for i in range(len(m_2psi)):
+    if m_2psi[i] < -2 and p_2psi[i] > 2:
+        m_2psi[i]=m_2psi[i]+2*np.pi
 
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][1].plot([np.min(p_2psi), np.max(p_2psi)],[np.min(p_2psi),np.max(p_2psi)],alpha=0.75,color='black')
+#axarr[0][1].plot([np.min(p_2psi), np.max(p_2psi)],[np.min(p_2psi),np.max(p_2psi)],alpha=0.75,color='black')
 axarr[0][1].set_title('Azimuth $2\psi$')
 axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][1].set_ylabel('Metasurface measurement (radians)')
+axarr[0][1].set_xlim([-1.1*np.pi,1.1*np.pi])
+axarr[0][1].set_ylim([-1.1*np.pi,1.1*np.pi])
 
 #diffs=(m_2psi-p_2psi)/(0.5*(m_2psi+p_2psi))
 diffs=m_2psi-p_2psi
 axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
+#fitting line to 2psi
+az_offset=np.mean(diffs)
+axarr[0][1].plot([-np.pi,np.pi],[-np.pi+az_offset, np.pi+az_offset], color='black')
 
+popt = np.polyfit(p_2chi, m_2chi, 1)
+if popt[0]<0:
+    m_2chi=-m_2chi
+    
 axarr[0][2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].plot([np.min(p_2chi), np.max(p_2chi)],[np.min(p_2chi),np.max(p_2chi)],alpha=0.75,color='black')
@@ -262,4 +328,141 @@ diffs=m_2chi-p_2chi
 axarr[1][2].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 
+plt.show()
+
+#############################################################################
+# plotting on Poincare sphere
+
+from matplotlib import cm, colors
+from mpl_toolkits.mplot3d import Axes3D
+from scipy.special import sph_harm
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+from matplotlib.colors import LightSource
+import random
+
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+
+# Set the aspect ratio to 1 so our sphere looks spherical
+fig = plt.figure(figsize=plt.figaspect(1.))
+ax = fig.add_subplot(111, projection='3d')
+
+def plot_sphere(ax,arrows='xyz'):
+    phi = np.linspace(0, np.pi, 200)
+    theta = np.linspace(0, 2*np.pi, 200)
+
+    #equatorial circle
+    xe=np.sin(theta)
+    ye=np.cos(theta)
+
+    phi, theta = np.meshgrid(phi, theta)
+
+    # The Cartesian coordinates of the unit sphere
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+
+    ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
+                antialiased=True, alpha=0.5)#, facecolors=cm)
+    if 'y' in arrows:
+        ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
+                        [0,0], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(0,1.5,0, '$S_2$', fontweight='bold')        
+    if 'x' in arrows:
+        ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
+                        [0,0], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(1.75,0,0, '$S_1$', fontweight='bold')        
+    if 'z' in arrows:        
+        ax.add_artist(Arrow3D([0, 0], [0,0], 
+                        [-0.03,1.5], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(0,0,1.5, '$S_3$',fontweight='bold')
+    ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
+
+plot_sphere(ax)
+# Plotting selected datapoints
+npoints=3
+dpoints=[]
+for n in range(npoints):
+    dpoints.append(int(random.random()*len(m_dops)))
+dpoints=np.array(dpoints)
+
+for n in range(npoints):
+    S3=np.sin(m_2chi[dpoints[n]])
+    S2=np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    S1=np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
+                          [0, S2/np.linalg.norm([S1,S2,S3])],
+                          [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,
+                          lw=0.5, arrowstyle="-|>", color="blue"))
+
+    x=np.linspace(np.cos(m_2psi[dpoints[n]]-m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]),
+                  np.cos(m_2psi[dpoints[n]]+m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]))
+    y=np.linspace(np.sin(m_2psi[dpoints[n]]-m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]),
+                  np.sin(m_2psi[dpoints[n]]+m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]))
+    z=np.linspace(np.sin(m_2chi[dpoints[n]]),
+                  np.sin(m_2chi[dpoints[n]]))
+    ax.plot(x,y,z, lw=0.25, color='blue', alpha=1)
+    
+    x=np.linspace(np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]]-m_2chi_err[dpoints[n]]),
+                  np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]]+m_2chi_err[dpoints[n]]))
+    y=np.linspace(np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]]-m_2chi_err[dpoints[n]]),
+                  np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]]+m_2chi_err[dpoints[n]]))
+    z=np.linspace(np.sin(m_2chi[dpoints[n]]-m_2chi_err[dpoints[n]]),
+                  np.sin(m_2chi[dpoints[n]]+m_2chi_err[dpoints[n]]))
+    ax.plot(x,y,z, lw=0.25, color='blue', alpha=1)
+    
+    S3=np.sin(p_2chi[dpoints[n]])
+    S2=np.sin(p_2psi[dpoints[n]]+az_offset)*np.cos(p_2chi[dpoints[n]])
+    S1=np.cos(p_2psi[dpoints[n]]+az_offset)*np.cos(p_2chi[dpoints[n]])
+    ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
+                          [0, S2/np.linalg.norm([S1,S2,S3])],
+                          [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,
+                          lw=0.5, arrowstyle="-|>", color="orange"))
+    
+    x=np.linspace(np.cos(p_2psi[dpoints[n]]-p_2psi_err[dpoints[n]])*np.cos(p_2chi[dpoints[n]]),
+                  np.cos(p_2psi[dpoints[n]]+p_2psi_err[dpoints[n]])*np.cos(p_2chi[dpoints[n]]))
+    y=np.linspace(np.sin(p_2psi[dpoints[n]]-p_2psi_err[dpoints[n]])*np.cos(p_2chi[dpoints[n]]),
+                  np.sin(p_2psi[dpoints[n]]+p_2psi_err[dpoints[n]])*np.cos(p_2chi[dpoints[n]]))
+    z=np.linspace(np.sin(p_2chi[dpoints[n]]),
+                  np.sin(p_2chi[dpoints[n]]))
+    ax.plot(x,y,z, lw=0.25, color='orange', alpha=1)
+
+    x=np.linspace(np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]]-p_2chi_err[dpoints[n]]),
+                  np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]]+p_2chi_err[dpoints[n]]))
+    y=np.linspace(np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]]-p_2chi_err[dpoints[n]]),
+                  np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]]+p_2chi_err[dpoints[n]]))
+    z=np.linspace(np.sin(p_2chi[dpoints[n]]-p_2chi_err[dpoints[n]]),
+                  np.sin(p_2chi[dpoints[n]]+p_2chi_err[dpoints[n]]))
+    ax.plot(x,y,z, lw=0.25, color='orange', alpha=1)
+    
+# Turn off the axis planes
+ax.set_axis_off()
+plt.show()
+
+#############################################################################
+# plotting hemispheres
+
+fig = plt.figure()
+ax = fig.add_subplot(1,2,1, projection='3d')
+plot_sphere(ax, arrows='xy')
+
+ax2 = fig.add_subplot(1,2,2, projection='3d')
+plot_sphere(ax2, arrows='xy')
+
+ax.set_axis_off()
+ax.view_init(90, 0)
+ax2.set_axis_off()
+ax2.view_init(-90, 0)
 plt.show()
