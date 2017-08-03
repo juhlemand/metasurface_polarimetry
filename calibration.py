@@ -581,10 +581,16 @@ def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
     
     axes.xaxis.set_minor_locator(minor_locatorx)
     axes.yaxis.set_minor_locator(minor_locatory)
-    axes.tick_params(axis='x', labelsize = 14, direction='in', length = 5, which = 'major', top='off')
-    axes.tick_params(axis='x', labelsize = 14, direction='in', length = 3, which = 'minor', top='off')
-    axes.tick_params(axis='y', labelsize = 14, direction='in', length = 5, which = 'major', top='off')
-    axes.tick_params(axis='y', labelsize = 14, direction='in', length = 3, which = 'minor', top='off')
+    
+    major_length = 7
+    major_width = 1.5
+    minor_length = 5
+    minor_width = 1.5    
+    
+    axes.tick_params(axis='x', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
+    axes.tick_params(axis='x', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
+    axes.tick_params(axis='y', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
+    axes.tick_params(axis='y', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
     axes.set_xlim([min_angle, max_angle])
 
       
@@ -606,8 +612,8 @@ plt.show()
 # now make inset graphs
 plt.figure(4)
 
-min_angle= 30
-max_angle = 60
+min_angle= 40
+max_angle = 50
 partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
 
 #plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
