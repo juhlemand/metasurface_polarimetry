@@ -339,7 +339,7 @@ class Arrow3D(FancyArrowPatch):
 fig = plt.figure(figsize=plt.figaspect(1.))
 ax = fig.add_subplot(111, projection='3d')
 
-def plot_sphere(ax,arrows='xyz'):
+def plot_sphere(ax,arrows='xyz',equatorial=True):
     phi = np.linspace(0, np.pi, 200)
     theta = np.linspace(0, 2*np.pi, 200)
 
@@ -371,7 +371,8 @@ def plot_sphere(ax,arrows='xyz'):
                         [-0.03,1.5], mutation_scale=15, 
                         lw=0.25, arrowstyle="-|>", color="black"))
         ax.text(0,0,1.5, '$S_3$',fontweight='bold')
-    ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
+    if equatorial:
+        ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
 plot_sphere(ax)
 # Plotting selected datapoints
@@ -439,10 +440,47 @@ plt.show()
 
 fig = plt.figure()
 ax = fig.add_subplot(1,2,1, projection='3d')
-plot_sphere(ax, arrows='xy')
+plot_sphere(ax, arrows='xy', equatorial=False)
 
 ax2 = fig.add_subplot(1,2,2, projection='3d')
-plot_sphere(ax2, arrows='xy')
+plot_sphere(ax2, arrows='xy', equatorial=False)
+
+# Plotting selected datapoints
+npoints=20
+dpoints=[]
+for n in range(npoints):
+    dpoints.append(int(random.random()*len(m_dops)))
+dpoints=np.array(dpoints)
+    
+for n in range(npoints):
+    S3=np.sin(m_2chi[dpoints[n]])
+    S2=np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    S1=np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    if S3 >=0:
+        ax.scatter(S1, S2, S3, color='blue', s=0.5)
+    if S3 <=0:
+        ax2.scatter(S1, S2, S3, color='blue', s=0.5)
+        
+    S3=np.sin(p_2chi[dpoints[n]])
+    S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    if S3 >=0:        
+        ax.scatter(S1, S2, S3, color='orange', s=0.5)
+    if S3 <=0:        
+        ax2.scatter(S1, S2, S3, color='orange', s=0.5)
+
+#mesh on sphere
+phi = np.linspace(0, 0.5*np.pi, 100)
+theta = np.linspace(0, 2*np.pi, 100)
+x = np.sin(phi) * np.cos(theta)
+y = np.sin(phi) * np.sin(theta)
+z = np.cos(phi)
+
+ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='black', lw=5,
+                antialiased=True, shade=0, alpha=1)#, facecolors=cm)
+
+ax2.plot_surface(x, y, z,  rstride=10, cstride=10, color='black', lw=5,
+                antialiased=True, shade=0, alpha=1)#, facecolors=cm)
 
 ax.set_axis_off()
 ax.view_init(90, 0)
