@@ -1,6 +1,6 @@
 %% Specify values in absolute coordinates for polarization optics.
 clear;
-foldername='calibration4';
+foldername='calibration6';
 mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\', foldername]);
 pol_hor = 0.0; %Reference polarizer position
 %last_polarizer_at_45 = 105;
@@ -72,6 +72,9 @@ ch3.TerminalConfig = 'SingleEnded';
 ch4.TerminalConfig = 'SingleEnded';
 
 %% dark current measurement
+cd('C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\');
+addpath('.');
+addpath('..\..\..')
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);  
 dark = daq_measure(5, ['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\dark.txt']);
@@ -283,7 +286,6 @@ hold off
 disp('Calibration completed.');
 cd ..\..\..
 %% Partial polarization state measurement
-
 default_duration = 0.5;
 input('Remove QWP, make sure interferometer is in beampath and press return to begin partial polarization measurement.');
 mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol'])
@@ -292,6 +294,9 @@ addpath('.');
 addpath('..');
 addpath('..\..')
 addpath('..\..\..');
+
+h_rot_stage.SetAbsMovePos(0, limit_out_beam);
+h_rot_stage.MoveAbsolute(0,1);  
 
 pol_angles = 0:2:359;
 %pol_angles = pol_angles - pol_hor;
