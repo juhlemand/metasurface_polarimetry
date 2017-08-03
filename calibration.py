@@ -552,10 +552,30 @@ partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
 
 
 def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
-    min_index = int(np.floor(min_angle/180) * len(xdata))
-    max_index = int(np.ceil(max_angle/180 * len(xdata))) 
-    axes.errorbar(xdata[min_index:max_index], ydata[min_index:max_index], yerr=yerror[min_index:max_index], fmt = ".", markersize = 6, ecolor = 'r', color = 'r')
-    axes.plot([0, 1.05*max_angle], [1,1], color = 'black', alpha = 0.25)
+
+    def partial_pol_func(x, offset):
+        return np.abs(np.cos(2*(x-offset)*np.pi/180))
+    
+    popt2, variance2 = curve_fit(partial_pol_func, xdata[:len(xdata)//4], ydata[:len(xdata)//4])
+    
+    offset = popt2[0]
+    xdata = xdata - (offset) 
+    xdata = np.mod(xdata, 360)
+    
+    mask = np.where((xdata>=min_angle) & (xdata<=max_angle))
+    xdata = xdata[mask]
+    ydata = ydata[mask]
+    yerror = yerror[mask]
+    
+    
+    thetas = np.linspace(min_angle, max_angle, 1000)    
+    curve = partial_pol_func(thetas, 0)    
+    
+    axes.plot(thetas, curve, linewidth = 1.0, color = 'blue')
+    
+    axes.set_ylim([np.min(curve), 1.05 * np.max(curve)])  
+    axes.errorbar(xdata, ydata, yerr=yerror, fmt = ".", markersize = 6, ecolor = 'r', color = 'r')
+    axes.plot([0, max_angle], [1,1], color = 'black', alpha = 0.25)
     minor_locator = AutoMinorLocator(2)
     axes.xaxis.set_minor_locator(minor_locator)
     axes.yaxis.set_minor_locator(minor_locator)
@@ -563,22 +583,10 @@ def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
     axes.tick_params(axis='x', labelsize = 14, direction='in', length = 3, which = 'minor', top='off')
     axes.tick_params(axis='y', labelsize = 14, direction='in', length = 5, which = 'major', top='off')
     axes.tick_params(axis='y', labelsize = 14, direction='in', length = 3, which = 'minor', top='off')
-    axes.set_xlim([min_angle, 1.*max_angle])
+    axes.set_xlim([min_angle, max_angle])
 
-    def partial_pol_func(x, offset):
-        return np.abs(np.cos(2*(x-offset)*np.pi/180))
+      
     
-    popt2, variance2 = curve_fit(partial_pol_func, pol_angles2[:len(pol_angles2)//2], partial_dops[:len(pol_angles2)//2])
-    
-    thetas = np.linspace(min_angle, max_angle, 1000)    
-    curve = partial_pol_func(thetas, *popt2)    
-    
-    axes.plot(thetas, curve, linewidth = 1.0, color = 'blue')
-    
-    axes.set_ylim([np.min(curve), 1.05 * np.max(curve)])    
-    
-    plt.show()
-
 
 
 # plot points and error bars over whole range first
@@ -591,10 +599,14 @@ file_name = 'partial_pol.svg'
 os.chdir('../../../../Graphics')
 plt.savefig(file_name, format='svg')
 os.chdir('..\\' + data_dir + '\\' + partial_pol)
+plt.show()
 
+# now make inset graphs
+plt.figure(4)
 
-
-# put horizontal line at 1.0
+min_angle= 30
+max_angle = 60
+partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
 
 #plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
 #plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
