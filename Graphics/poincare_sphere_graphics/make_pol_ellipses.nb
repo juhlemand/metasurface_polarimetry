@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     72988,       1738]
-NotebookOptionsPosition[     71307,       1682]
-NotebookOutlinePosition[     71650,       1697]
-CellTagsIndexPosition[     71607,       1694]
+NotebookDataLength[     73452,       1748]
+NotebookOptionsPosition[     71771,       1692]
+NotebookOutlinePosition[     72114,       1707]
+CellTagsIndexPosition[     72071,       1704]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -1609,6 +1609,13 @@ Cell[BoxData[
 \!\(\*SuperscriptBox[SubscriptBox[\(c\), \(x\)], \(y\)]\)}\>\"", ",", " ", 
        RowBox[{"FontFamily", "\[Rule]", "\"\<Perpetua\>\""}], ",", " ", 
        RowBox[{"FontSize", "\[Rule]", "50"}]}], "]"}]}], ";"}], " ", 
+   "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"epsilon", " ", "=", " ", 
+     RowBox[{"Style", "[", 
+      RowBox[{"\"\<\[Epsilon]\>\"", ",", " ", 
+       RowBox[{"FontFamily", "\[Rule]", "\"\<Perpetua\>\""}], ",", " ", 
+       RowBox[{"FontSize", "\[Rule]", "50"}]}], "]"}]}], ";"}], " ", 
    "\[IndentingNewLine]", "\[IndentingNewLine]", 
    RowBox[{"Export", "[", 
     RowBox[{"\"\<x.eps\>\"", ",", " ", "x"}], "]"}], "\[IndentingNewLine]", 
@@ -1625,13 +1632,16 @@ Cell[BoxData[
     RowBox[{"\"\<big_phi_x.eps\>\"", ",", " ", "bigphix"}], "]"}], 
    "\[IndentingNewLine]", 
    RowBox[{"Export", "[", 
-    RowBox[{"\"\<integral.eps\>\"", ",", " ", "integral"}], 
-    "]"}]}]}]], "Input",
+    RowBox[{"\"\<integral.eps\>\"", ",", " ", "integral"}], "]"}], 
+   "\[IndentingNewLine]", 
+   RowBox[{"Export", "[", 
+    RowBox[{"\"\<epsilon.eps\>\"", ",", " ", "epsilon"}], "]"}]}]}]], "Input",
  CellChangeTimes->{{3.710181729066723*^9, 3.7101817675623903`*^9}, {
   3.710181911028126*^9, 3.7101819566841726`*^9}, {3.7104588457391667`*^9, 
   3.710458913001469*^9}, {3.7104589611351023`*^9, 3.7104589961976976`*^9}, {
   3.7104615412720747`*^9, 3.710461559000598*^9}, {3.7104616811755857`*^9, 
-  3.7104617136178446`*^9}, {3.7104617438782954`*^9, 3.710461771391615*^9}}],
+  3.7104617136178446`*^9}, {3.7104617438782954`*^9, 3.710461771391615*^9}, {
+  3.7106253592067895`*^9, 3.7106253901754184`*^9}}],
 
 Cell[BoxData["\<\"x.eps\"\>"], "Output",
  CellChangeTimes->{
@@ -1730,16 +1740,16 @@ Cell[55422, 1277, 10321, 268, 236, "Output"]
 }, Open  ]],
 Cell[65758, 1548, 455, 12, 69, "Input"],
 Cell[CellGroupData[{
-Cell[66238, 1564, 3068, 69, 397, "Input"],
-Cell[69309, 1635, 258, 4, 30, "Output"],
-Cell[69570, 1641, 256, 4, 30, "Output"],
-Cell[69829, 1647, 258, 4, 30, "Output"],
-Cell[70090, 1653, 259, 4, 30, "Output"],
-Cell[70352, 1659, 260, 4, 30, "Output"],
-Cell[70615, 1665, 264, 4, 30, "Output"],
-Cell[70882, 1671, 263, 4, 30, "Output"]
+Cell[66238, 1564, 3532, 79, 435, "Input"],
+Cell[69773, 1645, 258, 4, 30, "Output"],
+Cell[70034, 1651, 256, 4, 30, "Output"],
+Cell[70293, 1657, 258, 4, 30, "Output"],
+Cell[70554, 1663, 259, 4, 30, "Output"],
+Cell[70816, 1669, 260, 4, 30, "Output"],
+Cell[71079, 1675, 264, 4, 30, "Output"],
+Cell[71346, 1681, 263, 4, 30, "Output"]
 }, Open  ]],
-Cell[71160, 1678, 143, 2, 30, "Input"]
+Cell[71624, 1688, 143, 2, 30, "Input"]
 }
 ]
 *)

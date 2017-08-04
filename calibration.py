@@ -6,26 +6,36 @@ This is a script to analyze polarimetry calibration data.
 
 @contributors: Noah, Ruoping
 """
-import os,re,pickle
+import os, re, pickle
 import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from itertools import compress
-from sys import platform
+from os import platform
+from matplotlib.ticker import AutoMinorLocator
+
+
+
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
 qwp_L = 'qwp_L'  # folder for qwp at second configuration
-partial_pol = 'partial_pol8'  # folder location of partial pol data
+
+partial_pol = 'partial_pol3'  # folder location of partial pol data
+
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
-if 'linux' in platform:
-    os.chdir('acquisition/data/calibration4')
-else:
-    os.chdir('acquisition\data\calibration8')
+
+#if 'linux' in platform:
+#    os.chdir('acquisition/data/calibration6')
+#else:
+#    os.chdir('acquisition\data\calibration6')
+
+data_dir = 'acquisition\data\calibration6'
+
+os.chdir(data_dir)
 
 
 #%% Collect some error analysis functions
@@ -391,10 +401,12 @@ print('')
 
 # save the instrument matrix as a text file for use in other scripts
 
-if 'linux' in platform:
-    np.savetxt('../Ainv.txt', Ainv)
-else:
-    np.savetxt('..\\Ainv.txt', Ainv)
+#if 'linux' in platform:
+    #np.savetxt('../Ainv.txt', Ainv)
+#else:
+    #np.savetxt('..\\Ainv.txt', Ainv)
+
+np.savetxt('..\\Ainv.txt', Ainv)
 
 #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf, http://sci-hub.io/10.1364/ao.47.002541)
 #Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
@@ -419,10 +431,12 @@ print('Covariance in Ainv: ')
 print(Ainv_cov)
 #np.savetxt('..\\Ainv_cov.txt', Ainv_cov)
 # save the covariance matrix to a text-like file?
-if 'linux' in platform:
-    pickle.dump( Ainv_cov, open( "../Ainv_cov.p", "wb" ) )
-else:
-    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
+#if 'linux' in platform:
+#    pickle.dump( Ainv_cov, open( "../Ainv_cov.p", "wb" ) )
+#else:
+#    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
+
+pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
     
 #%% Define functions to reconstruct Stokes vector and compute DOP
 def determine_stokes(measurement):
@@ -541,22 +555,81 @@ partial_dops_err = np.sqrt((dS0*np.sqrt(S1**2+S2**2+S3**2)/S0**2)**2
                    +2*cov_S3_S2*(S3/(S0*np.sqrt(S1**2+S2**2+S3**2)))*(S2/(S0*np.sqrt(S1**2+S2**2+S3**2)))
                    )
 
+
+def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
+
+    def partial_pol_func(x, offset):
+        return np.abs(np.cos(2*(x-offset)*np.pi/180))
+    
+    popt2, variance2 = curve_fit(partial_pol_func, xdata[:len(xdata)//4], ydata[:len(xdata)//4])
+    
+    offset = popt2[0]
+    xdata = xdata - (offset) 
+    xdata = np.mod(xdata, 360)
+
+    mask = np.where((xdata>=min_angle) & (xdata<=max_angle))
+    xdata = xdata[mask]
+    ydata = ydata[mask]
+    yerror = yerror[mask]
+
+
+    thetas = np.linspace(min_angle, max_angle, 1000)    
+    curve = partial_pol_func(thetas, 0)    
+
+    axes.plot(thetas, curve, linewidth = 1.0, color = 'blue')
+
+    axes.set_ylim([np.min(curve), 1.05 * np.max(curve)])  
+    axes.errorbar(xdata, ydata, yerr=yerror, fmt = ".", markersize = 6, ecolor = 'r', color = 'r')
+    axes.plot([0, max_angle], [1,1], color = 'black', alpha = 0.25)
+    minor_locatorx = AutoMinorLocator(2)
+    minor_locatory = AutoMinorLocator(2)
+
+    axes.xaxis.set_minor_locator(minor_locatorx)
+    axes.yaxis.set_minor_locator(minor_locatory)
+
+    major_length = 7
+    major_width = 1.5
+    minor_length = 5
+    minor_width = 1.5    
+
+    axes.tick_params(axis='x', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
+    axes.tick_params(axis='x', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
+    axes.tick_params(axis='y', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
+    axes.tick_params(axis='y', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
+    axes.set_xlim([min_angle, max_angle])
+
+      
+    
+
+
+# plot points and error bars over whole range first
 plt.figure(3)
-plt.errorbar(pol_angles2, partial_dops, yerr=partial_dops_err, fmt=".", markersize=5)
-plt.plot([0,np.max(pol_angles2)], [1,1], color='black', alpha=0.25)
-plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
-plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
-partial_pol_fig = plt.gca()
-partial_pol_fig.tick_params(axis='x', labelsize=16, direction='out', length = 5)
-partial_pol_fig.set_ylim([0, 1.05])
 
-thetas = np.linspace(0, np.max(pol_angles2), 1000)
-def partial_pol_func(x, scale, offset):
-    return scale * np.abs(np.cos(2*(x-offset)*np.pi/180))
-
-popt2, variance2 = curve_fit(partial_pol_func, pol_angles2, partial_dops)
-plt.plot(thetas, partial_pol_func(thetas, *popt2), linewidth = 1, alpha=0.5)
+min_angle= 0
+max_angle = 360
+partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
+file_name = 'partial_pol.svg'
+os.chdir('../../../../Graphics')
+plt.savefig(file_name, format='svg')
+os.chdir('..\\' + data_dir + '\\' + partial_pol)
 plt.show()
+
+# now make inset graphs
+plt.figure(4)
+
+min_angle= 80
+max_angle = 90
+partial_pol_fig(plt.gca(), partial_dops_err, pol_angles2, partial_dops, min_angle, max_angle)
+
+#plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
+#plt.ylabel('Degree of Polarization (DOP)', fontsize='12')
+
+
+# now generate inset plots for the maximum and minimum positions
+
+
+
+
 # now save the figure
 #file_name = os.getcwd() + 'partial_pol.svg'
 #plt.savefig(file_name, format='svg')
