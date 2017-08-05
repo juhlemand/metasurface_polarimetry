@@ -12,22 +12,20 @@ import matplotlib.pyplot as plt
 from sys import platform
 from scipy.optimize import curve_fit
 
-directory='acquisition/data/calibration4/comparison' #data location folder
-
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
 DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
 if 'linux' in platform:
-    directory='acquisition/data/calibration4/comparison' #data location folder
+    directory='acquisition/data/calibration6/comparison' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
 else:
-    directory='acquisition\data\calibration1\comparison1.2' #data location folder
+    directory='acquisition\\data\\calibration4\\comparison' #data location folder
     os.chdir(directory)
-    Ainv=np.loadtxt('..\Ainv.txt')
-    Ainv_cov=pickle.load(open( "..\Ainv_cov.p", "rb" ))
+    Ainv=np.loadtxt('..\\Ainv.txt')
+    Ainv_cov=pickle.load(open( "..\\Ainv_cov.p", "rb" ))
 
 N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
@@ -356,7 +354,7 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
     z = np.cos(phi)
 
     ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
-                antialiased=True, alpha=0.5)#, facecolors=cm)
+                antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
     if 'y' in arrows:
         ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
                         [0,0], mutation_scale=15, 

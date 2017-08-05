@@ -11,10 +11,8 @@ import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from os import platform
+from sys import platform
 from matplotlib.ticker import AutoMinorLocator
-
-
 
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
@@ -33,7 +31,7 @@ power_meter_error = 0.001 #Error in power meter reading from ambient light, unit
 #else:
 #    os.chdir('acquisition\data\calibration6')
 
-data_dir = 'acquisition\data\calibration6'
+data_dir = 'acquisition\data\calibration4'
 
 os.chdir(data_dir)
 
