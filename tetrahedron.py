@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys, csv, os
 
+
 from matplotlib import cm, colors
 from mpl_toolkits.mplot3d import Axes3D
 from scipy.special import sph_harm
@@ -13,7 +14,7 @@ import random
 if 'linux' in sys.platform:
     directory = 'acquisition/data/big_metasurface'
 else:
-    directory = 'acquisition\\data\\small_metasurfaces\\top1_left2'
+    directory = 'acquisition\\data\\small_metasurfaces\\top5_left4'
 
 subdirs = ['order_-2', 'order_-1', 'order_1', 'order_2']
 os.chdir(directory)
