@@ -1,6 +1,6 @@
 %% Specify values in absolute coordinates for polarization optics.
 clear;
-foldername='calibration6';
+foldername='calibration8';
 mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\', foldername]);
 pol_hor = 0.0; %Reference polarizer position
 %last_polarizer_at_45 = 105;
@@ -166,6 +166,7 @@ input('Place QWP between the two polarizers and press return to continue.');
 
 n_angles=18;
 figure
+
 hold on
 h_rot_stage.SetAbsMovePos(0, limit_in_beam);
 h_rot_stage.MoveAbsolute(0,1);
@@ -288,17 +289,17 @@ cd ..\..\..
 %% Partial polarization state measurement
 default_duration = 0.5;
 input('Remove QWP, make sure interferometer is in beampath and press return to begin partial polarization measurement.');
-mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol'])
-cd (['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol']); % cd into a new directory for the linear polarization data
+mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol8'])
+cd (['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername,'\partial_pol8']); % cd into a new directory for the linear polarization data
 addpath('.');
 addpath('..');
-addpath('..\..')
+addpath('..\..');
 addpath('..\..\..');
 
-h_rot_stage.SetAbsMovePos(0, limit_out_beam);
+%h_rot_stage.SetAbsMovePos(0, limit_out_beam);
 h_rot_stage.MoveAbsolute(0,1);  
 
-pol_angles = 0:2:359;
+pol_angles = 0:0.25:360;
 %pol_angles = pol_angles - pol_hor;
 
 %figure;

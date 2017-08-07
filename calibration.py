@@ -11,29 +11,29 @@ import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-
+from sys import platform
 from matplotlib.ticker import AutoMinorLocator
-
-
 
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
 qwp_L = 'qwp_L'  # folder for qwp at second configuration
+
 partial_pol = 'partial_pol3'  # folder location of partial pol data
+
 comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
+
 
 #if 'linux' in platform:
 #    os.chdir('acquisition/data/calibration6')
 #else:
 #    os.chdir('acquisition\data\calibration6')
 
-data_dir = 'acquisition\data\calibration6'
+data_dir = 'acquisition\data\calibration4'
 
 os.chdir(data_dir)
-
 
 
 #%% Collect some error analysis functions

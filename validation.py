@@ -12,22 +12,20 @@ import matplotlib.pyplot as plt
 from sys import platform
 from scipy.optimize import curve_fit
 
-directory='acquisition/data/calibration4/comparison' #data location folder
-
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
 DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
 if 'linux' in platform:
-    directory='acquisition/data/calibration1/comparison1.2' #data location folder
+    directory='acquisition/data/calibration6/comparison' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
 else:
-    directory='acquisition\data\calibration1\comparison1.2' #data location folder
+    directory='acquisition\\data\\calibration4\\comparison' #data location folder
     os.chdir(directory)
-    Ainv=np.loadtxt('..\Ainv.txt')
-    Ainv_cov=pickle.load(open( "..\Ainv_cov.p", "rb" ))
+    Ainv=np.loadtxt('..\\Ainv.txt')
+    Ainv_cov=pickle.load(open( "..\\Ainv_cov.p", "rb" ))
 
 N_measurements=len(os.listdir())-1 #number of measurements which have been taken
 
@@ -204,22 +202,6 @@ plt.ylim([0,1.1])
 plt.legend()
 plt.show()
 
-f, axarr  = plt.subplots(2,3)
-axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][0].plot([0,1],[0,1],alpha=0.75,color='black')
-axarr[0][0].set_title('DOP')
-axarr[0][0].set_xlabel('Polarimeter measurement')
-axarr[0][0].set_ylabel('Metasurface measurement')
-axarr[0][0].set_xlim([-0.1,1.1])
-axarr[0][0].set_ylim([-0.1,1.1])
-
-diffs=100*(m_dops-p_dops)  # relative dop error
-axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
-axarr[1][0].axvline(0.0,color='black', alpha=0.25)
-#axarr[1][0].set_title('DOP error metasurface-polarimeter')
-
-
 ##############################################################
 #plotting code
 
@@ -356,7 +338,7 @@ class Arrow3D(FancyArrowPatch):
 fig = plt.figure(figsize=plt.figaspect(1.))
 ax = fig.add_subplot(111, projection='3d')
 
-def plot_sphere(ax,arrows='xyz'):
+def plot_sphere(ax,arrows='xyz',equatorial=True):
     phi = np.linspace(0, np.pi, 200)
     theta = np.linspace(0, 2*np.pi, 200)
 
@@ -372,7 +354,7 @@ def plot_sphere(ax,arrows='xyz'):
     z = np.cos(phi)
 
     ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
-                antialiased=True, alpha=0.5)#, facecolors=cm)
+                antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
     if 'y' in arrows:
         ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
                         [0,0], mutation_scale=15, 
@@ -382,13 +364,14 @@ def plot_sphere(ax,arrows='xyz'):
         ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
                         [0,0], mutation_scale=15, 
                         lw=0.25, arrowstyle="-|>", color="black"))
-        ax.text(1.75,0,0, '$S_1$', fontweight='bold')        
+        ax.text(1.6,0,0, '$S_1$', fontweight='bold')        
     if 'z' in arrows:        
         ax.add_artist(Arrow3D([0, 0], [0,0], 
                         [-0.03,1.5], mutation_scale=15, 
                         lw=0.25, arrowstyle="-|>", color="black"))
         ax.text(0,0,1.5, '$S_3$',fontweight='bold')
-    ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
+    if equatorial:
+        ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
 plot_sphere(ax)
 # Plotting selected datapoints
@@ -454,15 +437,60 @@ plt.show()
 #############################################################################
 # plotting hemispheres
 
-fig = plt.figure()
+fig = plt.figure(figsize=plt.figaspect(0.5))
 ax = fig.add_subplot(1,2,1, projection='3d')
-plot_sphere(ax, arrows='xy')
+plot_sphere(ax, arrows='xy', equatorial=False)
 
 ax2 = fig.add_subplot(1,2,2, projection='3d')
-plot_sphere(ax2, arrows='xy')
+plot_sphere(ax2, arrows='xy', equatorial=False)
+
+# Plotting selected datapoints
+npoints=20
+dpoints=[]
+for n in range(npoints):
+    dpoints.append(int(random.random()*len(m_dops)))
+dpoints=np.array(dpoints)
+    
+for n in range(npoints):
+    S3=np.sin(m_2chi[dpoints[n]])
+    S2=np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    S1=np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    if S3 >=0:
+        ax.scatter(S1, S2, S3, color='blue', s=0.5)
+    if S3 <=0:
+        ax2.scatter(S1, S2, S3, color='blue', s=0.5)
+        
+    S3=np.sin(p_2chi[dpoints[n]])
+    S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    if S3 >=0:        
+        ax.scatter(S1, S2, S3, color='orange', s=0.5)
+    if S3 <=0:        
+        ax2.scatter(S1, S2, S3, color='orange', s=0.5)
+
+#mesh on sphere
+for phi in [np.pi/2, (np.pi/2)/3, 2*(np.pi/2)/3]:
+    theta = np.linspace(0, 2*np.pi, 100)
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+    ax.plot(x, y, -z, '--', dashes=(10, 10), color='red', lw=0.5)
+    ax2.plot(x, y, z, '--', dashes=(10, 10), color='red', lw=0.5)
+
+for theta in np.linspace(0, 2*np.pi, 12+1):
+    phi = np.linspace(np.pi/2, np.pi, 100)
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+    ax.plot(x, y, z, '--', dashes=(10, 10), color='red', lw=0.5)
+    ax2.plot(x, y, z, '--', dashes=(10, 10), color='red', lw=0.5)
 
 ax.set_axis_off()
 ax.view_init(90, 0)
+ax.scatter(0,0,1.1,s=10,color='black')
+ax.text(0, 0.1, 1.1, '$S_3$', fontweight='bold')
 ax2.set_axis_off()
 ax2.view_init(-90, 0)
+ax2.scatter(0,0,-1.1,marker="x", s=30,color='black')
+ax2.text(0, 0.1, 1.1, '$S_3$', fontweight='bold')
 plt.show()
