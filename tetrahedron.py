@@ -144,7 +144,7 @@ for i in range(0,4):
     for j in range(0,4):
         plt.plot(list(S1[n] for n in [i,j]),
                  list(S2[n] for n in [i,j]),
-                 list(S3[n] for n in [i,j]), color='orange', lw=0.5, marker='o')
+                 list(S3[n] for n in [i,j]), color='orange', lw=0.5, marker=' ')
 
 # Plotting measured polarization data
 S1 = measured_stokes.transpose()[1]
@@ -154,7 +154,7 @@ for i in range(0,4):
     for j in range(0,4):
         plt.plot(list(S1[n] for n in [i,j]),
                  list(S2[n] for n in [i,j]),
-                 list(S3[n] for n in [i,j]), color='blue', lw=0.5, marker='o')
+                 list(S3[n] for n in [i,j]), color='blue', lw=0.5, marker=' ')
 
 # Turn off the axis planes
 ax.set_axis_off()
