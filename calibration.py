@@ -262,7 +262,7 @@ def linear_cal_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
         axes.errorbar(xdata, y, fmt=" ", yerr=err, markersize = 6, ecolor = 'r', color = 'r', capsize=2.5, elinewidth=2.5) 
         print(fit_parameters[i])
         
-    axes.legend(prop={'size': 15})
+    axes.legend(prop={'size': 9})
     axes.set_ylim([0, 1.02*np.max(pd_voltages)])
     axes.set_xlim([min_angle, max_angle])
     minor_locatorx = AutoMinorLocator(2)
@@ -672,7 +672,6 @@ plt.figure(4)
 min_angle= 40
 max_angle = 50
 partial_pol_fig(plt.gca(), partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle, max_angle)
-plt.show()
 
 if save_fig:
     file_name = 'partial_pol_inset1.svg'
@@ -680,7 +679,7 @@ if save_fig:
     plt.savefig(file_name, format='svg')
     os.chdir('..\\' + data_dir + '\\' + partial_pol)
 
-
+plt.show()
 
 
 #plt.xlabel('$\Theta_{LP} (\circ)$', fontsize='12', fontname='Sans Serif')
