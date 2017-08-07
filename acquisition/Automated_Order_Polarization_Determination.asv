@@ -1,7 +1,7 @@
 %% Establish serial communication with motors and power meter
 
 clear;
-foldername = 'pol_det';
+foldername = 'small_metasurface ';
 mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\', foldername]);
 serial_rotation_mount = 55000517; % serial number of 1st rotation mount 
 serial_rotation_mount2 = 55000631; % serial number of 2nd rotation mount 
@@ -135,7 +135,7 @@ input('Place the metasurface in the beam, align it, and place just the linear po
 foldername = 'big_metasurface';
 mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\', foldername]);
 cd(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\',foldername]);
-save_dir = 'order_22';
+save_dir = 'order_2';
 mkdir(save_dir);
 cd(save_dir);
 linear_pol_extension = 'pol_only';
@@ -148,6 +148,7 @@ for i = 1:length(pol_angles)
     curr_angle = pol_angles(i) + hor_angle; % convert to coordinate system of rotation mount
     h_rot_mount.SetAbsMovePos(0, curr_angle);
     h_rot_mount.MoveAbsolute(0, 1);
+    pause(0.5)
     fprintf(pwr_meter, 'MEAS:POW?'); % query the power
     linear_out_powers(i) = str2double(fscanf(pwr_meter)) / 0.001; % get the power
     disp(['Completed linear point ', num2str(i), ' of ', num2str(length(pol_angles)), '.']);
@@ -159,20 +160,25 @@ csvwrite(linear_pol_extension, polarizer_dataset); % now save the data
 input('Linear polarization data acquisition completed and saved. Please place QWP in front of linear polarizer and press return to continue.');
 qwp_R_extension = 'qwp_R';
 
-qwp_angles = 0:90:90;
+qwp_angles = 0:5:360;
 qwp_R_out_powers = zeros(1, length(qwp_angles));
 
 % qwp_R loop
 for i = 1:length(qwp_angles)
-    curr_pol_angle = qwp_angles(i) + hor_angle; % convert to coordinate system of rotation mount
-    curr_qwp_angle = qwp_angles(i) + qwp_at_rcp;
+    curr_pol_angle = mod(qwp_angles(i) + hor_angle, 360); % convert to coordinate system of rotation mount
+    curr_qwp_angle = mod(qwp_angles(i) + qwp_at_rcp + 45, 360);
     h_rot_mount.SetAbsMovePos(0, curr_pol_angle);
     h_rot_mount2.SetAbsMovePos(0, curr_qwp_angle);
-    h_rot_mount.MoveAbsolute(0, 1);
+    h_rot_mount.MoveAbsolute(0, 0);
     h_rot_mount2.MoveAbsolute(0, 1);
+    tic;
+    while and(toc<36, or(IsMoving(h_rot_mount)==1, IsMoving(h_rot_mount2)==1))
+       pause(1) 
+    end
+    pause(0.5)
     fprintf(pwr_meter, 'MEAS:POW?'); % query the power
     qwp_R_out_powers(i) = str2double(fscanf(pwr_meter)) / 0.001; % get the power
-    disp(['Completed qwp_R point ', num2str(i), ' of ', num2str(length(pol_angles)), '.']);
+    disp(['Completed qwp_R point ', num2str(i), ' of ', num2str(length(qwp_angles)), '.']);
 end
 
 qwp_R_dataset = horzcat(qwp_angles', qwp_R_out_powers');
@@ -183,15 +189,20 @@ qwp_L_out_powers = zeros(1, length(qwp_angles));
 
 % qwp_L loop
 for i = 1:length(qwp_angles)
-    curr_pol_angle = qwp_angles(i) + hor_angle; % convert to coordinate system of rotation mount
-    curr_qwp_angle = qwp_angles(i) + qwp_at_lcp;
+    curr_pol_angle = mod(qwp_angles(i) + hor_angle, 360); % convert to coordinate system of rotation mount
+    curr_qwp_angle = mod(qwp_angles(i) + qwp_at_lcp + 45, 360);
     h_rot_mount.SetAbsMovePos(0, curr_pol_angle);
     h_rot_mount2.SetAbsMovePos(0, curr_qwp_angle);
-    h_rot_mount.MoveAbsolute(0, 1);
+    h_rot_mount.MoveAbsolute(0, 0);
     h_rot_mount2.MoveAbsolute(0, 1);
+    tic;
+    while and(toc<36, or(IsMoving(h_rot_mount)==1, IsMoving(h_rot_mount2)==1))
+       pause(1) 
+    end
+    pause(0.5)
     fprintf(pwr_meter, 'MEAS:POW?'); % query the power
     qwp_L_out_powers(i) = str2double(fscanf(pwr_meter)) / 0.001; % get the power
-    disp(['Completed qwp_L point ', num2str(i), ' of ', num2str(length(pol_angles)), '.']);
+    disp(['Completed qwp_L point ', num2str(i), ' of ', num2str(length(qwp_angles)), '.']);
 end
 
 qwp_L_dataset = horzcat(qwp_angles', qwp_L_out_powers');
@@ -202,9 +213,22 @@ disp('Measurement completed. Move to another diffraction order and change the di
 %% Quickly compute the Stokes vector of the given order
 
 qwp_R_intensity = mean(qwp_R_out_powers);
-qwp_L_intensity = mean(qwp_R_out_powers);
-for i = 1:length(linear_out_powers)
-    angle = polarizer_dataset(i, 1);
-    stokes_vector = [[1, 0, 0, 0]; [0, cosd(2*angle), sind(2*angle), 0]; [0, -sind(2*theta), cosd(2*theta), 0]; [0, 0, 0,]];
-    
+qwp_L_intensity = mean(qwp_L_out_powers);
+A = zeros(length(polarizer_dataset) + 2, 4);
+I = zeros(length(polarizer_dataset) + 2, 1);
+
+for i = 1:length(polarizer_dataset)
+    angle = -polarizer_dataset(i, 1);
+    stokes_vector = [[1, 0, 0, 0]; [0, cosd(2*angle), sind(2*angle), 0]; [0, -sind(2*angle), cosd(2*angle), 0]; [0, 0, 0, 1]] * [1; 1; 0; 0];
+    A(i, :) = stokes_vector';
+    I(i, 1) = polarizer_dataset(i, 2);
 end
+
+A(length(polarizer_dataset) + 1, :) = [1, 0, 0, 1];
+A(length(polarizer_dataset) + 2, :) = [1, 0, 0, -1];
+I(length(polarizer_dataset) + 1, 1) = qwp_R_intensity;
+I(length(polarizer_dataset) + 2, 1) = qwp_L_intensity;
+
+polarization_state = pinv(A) * I;
+polarization_state = polarization_state/polarization_state(1);
+dop = sqrt(polarization_state(2)^2 + polarization_state(3)^2 + polarization_state(4)^2)

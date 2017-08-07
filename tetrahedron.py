@@ -13,30 +13,32 @@ import random
 if 'linux' in sys.platform:
     directory = 'acquisition/data/big_metasurface'
 else:
-    directory = 'acquisition\\data\\big_metasurface'
+    directory = 'acquisition\\data\\small_metasurfaces\\top1_left2'
 
 subdirs = ['order_-2', 'order_-1', 'order_1', 'order_2']
 os.chdir(directory)
 
 ####################################################################
 #calculating efficiency
-with open('powers.txt') as f:
-    raw = f.readlines()
+try:
+    with open('powers.txt') as f:
+        raw = f.readlines()
 
-efficiency = 0.
-    
-for i in range(len(raw)):
-    raw[i] = raw[i].split(' ')
-    if 'mW' in raw[i][-1]:
-        raw[i][1] = float(raw[i][1])*1000
-    if 'inc' in raw[i][0]:
-        inc_power = float(raw[i][1])
-    if raw[i][0]!='0:' and raw[i][0]!='inc:':
-        efficiency += float(raw[i][1])
+    efficiency = 0.
         
-efficiency = efficiency/inc_power
-print('4-orders efficiency:',efficiency)
-
+    for i in range(len(raw)):
+        raw[i] = raw[i].split(' ')
+        if 'mW' in raw[i][-1]:
+            raw[i][1] = float(raw[i][1])*1000
+        if 'inc' in raw[i][0]:
+            inc_power = float(raw[i][1])
+        if raw[i][0]!='0:' and raw[i][0]!='inc:':
+            efficiency += float(raw[i][1])
+            
+    efficiency = efficiency/inc_power
+    print('4-orders efficiency:',efficiency)
+except:
+    pass
 ####################################################################
 #calculating efficiency
 
@@ -45,21 +47,29 @@ data_thorlabs=[]
 
 for folder in subdirs:
     os.chdir(folder)
-    with open('pol_only') as f:
-        pol_only = np.array(list(csv.reader(f)), dtype='float')
-    with open('qwp_L') as f:
-        qwp_L = np.array(list(csv.reader(f)), dtype='float')
-        qwp_L = np.mean(qwp_L,0)
-    with open('qwp_R') as f:
-        qwp_R = np.array(list(csv.reader(f)), dtype='float')
-        qwp_R = np.mean(qwp_R,0)
+    try:
+        with open('pol_only') as f:
+            pol_only = np.array(list(csv.reader(f)), dtype='float')
+        with open('qwp_L') as f:
+            qwp_L = np.array(list(csv.reader(f)), dtype='float')
+            qwp_L = np.mean(qwp_L,0)
+        with open('qwp_R') as f:
+            qwp_R = np.array(list(csv.reader(f)), dtype='float')
+            qwp_R = np.mean(qwp_R,0)
+    except:
+        pass
+    
     with open('polarimeter.txt') as f:
         polarimeter = np.array(list(csv.reader(f)), dtype='float')
         polarimeter = np.array([ 1 ] + list(np.mean(polarimeter,0)[0:3]))
         data_thorlabs.append(polarimeter)
 
-    data.append(np.hstack([pol_only.transpose()[1],qwp_R.transpose()[1],qwp_L.transpose()[1]]))
+    try:
+        data.append(np.hstack([pol_only.transpose()[1],qwp_R.transpose()[1],qwp_L.transpose()[1]]))
+    except:
+        pass
     os.chdir('..')
+    
     
 data = np.array(data)    
 data_thorlabs = np.array(data_thorlabs)
@@ -113,7 +123,7 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
     y = np.sin(phi) * np.sin(theta)
     z = np.cos(phi)
 
-    ax.plot_surface(x, y, z,  rstride=2, cstride=2, color='#EBE3E8',
+    ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='#EBE3E8',
                 antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
     if 'y' in arrows:
         ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
