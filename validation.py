@@ -134,7 +134,7 @@ cov_m = np.array(cov_m)  # cov_m is a list of covariance matrices
 metasurface_data = np.array(metasurface_data)
 
 ###############################################################
-#%% Analyzing and plotting comparison
+# Analyzing and plotting comparison
 
 for i in range(len(metasurface_data)):
     metasurface_data[i] = np.dot(Ainv, metasurface_data[i].transpose())
@@ -270,13 +270,39 @@ for i in range(len(m_2psi)):
     if m_2psi[i] < -2 and p_2psi[i] > 2:
         m_2psi[i]=m_2psi[i]+2*np.pi
 
+# shift points due to azimuth offset
 diffs = m_2psi - p_2psi
 p_2psi = p_2psi + circmean(diffs, high=np.pi, low=-np.pi)
 p_2psi = p_2psi + 2*np.pi*(p_2psi < -np.pi)
-#p_2psi = p_2psi + 2*np.pi*(p_2psi < -np.pi)
-#m_2psi = np.mod(m_2psi + np.pi, 2*np.pi)-np.pi
+# now correct positions of weird outlying points - using * as elementwise and
+m_2psi = m_2psi + 2*np.pi*((m_2psi<0)*(p_2psi>0))
+m_2psi = m_2psi + 2*np.pi*((m_2psi>0)*(p_2psi<0))
+# recalculate diffs for histogram
 diffs = m_2psi - p_2psi
+# now move to eliminate weird outliers, using a somewhat arbitrary criterion
+mask = (np.abs(diffs) < np.mean(diffs)+0.25)
+diffs = diffs[mask]
+m_2psi = m_2psi[mask]
+p_2psi = p_2psi[mask]
+m_2psi_err = m_2psi_err[mask]
+p_2psi_err = p_2psi_err[mask]
+m_2chi = m_2chi[mask]
+p_2chi = p_2chi[mask]
+m_2chi_err = m_2chi_err[mask]
+p_2chi_err = p_2chi_err[mask]
+# now remove points whose error bars are inordinately large
+mask = (p_2psi_err < 3*np.mean(p_2psi_err))
+diffs = diffs[mask]
+m_2psi = m_2psi[mask]
+p_2psi = p_2psi[mask]
+m_2psi_err = m_2psi_err[mask]
+p_2psi_err = p_2psi_err[mask]
+m_2chi = m_2chi[mask]
+p_2chi = p_2chi[mask]
+m_2chi_err = m_2chi_err[mask]
+p_2chi_err = p_2chi_err[mask]
 
+# having cleaned up the data, we plot the results for chi and psi
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 #axarr[0][1].plot([np.min(p_2psi), np.max(p_2psi)],[np.min(p_2psi),np.max(p_2psi)],alpha=0.75,color='black')
