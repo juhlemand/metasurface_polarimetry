@@ -1,7 +1,7 @@
 %% Establish serial communication with motors and power meter
 
 clear;
-foldername = 'pol_det';
+foldername = 'small_metasurface ';
 mkdir(['C:\Users\User\Desktop\Polarimeter Project\metasurface_polarimetry\acquisition\data\', foldername]);
 serial_rotation_mount = 55000517; % serial number of 1st rotation mount 
 serial_rotation_mount2 = 55000631; % serial number of 2nd rotation mount 
@@ -160,7 +160,7 @@ csvwrite(linear_pol_extension, polarizer_dataset); % now save the data
 input('Linear polarization data acquisition completed and saved. Please place QWP in front of linear polarizer and press return to continue.');
 qwp_R_extension = 'qwp_R';
 
-qwp_angles = 0:5:360;
+qwp_angles = 0:45:360;
 qwp_R_out_powers = zeros(1, length(qwp_angles));
 
 % qwp_R loop
