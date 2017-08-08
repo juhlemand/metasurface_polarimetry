@@ -40,6 +40,7 @@ try:
     print('4-orders efficiency:',efficiency)
 except:
     pass
+
 ####################################################################
 #calculating efficiency
 
@@ -150,6 +151,7 @@ plot_sphere(ax)
 S1 = data_thorlabs.transpose()[1]
 S2 = data_thorlabs.transpose()[2]
 S3 = data_thorlabs.transpose()[3]
+print(np.vstack([S1,S2,S3]).transpose())
 
 for i in range(0,4):
     for j in range(0,4):
