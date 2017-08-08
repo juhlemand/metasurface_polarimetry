@@ -1,23 +1,15 @@
-"""
-Created on Wed Jun 21 09:42:59 2017
-
-This is a script to analyze polarimetry calibration data.
-
-@contributors: Noah, Ruoping
-"""
-
 import csv, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from sys import platform
-from scipy.optimize import curve_fit
+from scipy.stats import circmean
 
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
 DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
 if 'linux' in platform:
-    directory='acquisition/data/calibration6/comparison' #data location folder
+    directory='acquisition/data/calibration4/comparison' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
@@ -268,7 +260,7 @@ axarr[0][0].set_ylabel('Metasurface measurement')
 axarr[0][0].set_xlim([-0.1,1.1])
 axarr[0][0].set_ylim([-0.1,1.1])
 
-diffs=m_dops-p_dops  # relative dop error
+diffs=m_dops-p_dops
 axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
@@ -277,6 +269,13 @@ axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 for i in range(len(m_2psi)):
     if m_2psi[i] < -2 and p_2psi[i] > 2:
         m_2psi[i]=m_2psi[i]+2*np.pi
+
+diffs = m_2psi - p_2psi
+p_2psi = p_2psi + circmean(diffs, high=np.pi, low=-np.pi)
+p_2psi = p_2psi + 2*np.pi*(p_2psi < -np.pi)
+#p_2psi = p_2psi + 2*np.pi*(p_2psi < -np.pi)
+#m_2psi = np.mod(m_2psi + np.pi, 2*np.pi)-np.pi
+diffs = m_2psi - p_2psi
 
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
@@ -288,12 +287,12 @@ axarr[0][1].set_xlim([-1.1*np.pi,1.1*np.pi])
 axarr[0][1].set_ylim([-1.1*np.pi,1.1*np.pi])
 
 #diffs=(m_2psi-p_2psi)/(0.5*(m_2psi+p_2psi))
-diffs=m_2psi-p_2psi
+
 axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 #fitting line to 2psi
-az_offset=np.mean(diffs)
-axarr[0][1].plot([-np.pi,np.pi],[-np.pi+az_offset, np.pi+az_offset], color='black')
+#az_offset=np.mean(diffs)
+axarr[0][1].plot([-np.pi,np.pi],[-np.pi, np.pi], color='black')
 
 popt = np.polyfit(p_2chi, m_2chi, 1)
 if popt[0]<0:
@@ -302,6 +301,7 @@ if popt[0]<0:
 axarr[0][2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].plot([np.min(p_2chi), np.max(p_2chi)],[np.min(p_2chi),np.max(p_2chi)],alpha=0.75,color='black')
+axarr[0][2].plot([0,1],[0,1],alpha=0.75,color='black')
 axarr[0][2].set_title('Altitude $2\chi$')
 axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][2].set_ylabel('Metasurface measurement (radians)')
@@ -312,6 +312,7 @@ axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 
 plt.show()
 
+#%% Poincare sphere plots
 #############################################################################
 # plotting on Poincare sphere
 
@@ -407,8 +408,8 @@ for n in range(npoints):
     ax.plot(x,y,z, lw=0.25, color='blue', alpha=1)
     
     S3=np.sin(p_2chi[dpoints[n]])
-    S2=np.sin(p_2psi[dpoints[n]]+az_offset)*np.cos(p_2chi[dpoints[n]])
-    S1=np.cos(p_2psi[dpoints[n]]+az_offset)*np.cos(p_2chi[dpoints[n]])
+    S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
     ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
                           [0, S2/np.linalg.norm([S1,S2,S3])],
                           [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,

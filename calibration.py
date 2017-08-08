@@ -25,10 +25,10 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
-data_dir = 'acquisition\data\calibration8'
+data_dir = 'acquisition\data\calibration4'
 
 if 'linux' in platform:
-    os.chdir('acquisition/data/calibration6')
+    os.chdir('acquisition/data/calibration4')
 else:
     os.chdir(data_dir)
 
