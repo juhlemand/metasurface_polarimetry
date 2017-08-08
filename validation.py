@@ -2,6 +2,7 @@ import csv, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 from sys import platform
 from scipy.stats import circmean
 from scipy import stats as stats
@@ -199,6 +200,32 @@ plt.show()
 ##############################################################
 #plotting code
 
+# histogram parameters
+histogram_color = (0,1,1, 0.5)
+fit_line_width = 3
+legend_size = 12
+
+# inset plotting parameters
+xmin_dop = 0.5
+xmax_dop = 0.6
+ymin_dop = 0.5
+ymax_dop = 0.6
+
+xmin_azimuth = 1.5
+xmax_azimuth = 2
+ymin_azimuth = 1.5
+ymax_azimuth = 2
+
+xmax_altitude = 0
+xmin_altitude = 0.25
+ymin_altitude = 0
+ymax_altitude = 0.25
+
+edge_color = "0.0"
+zoom = 4
+location = 4 # lower right corner
+
+
 #poincare sphere coordinates in radians
 # azimuth psi
 m_2psi=np.arctan2(S2, S1)
@@ -251,27 +278,6 @@ p_2chi=data_arr[9]
 m_2chi_err=data_arr[10]
 p_2chi_err=data_arr[11]
 
-
-f, axarr  = plt.subplots(2,3)
-axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][0].plot([0,1],[0,1],alpha=0.75,color='black')
-axarr[0][0].set_title('DOP')
-axarr[0][0].set_xlabel('Polarimeter measurement')
-axarr[0][0].set_ylabel('Metasurface measurement')
-axarr[0][0].set_xlim([-0.1,1.1])
-axarr[0][0].set_ylim([-0.1,1.1])
-
-diffs=m_dops-p_dops
-n, bins, patches = axarr[1][0].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))))
-axarr[1][0].axvline(0.0,color='black', alpha=0.25)
-(mu, sigma) = stats.norm.fit(diffs)
-sample = np.linspace(min(bins), max(bins), 200)
-y = mlab.normpdf(sample, mu, sigma)
-l = axarr[1][0].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
-axarr[1][0].legend(prop={'size': 12})
-#axarr[1][0].set_title('DOP error metasurface-polarimeter')
-
 #fixing small line segment
 for i in range(len(m_2psi)):
     if m_2psi[i] < -2 and p_2psi[i] > 2:
@@ -286,19 +292,6 @@ m_2psi = m_2psi + 2*np.pi*((m_2psi<0)*(p_2psi>0))
 m_2psi = m_2psi + 2*np.pi*((m_2psi>0)*(p_2psi<0))
 # recalculate diffs for histogram
 diffs = np.mod(m_2psi - p_2psi + np.pi, 2*np.pi) - np.pi
-# now move to eliminate weird outliers, using a somewhat arbitrary criterion
-#mask = (np.abs(diffs) < np.mean(diffs) + 0.25)
-#diffs = diffs[mask]
-#m_2psi = m_2psi[mask]
-#p_2psi = p_2psi[mask]
-#m_2psi_err = m_2psi_err[mask]
-#p_2psi_err = p_2psi_err[mask]
-#m_2chi = m_2chi[mask]
-#p_2chi = p_2chi[mask]
-#m_2chi_err = m_2chi_err[mask]
-#p_2chi_err = p_2chi_err[mask]
-#m_dops = m_dops[mask]
-#p_dops = p_dops[mask]
 # now remove points whose error bars are inordinately large
 mask = np.logical_and((p_2psi_err < 3*np.mean(p_2psi_err)), (m_2psi_err <    3*np.mean(m_2psi_err)))
 diffs = diffs[mask]
@@ -312,52 +305,114 @@ m_2chi_err = m_2chi_err[mask]
 p_2chi_err = p_2chi_err[mask]
 m_dops = m_dops[mask]
 p_dops = p_dops[mask]
+m_dops_err = m_dops_err[mask]
+p_dops_err = p_dops_err[mask]
 
-# having cleaned up the data, we plot the results for chi and psi
-axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-#axarr[0][1].plot([np.min(p_2psi), np.max(p_2psi)],[np.min(p_2psi),np.max(p_2psi)],alpha=0.75,color='black')
-axarr[0][1].set_title('Azimuth $2\psi$')
+# having cleaned up the data, we plot the results for dop, chi, and psi
+# plot the dop data
+f, axarr  = plt.subplots(2,3)
+axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][0].plot([0,1],[0,1],alpha=0.75,color='black')
+axarr[0][0].set_title('DOP')
+axarr[0][0].set_xlabel('Polarimeter measurement')
+axarr[0][0].set_ylabel('Metasurface measurement')
+axarr[0][0].set_xlim([-0.1,1.1])
+axarr[0][0].set_ylim([-0.1,1.1])
+
+# create a zoomed inset of the data
+axins_dop = zoomed_inset_axes(axarr[0][0], zoom, loc=location)
+axins_dop.scatter(p_dops, m_dops, alpha=0.5, s=2.)
+axins_dop.errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=0.5, fmt=' ')
+axins_dop.plot([-np.pi,np.pi],[-np.pi, np.pi], color='black', alpha=0.75)
+x1, x2, y1, y2 = xmin_dop, xmax_dop, ymin_dop, ymax_dop
+axins_dop.set_xlim(x1, x2) # apply the x-limits
+axins_dop.set_ylim(y1, y2) # apply the y-limits
+mark_inset(axarr[0][0], axins_dop, loc1=3, loc2=1, fc="none", ec=edge_color)
+axins_dop.set_xticklabels([])
+axins_dop.set_yticklabels([])
+
+# plot a histogram
+diffs=m_dops-p_dops
+n, bins, patches = axarr[1][0].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))), facecolor = histogram_color)
+axarr[1][0].axvline(0.0,color='black', alpha=0.25)
+(mu, sigma) = stats.norm.fit(diffs)
+sample = np.linspace(min(bins), max(bins), 200)
+y = mlab.normpdf(sample, mu, sigma)
+l = axarr[1][0].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=fit_line_width, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
+axarr[1][0].legend(prop={'size': legend_size})
+
+# move on to azimuth
+
+axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)
+axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')
+axarr[0][1].set_title('Azimuth $2\chi$')
 axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][1].set_ylabel('Metasurface measurement (radians)')
 axarr[0][1].set_xlim([-1.1*np.pi,1.1*np.pi])
 axarr[0][1].set_ylim([-1.1*np.pi,1.1*np.pi])
+axarr[0][1].plot([-np.pi,np.pi],[-np.pi, np.pi], color='black', alpha=0.75)
 
-#diffs=(m_2psi-p_2psi)/(0.5*(m_2psi+p_2psi))
+# create a zoomed inset of the data
+axins_az = zoomed_inset_axes(axarr[0][1], zoom, loc=location)
+axins_az.scatter(p_2psi, m_2psi, alpha=0.5, s=2.)
+axins_az.errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ')
+axins_az.plot([-np.pi,np.pi],[-np.pi, np.pi], color='black', alpha=0.75)
+x1, x2, y1, y2 = xmin_azimuth, xmax_azimuth, ymin_azimuth, ymax_azimuth
+axins_az.set_xlim(x1, x2) # apply the x-limits
+axins_az.set_ylim(y1, y2) # apply the y-limits
+mark_inset(axarr[0][1], axins_az, loc1=2, loc2=1, fc="none", ec=edge_color)
+axins_az.set_xticklabels([])
+axins_az.set_yticklabels([])
 
-n, bins, patches = axarr[1][1].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))))
+# histogram
+n, bins, patches = axarr[1][1].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))), facecolor=histogram_color)
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 (mu, sigma) = stats.norm.fit(diffs)
 sample = np.linspace(min(bins), max(bins), 200)
 y = mlab.normpdf(sample, mu, sigma)
-l = axarr[1][1].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
-axarr[1][1].legend(prop={'size': 12})
+l = axarr[1][1].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=fit_line_width, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
+axarr[1][1].legend(prop={'size': legend_size})
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
-#fitting line to 2psi
-#az_offset=np.mean(diffs)
-axarr[0][1].plot([-np.pi,np.pi],[-np.pi, np.pi], color='black')
+
+# move on to altitude
 
 popt = np.polyfit(p_2chi, m_2chi, 1)
-if popt[0]<0:
+if popt[0]<0: # correct for RCP/LCP ambiguity
     m_2chi=-m_2chi
     
 axarr[0][2].scatter(p_2chi, m_2chi, alpha=0.5,s=2)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
 axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=0.5, fmt=' ')#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][2].plot([np.min(p_2chi), np.max(p_2chi)],[np.min(p_2chi),np.max(p_2chi)],alpha=0.75,color='black')
-axarr[0][2].plot([0,1],[0,1],alpha=0.75,color='black')
-axarr[0][2].set_title('Altitude $2\chi$')
+axarr[0][2].set_title('Altitude $\phi$')
 axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][2].set_ylabel('Metasurface measurement (radians)')
-#diffs=(m_2chi-p_2chi)/(0.5*(m_2chi+p_2chi))
+axarr[0][2].set_xlim([-1.1*np.pi/2,1.1*np.pi/2])
+axarr[0][2].set_ylim([-1.1*np.pi/2,1.1*np.pi/2])
+axarr[0][2].plot([-np.pi/2,np.pi/2],[-np.pi/2, np.pi/2], color='black', alpha=0.75)
+
+# create a zoomed inset of the data
+axins_alt = zoomed_inset_axes(axarr[0][2], zoom, loc=location)
+axins_alt.scatter(p_2chi, m_2chi, alpha=0.5, s=2.)
+axins_alt.errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=0.5, fmt=' ')
+axins_alt.plot([-np.pi/2,np.pi/2],[-np.pi/2, np.pi/2], color='black', alpha=0.75)
+x1, x2, y1, y2 = xmin_altitude, xmax_altitude, ymin_altitude, ymax_altitude
+axins_alt.set_xlim(x1, x2) # apply the x-limits
+axins_alt.set_ylim(y1, y2) # apply the y-limits
+mark_inset(axarr[0][2], axins_alt, loc1=4, loc2=2, fc="none", ec=edge_color)
+axins_alt.set_xticklabels([])
+axins_alt.set_yticklabels([])
+axins_alt.tick_params(axis='y', direction='in')
+
+# plot a histogram
 diffs=m_2chi-p_2chi
-n, bins, patches = axarr[1][2].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))))
+n, bins, patches = axarr[1][2].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))), facecolor = histogram_color)
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 (mu, sigma) = stats.norm.fit(diffs)
 sample = np.linspace(min(bins), max(bins), 200)
 y = mlab.normpdf(sample, mu, sigma)
-l = axarr[1][2].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
-axarr[1][2].legend(prop={'size': 12})
-axarr[1][2].axvline(0.0,color='black', alpha=0.25)
+l = axarr[1][2].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=fit_line_width, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
+axarr[1][2].legend(prop={'size': legend_size})
+axarr[1][2].axvline(0.0,color='black',alpha=0.25)
 
 plt.show()
 
