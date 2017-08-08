@@ -285,22 +285,22 @@ p_2psi = p_2psi + 2*np.pi*(p_2psi < -np.pi)
 m_2psi = m_2psi + 2*np.pi*((m_2psi<0)*(p_2psi>0))
 m_2psi = m_2psi + 2*np.pi*((m_2psi>0)*(p_2psi<0))
 # recalculate diffs for histogram
-diffs = m_2psi - p_2psi
+diffs = np.mod(m_2psi - p_2psi + np.pi, 2*np.pi) - np.pi
 # now move to eliminate weird outliers, using a somewhat arbitrary criterion
-mask = (np.abs(diffs) < np.mean(diffs)+0.25)
-diffs = diffs[mask]
-m_2psi = m_2psi[mask]
-p_2psi = p_2psi[mask]
-m_2psi_err = m_2psi_err[mask]
-p_2psi_err = p_2psi_err[mask]
-m_2chi = m_2chi[mask]
-p_2chi = p_2chi[mask]
-m_2chi_err = m_2chi_err[mask]
-p_2chi_err = p_2chi_err[mask]
-m_dops = m_dops[mask]
-p_dops = p_dops[mask]
+#mask = (np.abs(diffs) < np.mean(diffs) + 0.25)
+#diffs = diffs[mask]
+#m_2psi = m_2psi[mask]
+#p_2psi = p_2psi[mask]
+#m_2psi_err = m_2psi_err[mask]
+#p_2psi_err = p_2psi_err[mask]
+#m_2chi = m_2chi[mask]
+#p_2chi = p_2chi[mask]
+#m_2chi_err = m_2chi_err[mask]
+#p_2chi_err = p_2chi_err[mask]
+#m_dops = m_dops[mask]
+#p_dops = p_dops[mask]
 # now remove points whose error bars are inordinately large
-mask = (p_2psi_err < 3*np.mean(p_2psi_err))
+mask = np.logical_and((p_2psi_err < 3*np.mean(p_2psi_err)), (m_2psi_err <    3*np.mean(m_2psi_err)))
 diffs = diffs[mask]
 m_2psi = m_2psi[mask]
 p_2psi = p_2psi[mask]
