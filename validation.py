@@ -1,8 +1,10 @@
 import csv, os, pickle
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 from sys import platform
 from scipy.stats import circmean
+from scipy import stats as stats
 
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
 DOP_CUTOFF=0.5
@@ -261,8 +263,12 @@ axarr[0][0].set_xlim([-0.1,1.1])
 axarr[0][0].set_ylim([-0.1,1.1])
 
 diffs=m_dops-p_dops
-axarr[1][0].hist(diffs, bins=np.arange(min(diffs), max(diffs) + 0.005, 0.005))
+n, bins, patches = axarr[1][0].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))))
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
+(mu, sigma) = stats.norm.fit(diffs)
+y = mlab.normpdf(bins, mu, sigma)
+l = axarr[1][0].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= r'$\mu=%.3f,\ \sigma=%.3f$'%(mu, sigma))
+axarr[1][0].legend(prop={'size': 12})
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
 
 #fixing small line segment
@@ -290,6 +296,8 @@ m_2chi = m_2chi[mask]
 p_2chi = p_2chi[mask]
 m_2chi_err = m_2chi_err[mask]
 p_2chi_err = p_2chi_err[mask]
+m_dops = m_dops[mask]
+p_dops = p_dops[mask]
 # now remove points whose error bars are inordinately large
 mask = (p_2psi_err < 3*np.mean(p_2psi_err))
 diffs = diffs[mask]
@@ -301,6 +309,8 @@ m_2chi = m_2chi[mask]
 p_2chi = p_2chi[mask]
 m_2chi_err = m_2chi_err[mask]
 p_2chi_err = p_2chi_err[mask]
+m_dops = m_dops[mask]
+p_dops = p_dops[mask]
 
 # having cleaned up the data, we plot the results for chi and psi
 axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=2.)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
@@ -314,7 +324,12 @@ axarr[0][1].set_ylim([-1.1*np.pi,1.1*np.pi])
 
 #diffs=(m_2psi-p_2psi)/(0.5*(m_2psi+p_2psi))
 
-axarr[1][1].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
+n, bins, patches = axarr[1][1].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))))
+axarr[1][1].axvline(0.0,color='black', alpha=0.25)
+(mu, sigma) = stats.norm.fit(diffs)
+y = mlab.normpdf(bins, mu, sigma)
+l = axarr[1][1].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= r'$\mu=%.3f,\ \sigma=%.3f$'%(mu, sigma))
+axarr[1][1].legend(prop={'size': 12})
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 #fitting line to 2psi
 #az_offset=np.mean(diffs)
@@ -333,10 +348,21 @@ axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
 axarr[0][2].set_ylabel('Metasurface measurement (radians)')
 #diffs=(m_2chi-p_2chi)/(0.5*(m_2chi+p_2chi))
 diffs=m_2chi-p_2chi
-axarr[1][2].hist(diffs,bins=np.arange(min(diffs), max(diffs) + 0.01, 0.01))
+n, bins, patches = axarr[1][2].hist(diffs, bins=np.linspace(min(diffs), max(diffs) + 0.005, np.sqrt(len(diffs))))
+axarr[1][2].axvline(0.0,color='black', alpha=0.25)
+(mu, sigma) = stats.norm.fit(diffs)
+y = mlab.normpdf(bins, mu, sigma)
+l = axarr[1][2].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= r'$\mu=%.3f,\ \sigma=%.3f$'%(mu, sigma))
+axarr[1][2].legend(prop={'size': 12})
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 
 plt.show()
+
+savefig = 0
+f_name = 'comparison_graphs.svg'
+if savefig:
+    plt.savefig(f_name)
+
 
 #%% Poincare sphere plots
 #############################################################################
@@ -365,7 +391,7 @@ class Arrow3D(FancyArrowPatch):
 fig = plt.figure(figsize=plt.figaspect(1.))
 ax = fig.add_subplot(111, projection='3d')
 
-def plot_sphere(ax,arrows='xyz',equatorial=True):
+def plot_sphere(ax,arrows='xyz', equatorial=True):
     phi = np.linspace(0, np.pi, 200)
     theta = np.linspace(0, 2*np.pi, 200)
 
@@ -402,10 +428,11 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
 
 plot_sphere(ax)
 # Plotting selected datapoints
-npoints=3
+npoints=50
 dpoints=[]
 for n in range(npoints):
     dpoints.append(int(random.random()*len(m_dops)))
+
 dpoints=np.array(dpoints)
 
 for n in range(npoints):
@@ -472,28 +499,29 @@ ax2 = fig.add_subplot(1,2,2, projection='3d')
 plot_sphere(ax2, arrows='xy', equatorial=False)
 
 # Plotting selected datapoints
-npoints=20
+npoints=200
 dpoints=[]
 for n in range(npoints):
     dpoints.append(int(random.random()*len(m_dops)))
 dpoints=np.array(dpoints)
-    
+
+size = 3
 for n in range(npoints):
     S3=np.sin(m_2chi[dpoints[n]])
     S2=np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
     S1=np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
     if S3 >=0:
-        ax.scatter(S1, S2, S3, color='blue', s=0.5)
+        ax.scatter(S1, S2, S3, color='blue', s=size)
     if S3 <=0:
-        ax2.scatter(S1, S2, S3, color='blue', s=0.5)
+        ax2.scatter(S1, S2, S3, color='blue', s=size)
         
     S3=np.sin(p_2chi[dpoints[n]])
     S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
     S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
     if S3 >=0:        
-        ax.scatter(S1, S2, S3, color='orange', s=0.5)
+        ax.scatter(S1, S2, S3, color='orange', s=size)
     if S3 <=0:        
-        ax2.scatter(S1, S2, S3, color='orange', s=0.5)
+        ax2.scatter(S1, S2, S3, color='orange', s=size)
 
 #mesh on sphere
 for phi in [np.pi/2, (np.pi/2)/3, 2*(np.pi/2)/3]:
