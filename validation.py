@@ -267,7 +267,7 @@ n, bins, patches = axarr[1][0].hist(diffs, bins=np.linspace(min(diffs), max(diff
 axarr[1][0].axvline(0.0,color='black', alpha=0.25)
 (mu, sigma) = stats.norm.fit(diffs)
 y = mlab.normpdf(bins, mu, sigma)
-l = axarr[1][0].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= r'$\mu=%.3f,\ \sigma=%.3f$'%(mu, sigma))
+l = axarr[1][0].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
 axarr[1][0].legend(prop={'size': 12})
 #axarr[1][0].set_title('DOP error metasurface-polarimeter')
 
@@ -328,7 +328,7 @@ n, bins, patches = axarr[1][1].hist(diffs, bins=np.linspace(min(diffs), max(diff
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 (mu, sigma) = stats.norm.fit(diffs)
 y = mlab.normpdf(bins, mu, sigma)
-l = axarr[1][1].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= r'$\mu=%.3f,\ \sigma=%.3f$'%(mu, sigma))
+l = axarr[1][1].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
 axarr[1][1].legend(prop={'size': 12})
 axarr[1][1].axvline(0.0,color='black', alpha=0.25)
 #fitting line to 2psi
@@ -352,7 +352,7 @@ n, bins, patches = axarr[1][2].hist(diffs, bins=np.linspace(min(diffs), max(diff
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 (mu, sigma) = stats.norm.fit(diffs)
 y = mlab.normpdf(bins, mu, sigma)
-l = axarr[1][2].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= r'$\mu=%.3f,\ \sigma=%.3f$'%(mu, sigma))
+l = axarr[1][2].plot(bins, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=2, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
 axarr[1][2].legend(prop={'size': 12})
 axarr[1][2].axvline(0.0,color='black', alpha=0.25)
 
