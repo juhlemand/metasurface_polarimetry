@@ -17,7 +17,7 @@ DOP_CUTOFF=0.5
 
 #instrument matrix from calibration
 if 'linux' in platform:
-    directory='acquisition/data/calibration6/comparison' #data location folder
+    directory='acquisition/data/calibration4/comparison' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))

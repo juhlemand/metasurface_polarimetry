@@ -11,7 +11,7 @@ import fnmatch
 import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
-from sys import platform
+import sys
 from matplotlib.ticker import AutoMinorLocator
 
 
@@ -26,12 +26,10 @@ comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
 
-#if 'linux' in platform:
-#    os.chdir('acquisition/data/calibration6')
-#else:
-#    os.chdir('acquisition\data\calibration6')
-
-data_dir = 'acquisition\data\calibration4'
+if 'linux' in sys.platform:
+    data_dir = 'acquisition/data/calibration6'
+else:
+    data_dir = 'acquisition\data\calibration6'
 
 os.chdir(data_dir)
 
