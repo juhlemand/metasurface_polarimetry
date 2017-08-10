@@ -19,7 +19,7 @@ if 'linux' in platform:
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
 else:
-    directory='acquisition\\data\\calibration4\\comparison' #data location folder
+    directory='acquisition\\data\\calibration1\\comparison1.2' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('..\\Ainv.txt')
     Ainv_cov=pickle.load(open( "..\\Ainv_cov.p", "rb" ))
@@ -223,8 +223,8 @@ xmax_azimuth = 2
 ymin_azimuth = 1.5
 ymax_azimuth = 2
 
-xmax_altitude = -0.25
-xmin_altitude = 0
+xmin_altitude = -0.25
+xmax_altitude = 0
 ymin_altitude = -0.25
 ymax_altitude = 0
 
@@ -440,15 +440,16 @@ def plot02(ax):
     
     # create a zoomed inset of the data
     
-    axins_alt = zoomed_inset_axes(axarr[0][2], zoom, loc=4)
-    axins_alt.plot([-np.pi/2,np.pi/2],[-np.pi/2, np.pi/2], alpha=line_alpha, color=line_color, linewidth=line_weight)
-    axins_alt.tick_params(axis='y',direction='out')
+
+    axins_alt = zoomed_inset_axes(ax, zoom, loc=4)
+    
     axins_alt.scatter(p_2chi, m_2chi, alpha=scatter_alpha, s=scatter_weight, color=scatter_color)
     axins_alt.errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color, elinewidth = eline_width, capthick = eline_width, capsize = cap_size)
     x1, x2, y1, y2 = xmin_altitude, xmax_altitude, ymin_altitude, ymax_altitude
+    axins_alt.plot([x1, x2], [y1, y2], alpha=line_alpha,color=line_color, linewidth=line_weight)
     axins_alt.set_xlim(x1, x2) # apply the x-limits
     axins_alt.set_ylim(y1, y2) # apply the y-limits
-    mark_inset(ax, axins_alt, loc1=4, loc2=2, fc="none", ec=edge_color)
+    mark_inset(ax, axins_alt, loc1=1, loc2=3, fc="none", ec=edge_color)
     axins_alt.set_xticklabels([])
     axins_alt.set_yticklabels([])
 
