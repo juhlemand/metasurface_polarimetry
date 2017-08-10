@@ -19,7 +19,7 @@ if 'linux' in platform:
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
 else:
-    directory='acquisition\\data\\calibration1\\comparison1.2' #data location folder
+    directory='acquisition\\data\\calibration4\\comparison' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('..\\Ainv.txt')
     Ainv_cov=pickle.load(open( "..\\Ainv_cov.p", "rb" ))
@@ -480,7 +480,7 @@ plt.show()
 
 #%% Save the figure
 savefig=1
-new_dir = 'dataset_2'
+new_dir = 'dataset_1'
 
 if savefig:
     left = os.getcwd()
@@ -565,7 +565,8 @@ class Arrow3D(FancyArrowPatch):
 fig = plt.figure(figsize=plt.figaspect(1.))
 ax = fig.add_subplot(111, projection='3d')
 
-def plot_sphere(ax,arrows='xyz', equatorial=True):
+# generic function for plotting on a sphere
+def plot_sphere(ax, arrows='xyz', equatorial=True):
     phi = np.linspace(0, np.pi, 200)
     theta = np.linspace(0, 2*np.pi, 200)
 
@@ -600,24 +601,27 @@ def plot_sphere(ax,arrows='xyz', equatorial=True):
     if equatorial:
         ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
-plot_sphere(ax)
+plot_sphere(ax) # plot a sphere to the axes
+
 # Plotting selected datapoints
-npoints=50
+npoints=200
 dpoints=[]
 for n in range(npoints):
     dpoints.append(int(random.random()*len(m_dops)))
 
-dpoints=np.array(dpoints)
+dpoints=np.array(dpoints) # data points to plot
 
 for n in range(npoints):
+    # compute the Stokes parameters for the metasurface and plot
     S3=np.sin(m_2chi[dpoints[n]])
     S2=np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
     S1=np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
-    ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
-                          [0, S2/np.linalg.norm([S1,S2,S3])],
-                          [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,
-                          lw=0.5, arrowstyle="-|>", color="blue"))
-
+    #ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
+     #                     [0, S2/np.linalg.norm([S1,S2,S3])],
+      #                    [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,
+       #                   lw=0.5, arrowstyle="-|>", color="blue"))
+    ax.plot([S1/np.linalg.norm([S1,S2,S3])], [S2/np.linalg.norm([S1,S2,S3])], [S3/np.linalg.norm([S1,S2,S3])],  color='blue')
+    # compute the spread in the stokes coordinates for errors in chi and phi
     x=np.linspace(np.cos(m_2psi[dpoints[n]]-m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]),
                   np.cos(m_2psi[dpoints[n]]+m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]))
     y=np.linspace(np.sin(m_2psi[dpoints[n]]-m_2psi_err[dpoints[n]])*np.cos(m_2chi[dpoints[n]]),
@@ -634,13 +638,15 @@ for n in range(npoints):
                   np.sin(m_2chi[dpoints[n]]+m_2chi_err[dpoints[n]]))
     ax.plot(x,y,z, lw=0.25, color='blue', alpha=1)
     
+    # do the same for the data from the rotating waveplate polarimeter
     S3=np.sin(p_2chi[dpoints[n]])
     S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
     S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
-    ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
-                          [0, S2/np.linalg.norm([S1,S2,S3])],
-                          [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,
-                          lw=0.5, arrowstyle="-|>", color="orange"))
+#    ax.add_artist(Arrow3D([0, S1/np.linalg.norm([S1,S2,S3])],
+#                          [0, S2/np.linalg.norm([S1,S2,S3])],
+#                          [0, S3/np.linalg.norm([S1,S2,S3])], mutation_scale=5,
+#                          lw=0.5, arrowstyle="-|>", color="orange"))
+#    ax.plot([S1/np.linalg.norm([S1,S2,S3])], [S2/np.linalg.norm([S1,S2,S3])], [S3/np.linalg.norm([S1,S2,S3])], color='orange')
     
     x=np.linspace(np.cos(p_2psi[dpoints[n]]-p_2psi_err[dpoints[n]])*np.cos(p_2chi[dpoints[n]]),
                   np.cos(p_2psi[dpoints[n]]+p_2psi_err[dpoints[n]])*np.cos(p_2chi[dpoints[n]]))
@@ -663,7 +669,7 @@ ax.set_axis_off()
 plt.show()
 
 #############################################################################
-# plotting hemispheres
+#%% plotting hemispheres
 
 fig = plt.figure(figsize=plt.figaspect(0.5))
 ax = fig.add_subplot(1,2,1, projection='3d')
@@ -677,21 +683,26 @@ npoints=200
 dpoints=[]
 for n in range(npoints):
     dpoints.append(int(random.random()*len(m_dops)))
+
 dpoints=np.array(dpoints)
 
-size = 3
+size = 10 # size of scatter plot points
 for n in range(npoints):
-    S3=np.sin(m_2chi[dpoints[n]])
-    S2=np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
-    S1=np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
-    if S3 >=0:
+    S3 = np.sin(m_2chi[dpoints[n]])
+    S2 = np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    S1 = np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    norm = np.sqrt(S1**2+S2**2+S3**2)
+    S1, S2, S3 = S1/norm, S2/norm, S3/norm
+    if S3 >= 0:
         ax.scatter(S1, S2, S3, color='blue', s=size)
-    if S3 <=0:
+    if S3 <= 0:
         ax2.scatter(S1, S2, S3, color='blue', s=size)
-        
+    
     S3=np.sin(p_2chi[dpoints[n]])
     S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
     S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    norm = np.sqrt(S1**2+S2**2+S3**2)
+    S1, S2, S3 = S1/norm, S2/norm, S3/norm
     if S3 >=0:        
         ax.scatter(S1, S2, S3, color='orange', s=size)
     if S3 <=0:        
@@ -723,3 +734,131 @@ ax2.view_init(-90, 0)
 ax2.scatter(0,0,-1.1,marker="x", s=30,color='black')
 ax2.text(0, 0.1, 1.1, '$S_3$', fontweight='bold')
 plt.show()
+
+#%% Second attempt at plotting hemispherical views of the Poincare Sphere
+
+fig = plt.figure(facecolor='white', figsize = (8,8), dpi=my_dpi)
+fig2 = plt.figure(facecolor='white', figsize = (8,8), dpi=my_dpi)
+latitudes = [30, 45, 60, 75]
+longitudes = [0, 45, 90, 135]
+
+ax = fig.gca()
+ax2 = fig2.gca()
+zoom = 2
+axins_alt = zoomed_inset_axes(ax, zoom, loc=1, bbox_to_anchor=[0, -2])
+axins_alt2 = zoomed_inset_axes(ax2, zoom, loc=4)
+x1, x2, y1, y2 = -0.75, 0.75, -0.25, -0.6
+
+lim = 1.5
+main = plt.Circle((0, 0), 1, color=(0, 0, 0, 0.1))
+main2 = plt.Circle((0, 0), 1, color=(0, 0, 0, 0.1))
+mainalt = plt.Circle((0, 0), 1, color=(0, 0, 0, 0.1))
+mainalt2 = plt.Circle((0, 0), 1, color=(0, 0, 0, 0.1))
+ax.set_xlim([-lim, lim])
+ax.set_ylim([-lim, lim])
+ax2.set_xlim([-lim, lim])
+ax2.set_ylim([-lim, lim])
+ax.add_artist(main)
+ax2.add_artist(main2)
+axins_alt.add_artist(mainalt)
+axins_alt2.add_artist(mainalt2)
+
+def draw_circle(rad, weight, arg, axis):
+    u = np.linspace(0, 2*np.pi, 500)
+    x = rad*np.sin(u)
+    y = rad*np.cos(u)
+    axis.plot(x, y, arg, linewidth=weight)
+    
+draw_circle(1, 3, 'k', ax)
+draw_circle(1, 3, 'k', axins_alt)
+draw_circle(1, 3, 'k', ax2)
+draw_circle(1, 3, 'k', axins_alt2)
+
+for angle in latitudes:
+    rad = np.cos(np.deg2rad(angle))
+    draw_circle(rad, 1.5, '--k', ax)
+    draw_circle(rad, 1.5, '--k', axins_alt)
+    draw_circle(rad, 1.5, '--k', ax2)
+    draw_circle(rad, 1.5, '--k', axins_alt2)
+    ax.text(0, -0.98*rad, str(angle)+'$\degree$', fontsize=12)
+    ax2.text(0, -0.98*rad, str(-angle)+'$\degree$', fontsize=12)
+for angle in longitudes:
+    start_x = np.cos(np.deg2rad(angle))    
+    start_y = np.sin(np.deg2rad(angle))
+    ax.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
+    axins_alt.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
+    ax2.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
+    axins_alt2.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)     
+
+# Plotting selected datapoints
+
+npoints=300
+dpoints=[]
+for n in range(npoints):
+    dpoints.append(int(random.random()*len(m_dops)))
+
+dpoints=np.array(dpoints)
+
+size = 10 # size of scatter plot points
+for n in range(npoints):
+    S3 = np.sin(m_2chi[dpoints[n]])
+    S2 = np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    S1 = np.cos(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
+    norm = np.sqrt(S1**2+S2**2+S3**2)
+    S1, S2, S3 = S1/norm, S2/norm, S3/norm
+    if S3 >= 0:
+        ax.scatter(S1, S2, color='blue', s=size)
+        axins_alt.scatter(S1, S2, color='blue', s=size)
+    if S3 <= 0:
+       ax2.scatter(S1, S2, color='blue', s=size)
+       axins_alt2.scatter(S1, S2, color='blue', s=size)
+
+    
+    S3=np.sin(p_2chi[dpoints[n]])
+    S2=np.sin(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    S1=np.cos(p_2psi[dpoints[n]])*np.cos(p_2chi[dpoints[n]])
+    norm = np.sqrt(S1**2+S2**2+S3**2)
+    S1, S2, S3 = S1/norm, S2/norm, S3/norm
+    if S3 >=0:        
+        ax.scatter(S1, S2, color='orange', s=size)
+        axins_alt.scatter(S1, S2, color='orange', s=size)
+    if S3 <=0:        
+        ax2.scatter(S1, S2, color='orange', s=size)
+        axins_alt2.scatter(S1, S2, color='orange', s=size)
+        
+
+
+axins_alt.set_xlim(x1, x2) # apply the x-limits
+axins_alt.set_ylim(y1, y2) # apply the y-limits
+mark_inset(ax, axins_alt, loc1=4, loc2=3, fc="none", ec=edge_color)
+axins_alt2.set_xlim(x1, x2) # apply the x-limits
+axins_alt2.set_ylim(y1, y2) # apply the y-limits
+mark_inset(ax2, axins_alt2, loc1=4, loc2=3, fc="none", ec=edge_color)
+
+axins_alt.set_xticklabels([])
+axins_alt.set_yticklabels([])
+axins_alt2.set_xticklabels([])
+axins_alt2.set_yticklabels([])
+axins_alt.set_xticks([])
+axins_alt.set_yticks([])
+axins_alt2.set_xticks([])
+axins_alt2.set_yticks([])
+
+ax.set_axis_off()
+ax2.set_axis_off()
+ax.arrow(0, 0, 0, lim, color='k', length_includes_head=True, width=0.005)
+ax.arrow(0, 0, lim, 0, color='k', length_includes_head=True, width=0.005)
+ax2.arrow(0, 0, 0, -lim, color='k', length_includes_head=True, width=0.005)
+ax2.arrow(0, 0, lim, 0, color='k', length_includes_head=True, width=0.005)
+axins_alt2.arrow(0, 0, 0, -lim, color='k', length_includes_head=True, width=0.005)
+axins_alt2.arrow(0, 0, lim, 0, color='k', length_includes_head=True, width=0.005)
+
+new_dir = 'Hemispheres'
+left = os.getcwd()
+os.chdir('../../../..')
+os.chdir('Graphics')
+if not os.path.isdir(new_dir):
+        os.mkdir(new_dir)
+os.chdir(new_dir)
+plt.savefig('hemisphere1.pdf', dpi = my_dpi, bbox_inches='tight')
+os.chdir(left)
