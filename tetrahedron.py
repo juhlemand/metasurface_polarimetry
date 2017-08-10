@@ -13,7 +13,7 @@ import random
 
 if 'linux' in sys.platform:
     directory = 'acquisition/data/big_metasurface'
-    #directory = 'acquisition/data/small_metasurfaces/top1_left4'
+    directory = 'acquisition/data/small_metasurfaces/top2_left3'
 else:
     directory = 'acquisition\\data\\small_metasurfaces\\top5_left4'
 
@@ -183,11 +183,17 @@ if 'big_metasurface' in directory:
                        [1,-np.sqrt(2)/3,-np.sqrt(2/3),1/3],
                        [1,-np.sqrt(2)/3,np.sqrt(2/3),1/3],
                        [1,2*np.sqrt(2)/3,0,1/3]])
-elif 'small_metasurfaces' in directory:
+if 'left1' or 'left2' in directory:
+    designed=np.array([[1,2*np.sqrt(2)/3,0,1/3],
+                       [1,-np.sqrt(2)/3,np.sqrt(2/3),1/3],
+                       [1,-np.sqrt(2)/3,-np.sqrt(2/3),1/3],
+                       [1,0,0,-1]])    
+if 'left3' or 'left4' in directory:
     designed=np.array([[1,0,-1,0.01],
                        [1,0,0,1],
                        [1,0,0,-1],
                        [1,0,1,0.01]])
+    
 n=0
 p=[]
 
@@ -258,3 +264,4 @@ axarr[1][2].axis('off')
 axarr[1][3].axis('off')
 plt.show()
 
+###########################################################################
