@@ -21,11 +21,9 @@ qwp_L = 'qwp_L'  # folder for qwp at second configuration
 
 partial_pol = 'partial_pol8'  # folder location of partial pol data
 
-comparison = 'polarimeter_comparison'  # folder for comparing polarimeter data
-
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
-data_dir = 'acquisition\data\calibration4'
+data_dir = 'acquisition\data\calibration1'
 
 if 'linux' in platform:
     os.chdir('acquisition/data/calibration4')
@@ -281,6 +279,7 @@ def linear_cal_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
     axes.tick_params(axis='y', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
     axes.tick_params(axis='y', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
     axes.set_xlim([min_angle, max_angle])
+    return fit_errs
 
 
 save_fig = 1
@@ -290,7 +289,7 @@ min_angle = 0
 max_angle = 180
 fig = plt.figure()
 ax = plt.gca()
-linear_cal_fig(ax, pd_errs, angles, pd_voltages, min_angle, max_angle)
+fit_errs = linear_cal_fig(ax, pd_errs, angles, pd_voltages, min_angle, max_angle)
 
 if save_fig:
     file_name = 'linear_cal.svg'

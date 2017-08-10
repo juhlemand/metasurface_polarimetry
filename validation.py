@@ -8,7 +8,9 @@ from scipy.stats import circmean
 from scipy import stats as stats
 
 polarimeter_file = 'polarimeter.txt' #polarimeter data file
-DOP_CUTOFF=0.5
+DOP_CUTOFF=0
+
+#os.chdir('../../../..')
 
 #instrument matrix from calibration
 if 'linux' in platform:
@@ -17,7 +19,7 @@ if 'linux' in platform:
     Ainv=np.loadtxt('../Ainv.txt')
     Ainv_cov=pickle.load(open( "../Ainv_cov.p", "rb" ))
 else:
-    directory='acquisition\\data\\calibration4\\comparison' #data location folder
+    directory='acquisition\\data\\calibration1\\comparison1.2' #data location folder
     os.chdir(directory)
     Ainv=np.loadtxt('..\\Ainv.txt')
     Ainv_cov=pickle.load(open( "..\\Ainv_cov.p", "rb" ))
@@ -200,19 +202,21 @@ plt.show()
 ##############################################################
 #plotting code
 
-savefig = 1
-f_name = 'comparison_graphs.svg'
+savefig = 0
+f_name = 'comparison_graph'
+
+my_dpi = 192
 
 # histogram parameters
 histogram_color = (0,1,0, 0.5)
-fit_line_width = 3
-legend_size = 12
+fit_line_width = 5
+legend_size = 15
 
 # inset plotting parameters
-xmin_dop = 0.5
-xmax_dop = 0.6
-ymin_dop = 0.5
-ymax_dop = 0.6
+xmin_dop = 0.6
+xmax_dop = 0.68
+ymin_dop = 0.6
+ymax_dop = 0.68
 
 xmin_azimuth = 1.5
 xmax_azimuth = 2
@@ -224,18 +228,23 @@ xmin_altitude = -0.25
 ymin_altitude = -0.50
 ymax_altitude = -0.25
 
+fig_x = 20
+fig_y = 2/3*fig_x
+
 edge_color = "0.0"
-zoom = 3
+zoom = 6
 location = 4 # lower right corner
 
 # scatter plot parameters
 scatter_color = 'red'
-scatter_weight = 2
-line_weight = 1.5  # weight of the one-to-one line
+scatter_weight = 4
+line_weight = 1  # weight of the one-to-one line
 line_color = 'black'
-line_alpha = 0.75
-scatter_alpha = 0.5
+line_alpha = 1
+scatter_alpha = 1
 label_size = 16
+eline_width = 0.5
+cap_size = 2
 
 
 #poincare sphere coordinates in radians
@@ -305,7 +314,9 @@ m_2psi = m_2psi + 2*np.pi*((m_2psi>0)*(p_2psi<0))
 # recalculate diffs for histogram
 diffs = np.mod(m_2psi - p_2psi + np.pi, 2*np.pi) - np.pi
 # now remove points whose error bars are inordinately large
-mask = np.logical_and((p_2psi_err < 3*np.mean(p_2psi_err)), (m_2psi_err <    3*np.mean(m_2psi_err)))
+mask1 = np.logical_and((p_2psi_err < 3*np.mean(p_2psi_err)), (m_2psi_err <    3*np.mean(m_2psi_err)))
+mask2 = np.logical_and((m_dops_err<3*np.mean(m_dops_err)), (p_dops_err<    3*np.mean(p_dops_err)))
+mask = np.logical_and(mask1, mask2)
 diffs = diffs[mask]
 m_2psi = m_2psi[mask]
 p_2psi = p_2psi[mask]
@@ -322,26 +333,26 @@ p_dops_err = p_dops_err[mask]
 
 # having cleaned up the data, we plot the results for dop, chi, and psi
 # plot the dop data
-f, axarr  = plt.subplots(2,3)
-axarr[0][0].scatter(p_dops, m_dops,alpha=0.5,s=scatter_weight, color=scatter_color)
-axarr[0][0].errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=scatter_alpha, fmt=' ', color=scatter_color)
+f, axarr  = plt.subplots(2,3, figsize =(fig_x, fig_y))
 axarr[0][0].plot([0,1],[0,1],alpha=line_alpha,color=line_color, linewidth=line_weight)
-axarr[0][0].set_title('DOP')
-axarr[0][0].set_xlabel('Polarimeter measurement')
-axarr[0][0].set_ylabel('Metasurface measurement')
+axarr[0][0].scatter(p_dops, m_dops,alpha=scatter_alpha,s=scatter_weight, color=scatter_color)
+axarr[0][0].errorbar(p_dops, m_dops, yerr=m_dops_err, alpha=scatter_alpha, fmt=' ', color=scatter_color, elinewidth = eline_width, capthick = eline_width, capsize = cap_size)
+#axarr[0][0].set_title('DOP')
+#axarr[0][0].set_xlabel('Polarimeter measurement')
+#axarr[0][0].set_ylabel('Metasurface measurement')
 axarr[0][0].set_xlim([-0.1,1.1])
 axarr[0][0].set_ylim([-0.1,1.1])
 axarr[0][0].tick_params(labelsize=label_size)
 
 # create a zoomed inset of the data
 axins_dop = zoomed_inset_axes(axarr[0][0], zoom, loc=location)
-axins_dop.scatter(p_dops, m_dops, alpha=0.5, s=scatter_weight, color=scatter_color)
-axins_dop.errorbar(p_dops, m_dops, xerr=p_dops_err, yerr=m_dops_err, alpha=scatter_alpha, fmt=' ', color=scatter_color)
 axins_dop.plot([-np.pi,np.pi],[-np.pi, np.pi], color=line_color, alpha=line_alpha, linewidth=line_weight)
+axins_dop.scatter(p_dops, m_dops, alpha=scatter_alpha, s=scatter_weight, color=scatter_color)
+axins_dop.errorbar(p_dops, m_dops, yerr=m_dops_err, alpha=scatter_alpha, fmt=' ', color=scatter_color,elinewidth = eline_width, capsize = cap_size)
 x1, x2, y1, y2 = xmin_dop, xmax_dop, ymin_dop, ymax_dop
 axins_dop.set_xlim(x1, x2) # apply the x-limits
 axins_dop.set_ylim(y1, y2) # apply the y-limits
-mark_inset(axarr[0][0], axins_dop, loc1=3, loc2=1, fc="none", ec=edge_color)
+mark_inset(axarr[0][0], axins_dop, loc1=2, loc2=1, fc="none", ec=edge_color)
 axins_dop.set_xticklabels([])
 axins_dop.set_yticklabels([])
 
@@ -360,26 +371,27 @@ axarr[1][0].set_xticks(xticks[::2])
 
 # move on to azimuth
 
-axarr[0][1].scatter(p_2psi, m_2psi, alpha=0.5, s=scatter_weight, color=scatter_color)
-axarr[0][1].errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=0.5, fmt=' ', color=scatter_color)
-axarr[0][1].set_title('Azimuth $2\chi$')
-axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
-axarr[0][1].set_ylabel('Metasurface measurement (radians)')
+axarr[0][1].plot([-np.pi,np.pi],[-np.pi, np.pi], color=line_color, alpha=line_alpha, linewidth=line_weight)
+axarr[0][1].scatter(p_2psi, m_2psi, alpha=scatter_alpha, s=scatter_weight, color=scatter_color)
+axarr[0][1].errorbar(p_2psi, m_2psi, yerr=m_2psi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color, elinewidth = eline_width, capthick = eline_width, capsize = cap_size)
+#axarr[0][1].set_title('Azimuth $2\chi$')
+#axarr[0][1].set_xlabel('Polarimeter measurement (radians)')
+#axarr[0][1].set_ylabel('Metasurface measurement (radians)')
 axarr[0][1].set_xlim([-1.1*np.pi,1.1*np.pi])
 axarr[0][1].set_ylim([-1.1*np.pi,1.1*np.pi])
-axarr[0][1].plot([-np.pi,np.pi],[-np.pi, np.pi], color=line_color, alpha=line_alpha, linewidth=line_weight)
 axarr[0][1].set_xticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
 axarr[0][1].set_xticks([-3*np.pi/4, -np.pi/4, np.pi/4, 3*np.pi/4], minor=True)
-axarr[0][1].set_xticklabels(["-$\pi$", r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$", "$\pi$"], family='sans-serif', size=label_size)
+axarr[0][1].set_xticklabels(["-$\pi$", r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$", "$\pi$"], family='sans-serif', size=1.5*label_size)
 axarr[0][1].set_yticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
 axarr[0][1].set_yticks([-3*np.pi/4, -np.pi/4, np.pi/4, 3*np.pi/4], minor=True)
-axarr[0][1].set_yticklabels(["-$\pi$", r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$", "$\pi$"], family='sans-serif', size=label_size)
+axarr[0][1].set_yticklabels(["-$\pi$", r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$", "$\pi$"], family='sans-serif', size=1.5*label_size)
 
 # create a zoomed inset of the data
+
 axins_az = zoomed_inset_axes(axarr[0][1], zoom, loc=location)
-axins_az.scatter(p_2psi, m_2psi, alpha=0.5, s=scatter_weight, color=scatter_color)
-axins_az.errorbar(p_2psi, m_2psi, xerr=p_2psi_err, yerr=m_2psi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color)
 axins_az.plot([-np.pi,np.pi],[-np.pi, np.pi], alpha=line_alpha,color=line_color, linewidth=line_weight)
+axins_az.scatter(p_2psi, m_2psi, alpha=scatter_alpha, s=scatter_weight, color=scatter_color)
+axins_az.errorbar(p_2psi, m_2psi, yerr=m_2psi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color, elinewidth = eline_width, capthick = eline_width, capsize = cap_size)
 x1, x2, y1, y2 = xmin_azimuth, xmax_azimuth, ymin_azimuth, ymax_azimuth
 axins_az.set_xlim(x1, x2) # apply the x-limits
 axins_az.set_ylim(y1, y2) # apply the y-limits
@@ -405,28 +417,29 @@ axarr[1][1].tick_params(labelsize=label_size)
 popt = np.polyfit(p_2chi, m_2chi, 1)
 if popt[0]<0: # correct for RCP/LCP ambiguity
     m_2chi=-m_2chi
-    
-axarr[0][2].scatter(p_2chi, m_2chi, alpha=0.5,s=scatter_weight, color=scatter_color)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
-axarr[0][2].set_title('Altitude $\phi$')
-axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
-axarr[0][2].set_ylabel('Metasurface measurement (radians)')
+
+axarr[0][2].plot([-np.pi/2,np.pi/2],[-np.pi/2, np.pi/2], alpha=line_alpha,color=line_color, linewidth=line_weight)
+axarr[0][2].scatter(p_2chi, m_2chi, alpha=scatter_alpha,s=scatter_weight, color=scatter_color)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+axarr[0][2].errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color, elinewidth = eline_width, capthick=eline_width, capsize = cap_size)#,c=np.arange(0,len(polarimeter_dops)), cmap='viridis')
+#axarr[0][2].set_title('Altitude $\phi$')
+#axarr[0][2].set_xlabel('Polarimeter measurement (radians)')
+#axarr[0][2].set_ylabel('Metasurface measurement (radians)')
 axarr[0][2].set_xlim([-1.1*np.pi/2,1.1*np.pi/2])
 axarr[0][2].set_ylim([-1.1*np.pi/2,1.1*np.pi/2])
-axarr[0][2].plot([-np.pi/2,np.pi/2],[-np.pi/2, np.pi/2], alpha=line_alpha,color=line_color, linewidth=line_weight)
 axarr[0][2].set_xticks([-np.pi/2, 0, np.pi/2])
 axarr[0][2].set_xticks([-np.pi/4, np.pi/4], minor=True)
-axarr[0][2].set_xticklabels([r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$"], family='sans-serif', size=label_size)
+axarr[0][2].set_xticklabels([r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$"], family='sans-serif', size=1.5*label_size)
 axarr[0][2].set_yticks([-np.pi/2, 0, np.pi/2])
 axarr[0][2].set_yticks([-np.pi/4, np.pi/4], minor=True)
-axarr[0][2].set_yticklabels([r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$"], family='sans-serif', size=label_size)
+axarr[0][2].set_yticklabels([r"$-\frac{\pi}{2}$", "$0$", r"$\frac{\pi}{2}$"], family='sans-serif', size=1.5*label_size)
 
 # create a zoomed inset of the data
+
 axins_alt = zoomed_inset_axes(axarr[0][2], zoom, loc=4)
-axins_alt.tick_params(axis='y',direction='out')
-axins_alt.scatter(p_2chi, m_2chi, alpha=0.5, s=scatter_weight, color=scatter_color)
-axins_alt.errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color)
 axins_alt.plot([-np.pi/2,np.pi/2],[-np.pi/2, np.pi/2], alpha=line_alpha, color=line_color, linewidth=line_weight)
+axins_alt.tick_params(axis='y',direction='out')
+axins_alt.scatter(p_2chi, m_2chi, alpha=scatter_alpha, s=scatter_weight, color=scatter_color)
+axins_alt.errorbar(p_2chi, m_2chi, xerr=p_2chi_err, yerr=m_2chi_err, alpha=scatter_alpha, fmt=' ', color=scatter_color, elinewidth = eline_width, capthick = eline_width, capsize = cap_size)
 x1, x2, y1, y2 = xmin_altitude, xmax_altitude, ymin_altitude, ymax_altitude
 axins_alt.set_xlim(x1, x2) # apply the x-limits
 axins_alt.set_ylim(y1, y2) # apply the y-limits
@@ -445,12 +458,28 @@ y = mlab.normpdf(sample, mu, sigma)
 l = axarr[1][2].plot(sample, len(diffs)*(bins[1]-bins[0])*y, 'r--', linewidth=fit_line_width, label= '$\mu=%.3f$\n$\sigma=%.3f $'%(mu, sigma))
 axarr[1][2].legend(prop={'size': legend_size})
 axarr[1][2].axvline(0.0,color='black',alpha=0.25)
-axarr[1][1].tick_params(labelsize=label_size)
+axarr[1][2].tick_params(labelsize=label_size)
 
 plt.show()
 
+#%% Save the figure
+savefig=1
+new_dir = 'dataset_2'
+
 if savefig:
-    plt.savefig(f_name)
+    left = os.getcwd()
+    os.chdir('../../../..')
+    os.chdir('Graphics')
+    if not os.path.isdir(new_dir):
+        os.mkdir(new_dir)
+    os.chdir(new_dir)
+    for i in range(3):
+        for j in range(2):
+            curr_ax = axarr[j][i]
+            extent = curr_ax.get_window_extent().transformed(f.dpi_scale_trans.inverted())
+            f_name_mod = f_name + str(j) + str(i) + '.pdf'
+            plt.savefig(f_name_mod, transparent=False,  bbox_inches=extent.expanded(1.2, 1.2))
+    os.chdir(left)
 
 
 #%% Poincare sphere plots
