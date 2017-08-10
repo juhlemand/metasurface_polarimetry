@@ -183,16 +183,22 @@ if 'big_metasurface' in directory:
                        [1,-np.sqrt(2)/3,-np.sqrt(2/3),1/3],
                        [1,-np.sqrt(2)/3,np.sqrt(2/3),1/3],
                        [1,2*np.sqrt(2)/3,0,1/3]])
+    twopsi_d=np.array([0, -2*np.pi/3, 2*np.pi/3, np.pi])
+    twochi_d=np.array([-np.pi/2, np.pi/6,np.pi/6, np.pi/6])
 if 'left1' or 'left2' in directory:
     designed=np.array([[1,2*np.sqrt(2)/3,0,1/3],
                        [1,-np.sqrt(2)/3,np.sqrt(2/3),1/3],
                        [1,-np.sqrt(2)/3,-np.sqrt(2/3),1/3],
-                       [1,0,0,-1]])    
+                       [1,0,0,-1]])
+    twopsi_d=np.array([np.pi, 2*np.pi/3, -2*np.pi/3, 0])
+    twochi_d=np.array([np.pi/6,np.pi/6, np.pi/6, -np.pi/2]) 
 if 'left3' or 'left4' in directory:
     designed=np.array([[1,0,-1,0.01],
                        [1,0,0,1],
                        [1,0,0,-1],
                        [1,0,1,0.01]])
+    twopsi_d=np.array([-np.pi/2, 0, 0, np.pi/2])
+    twochi_d=np.array([0,np.pi/2, -np.pi/2, 0])
     
 n=0
 p=[]
@@ -211,11 +217,20 @@ for meas in [data_thorlabs,measured_stokes,designed]:
     S1=S1/S0
     S2=S2/S0
     S3=-S3/S0
-    
+    err=0.
     for i in range(4):
         twopsi = np.arctan2(S2[i], S1[i])
         twochi = np.arctan2(S3[i], np.sqrt(S1[i]**2+S2[i]**2))
 
+        def diff(a,b):
+            d1=abs(a+b)
+            d2=abs(a-b)
+            d3=abs(a+b+np.pi)
+            d4=abs(a+b-np.pi)
+            return min([d1,d2,d3,d4])
+
+        if meas.all==data_thorlabs.all:
+            err += diff(twopsi, twopsi_d[i])**2+diff(twochi,twochi_d[i])**2
         el=np.tan((twochi)/2)
 
         thetas = np.linspace(0, 2*np.pi, 10000)
@@ -254,6 +269,9 @@ for meas in [data_thorlabs,measured_stokes,designed]:
                            np.sign(S3[i])*(yy[7*(len(yy)//8)+10]-yy[7*(len(xx)//8)]),
                            head_width=0.1, head_length=0.2, linewidth=0., alpha=.8)
     n+=1
+    if err>0.00000001:
+        print('Error with respect to designed', err)
+
 
 plt.figlegend([p[0],p[4],p[8]],
            ['Thorlabs measurement','Time-sequential measurement','Designed states'],
@@ -263,5 +281,7 @@ axarr[1][1].axis('off')
 axarr[1][2].axis('off')
 axarr[1][3].axis('off')
 plt.show()
+
+
 
 ###########################################################################
