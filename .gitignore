@@ -1,6 +1,5 @@
-acquisition/data/calibration2/*
-acquisition/data/calibration3/*
-acquisition/data/calibration5/*
+acquisition/data/*/Ainv.txt
+acquisition/data/*/Ainv_cov.p
 acquisition/TXP_PAX/.vs/TXP_PAX/v15/Browse.VC.db
 acquisition/TXP_PAX/TXP_PAX/Debug/TXP_PAX.tlog/link.write.1.tlog
 acquisition/TXP_PAX/TXP_PAX/Debug/TXP_PAX.log
