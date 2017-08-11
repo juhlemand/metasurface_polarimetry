@@ -774,22 +774,6 @@ draw_circle(1, 3, 'k', axins_alt)
 draw_circle(1, 3, 'k', ax2)
 draw_circle(1, 3, 'k', axins_alt2)
 
-for angle in latitudes:
-    rad = np.cos(np.deg2rad(angle))
-    draw_circle(rad, 1.5, '--k', ax)
-    draw_circle(rad, 1.5, '--k', axins_alt)
-    draw_circle(rad, 1.5, '--k', ax2)
-    draw_circle(rad, 1.5, '--k', axins_alt2)
-    ax.text(0, -0.98*rad, str(angle)+'$\degree$', fontsize=12)
-    ax2.text(0, -0.98*rad, str(-angle)+'$\degree$', fontsize=12)
-for angle in longitudes:
-    start_x = np.cos(np.deg2rad(angle))    
-    start_y = np.sin(np.deg2rad(angle))
-    ax.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
-    axins_alt.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
-    ax2.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
-    axins_alt2.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)     
-
 # Plotting selected datapoints
 
 npoints=300
@@ -799,7 +783,7 @@ for n in range(npoints):
 
 dpoints=np.array(dpoints)
 
-size = 10 # size of scatter plot points
+size = 25 # size of scatter plot points
 for n in range(npoints):
     S3 = np.sin(m_2chi[dpoints[n]])
     S2 = np.sin(m_2psi[dpoints[n]])*np.cos(m_2chi[dpoints[n]])
@@ -808,10 +792,10 @@ for n in range(npoints):
     S1, S2, S3 = S1/norm, S2/norm, S3/norm
     if S3 >= 0:
         ax.scatter(S1, S2, color='blue', s=size)
-        axins_alt.scatter(S1, S2, color='blue', s=size)
+        axins_alt.scatter(S1, S2, color='blue', s=zoom*size)
     if S3 <= 0:
        ax2.scatter(S1, S2, color='blue', s=size)
-       axins_alt2.scatter(S1, S2, color='blue', s=size)
+       axins_alt2.scatter(S1, S2, color='blue', s=zoom*size)
 
     
     S3=np.sin(p_2chi[dpoints[n]])
@@ -821,12 +805,26 @@ for n in range(npoints):
     S1, S2, S3 = S1/norm, S2/norm, S3/norm
     if S3 >=0:        
         ax.scatter(S1, S2, color='orange', s=size)
-        axins_alt.scatter(S1, S2, color='orange', s=size)
+        axins_alt.scatter(S1, S2, color='orange', s=zoom*size)
     if S3 <=0:        
         ax2.scatter(S1, S2, color='orange', s=size)
-        axins_alt2.scatter(S1, S2, color='orange', s=size)
+        axins_alt2.scatter(S1, S2, color='orange', s=zoom*size)
         
-
+for angle in latitudes:
+    rad = np.cos(np.deg2rad(angle))
+    draw_circle(rad, 1.5, '--k', ax)
+    draw_circle(rad, 1.5, '--k', axins_alt)
+    draw_circle(rad, 1.5, '--k', ax2)
+    draw_circle(rad, 1.5, '--k', axins_alt2)
+    ax.text(0, -rad+0.05, str(angle)+'$\degree$', fontsize=14)
+    ax2.text(0, -rad+0.025, str(-angle)+'$\degree$', fontsize=14)
+for angle in longitudes:
+    start_x = np.cos(np.deg2rad(angle))    
+    start_y = np.sin(np.deg2rad(angle))
+    ax.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
+    axins_alt.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
+    ax2.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)
+    axins_alt2.plot([start_x, -start_x], [start_y, -start_y], '--k', linewidth=1.5)     
 
 axins_alt.set_xlim(x1, x2) # apply the x-limits
 axins_alt.set_ylim(y1, y2) # apply the y-limits
@@ -846,12 +844,12 @@ axins_alt2.set_yticks([])
 
 ax.set_axis_off()
 ax2.set_axis_off()
-ax.arrow(0, 0, 0, lim, color='k', length_includes_head=True, width=0.005)
-ax.arrow(0, 0, lim, 0, color='k', length_includes_head=True, width=0.005)
-ax2.arrow(0, 0, 0, -lim, color='k', length_includes_head=True, width=0.005)
-ax2.arrow(0, 0, lim, 0, color='k', length_includes_head=True, width=0.005)
-axins_alt2.arrow(0, 0, 0, -lim, color='k', length_includes_head=True, width=0.005)
-axins_alt2.arrow(0, 0, lim, 0, color='k', length_includes_head=True, width=0.005)
+ax.arrow(0, -lim, 0, 2*lim, color='k', length_includes_head=True, width=0.005)
+ax.arrow(-lim, 0, 2*lim, 0, color='k', length_includes_head=True, width=0.005)
+ax2.arrow(0, lim, 0, -2*lim, color='k', length_includes_head=True, width=0.005)
+ax2.arrow(-lim, 0, 2*lim, 0, color='k', length_includes_head=True, width=0.005)
+axins_alt2.arrow(0, lim, 0, -2*lim, color='k', length_includes_head=True, width=0.005)
+axins_alt2.arrow(-lim, 0, 2*lim, 0, color='k', length_includes_head=True, width=0.005)
 
 new_dir = 'Hemispheres'
 left = os.getcwd()
@@ -860,5 +858,8 @@ os.chdir('Graphics')
 if not os.path.isdir(new_dir):
         os.mkdir(new_dir)
 os.chdir(new_dir)
+plt.figure(fig.number)
 plt.savefig('hemisphere1.pdf', dpi = my_dpi, bbox_inches='tight')
+plt.figure(fig2.number)
+plt.savefig('hemisphere2.pdf', dpi = my_dpi, bbox_inches='tight')
 os.chdir(left)
