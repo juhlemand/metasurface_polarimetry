@@ -43,13 +43,14 @@ except:
     pass
 
 ####################################################################
-#calculating efficiency
+#%% calculating efficiency
 
 data=[]
 data_thorlabs=[]
 
 for folder in subdirs:
     os.chdir(folder)
+    # if time sequential measurement was done, fetch the data
     try:
         with open('pol_only') as f:
             pol_only = np.array(list(csv.reader(f)), dtype='float')
@@ -62,6 +63,7 @@ for folder in subdirs:
     except:
         pass
     
+    # get data from ThorLabs polarimeter
     with open('polarimeter.txt') as f:
         polarimeter = np.array(list(csv.reader(f)), dtype='float')
         polarimeter = np.array([ 1 ] + list(np.mean(polarimeter,0)[0:3]))
@@ -86,6 +88,7 @@ A = [[1,1,0,0],
 A = np.array(A)
 Ainv = np.linalg.pinv(A)
 
+# apply the pseudo-inverse to the data measured in time sequential measurement
 measured_stokes=np.zeros((4,4))
 for i in range(len(data)):
    measured_stokes[i] = np.dot(Ainv, data[i])
@@ -94,7 +97,7 @@ for i in range(len(data)):
 
 
 #############################################################################
-# plotting on Poincare sphere
+#%% plotting on Poincare sphere
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
@@ -154,6 +157,7 @@ S2 = data_thorlabs.transpose()[2]
 S3 = data_thorlabs.transpose()[3]
 print(np.vstack([S1,S2,S3]).transpose())
 
+# iterate over all pairs of Stokes coordinates
 for i in range(0,4):
     for j in range(0,4):
         plt.plot(list(S1[n] for n in [i,j]),
@@ -164,6 +168,8 @@ for i in range(0,4):
 S1 = measured_stokes.transpose()[1]
 S2 = measured_stokes.transpose()[2]
 S3 = measured_stokes.transpose()[3]
+
+# iterate over all pairs of Stokes coordinates
 for i in range(0,4):
     for j in range(0,4):
         plt.plot(list(S1[n] for n in [i,j]),
@@ -175,7 +181,7 @@ ax.set_axis_off()
 plt.show()
 
 #########################################################
-## Plotting polarization ellipses
+#%% Plotting polarization ellipses
 fig, axarr = plt.subplots(2,4,figsize=(12.5,2*3))
 
 if 'big_metasurface' in directory:
@@ -203,6 +209,7 @@ if 'left3' or 'left4' in directory:
 n=0
 p=[]
 
+# iterate over measurement schemes
 for meas in [data_thorlabs,measured_stokes,designed]:
     S0 = meas.transpose()[0]
     S1 = meas.transpose()[1]
@@ -218,6 +225,7 @@ for meas in [data_thorlabs,measured_stokes,designed]:
     S2=S2/S0
     S3=-S3/S0
     err=0.
+    # iterate over diffraction orders
     for i in range(4):
         twopsi = np.arctan2(S2[i], S1[i])
         twochi = np.arctan2(S3[i], np.sqrt(S1[i]**2+S2[i]**2))
@@ -228,11 +236,13 @@ for meas in [data_thorlabs,measured_stokes,designed]:
             d3=abs(a+b+np.pi)
             d4=abs(a+b-np.pi)
             return min([d1,d2,d3,d4])
-
+        
+        # if we are in the Thorlabs data case
         if meas.all==data_thorlabs.all:
             err += diff(twopsi, twopsi_d[i])**2+diff(twochi,twochi_d[i])**2
+        # find the ellipticity
         el=np.tan((twochi)/2)
-
+        
         thetas = np.linspace(0, 2*np.pi, 10000)
         b = 1
         a = np.sign(S3[i])*b/el
@@ -243,31 +253,36 @@ for meas in [data_thorlabs,measured_stokes,designed]:
 
         x=r*np.cos(thetas)
         y=r*np.sin(thetas)
-
+        
+        # rotate the ellipse
         xx=x*np.cos(0.5*twopsi)-y*np.sin(0.5*twopsi)
         yy=x*np.sin(0.5*twopsi)+y*np.cos(0.5*twopsi)
 
+        # plot the polarization ellipse
         if meas.all==data_thorlabs.all:
-            p.append(axarr[0][i].plot(xx,yy,'-',alpha=0.8, label='Thorlabs measurement')[0])
+            color='-k'
+            p.append(axarr[0][i].plot(xx,yy,color,alpha=0.8, label='Thorlabs measurement')[0])
         elif meas.all==measured_stokes.all:
-            p.append(axarr[0][i].plot(xx,yy,'--',alpha=0.8, label='Time-sequential measurement')[0])
+            color = '--r'
+            p.append(axarr[0][i].plot(xx,yy,color,alpha=0.8, label='Time-sequential measurement')[0])
         elif meas.all==designed.all:
+            color = '--k'
             p.append(axarr[0][i].plot(xx,yy,'--',alpha=0.8, label='Designed states')[0])
             
         axarr[0][i].set_xlim([-1.1,1.1])
         axarr[0][i].set_ylim([-1.1,1.1])
 
-        #find ang
+        # find ang
 
         if abs(el) > 0.05 and (meas.all==data_thorlabs.all or meas.all==designed.all):
             axarr[0][i].arrow(xx[3*len(xx)//8-10], yy[3*len(yy)//8-10],
                            np.sign(S3[i])*(xx[3*len(xx)//8+10]-xx[3*len(xx)//8]),
                            np.sign(S3[i])*(yy[3*len(yy)//8+10]-yy[3*len(xx)//8]),
-                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8)
+                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=color)
             axarr[0][i].arrow(xx[7*(len(xx)//8-10)], yy[7*(len(yy)//8-10)],
                            np.sign(S3[i])*(xx[7*(len(xx)//8)+10]-xx[7*(len(xx)//8)]),
                            np.sign(S3[i])*(yy[7*(len(yy)//8)+10]-yy[7*(len(xx)//8)]),
-                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8)
+                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=color)
     n+=1
     if err>0.00000001:
         print('Error with respect to designed', err)
