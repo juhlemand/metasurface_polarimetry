@@ -182,7 +182,10 @@ plt.show()
 
 #########################################################
 #%% Plotting polarization ellipses
-fig, axarr = plt.subplots(2,4,figsize=(12.5,2*3))
+fig_x = 15
+fig_y = fig_x/3
+my_dpi=192
+fig, axarr = plt.subplots(1,4, figsize=(fig_x, fig_y), dpi=my_dpi)
 
 if 'big_metasurface' in directory:
     designed=np.array([[1,0,0,-1],
@@ -266,30 +269,40 @@ for meas in [data_thorlabs,measured_stokes,designed]:
         # rotate the ellipse
         xx=x*np.cos(0.5*twopsi)-y*np.sin(0.5*twopsi)
         yy=x*np.sin(0.5*twopsi)+y*np.cos(0.5*twopsi)
-
+        
+        axarr[i].set_aspect('equal')        
+        
+        lw = 1.5
         # plot the polarization ellipse
         if meas.all==data_thorlabs.all:
             linestyle='-'
             col='red'
-            p.append(axarr[0][i].plot(xx,yy,color=col,ls=linestyle,alpha=0.8, label='Thorlabs measurement')[0])
+            p.append(axarr[i].plot(xx,yy,color=col,ls=linestyle,alpha=0.8, label='Thorlabs measurement', linewidth=lw)[0])
         elif meas.all==measured_stokes.all:
             linestyle = '--'
             col = 'red'
-            p.append(axarr[0][i].plot(xx,yy,color=col, ls=linestyle, alpha=0.8, label='Time-sequential measurement')[0])
+            p.append(axarr[i].plot(xx,yy,color=col, ls=linestyle, alpha=0.8, label='Time-sequential measurement', linewidth=lw)[0])
         elif meas.all==designed.all:
             linestyle = '--'
             col = 'blue'
-            p.append(axarr[0][i].plot(xx,yy, ls=linestyle, color=col, alpha=0.8, label='Designed states')[0])
+            p.append(axarr[i].plot(xx,yy, ls=linestyle, color=col, alpha=0.8, label='Designed states', linewidth=lw)[0])
             
-        axarr[0][i].set_xlim([-1.1,1.1])
-        axarr[0][i].set_ylim([-1.1,1.1])
+        axarr[i].set_xlim([-1.1,1.1])
+        axarr[i].set_ylim([-1.1,1.1])
+        
+        axarr[i].axes.get_xaxis().set_visible(False)
+        axarr[i].axes.get_yaxis().set_visible(False)
 
         # find ang
 
         if abs(el) > 0.05 and (meas.all==data_thorlabs.all or meas.all==designed.all):
             points = [2000, 4500, 8000]
-                
-            axarr[0][i].quiver(xx[points], yy[points], (np.roll(xx, 1) - xx)[points], (np.roll(yy, 1)-yy)[points], color=col, headwidth=10, headlength=10, pivot='mid', headaxislength=10)            
+            u = (np.roll(xx, 1) - xx)[points]
+            v = (np.roll(yy, 1) - yy)[points]
+            norms = np.sqrt(u**2+v**2)
+            u, v = u/norms, v/norms # equalize arrow lengths            
+            
+            axarr[i].quiver(xx[points], yy[points], u, v, color=col, headwidth=10, headlength=10, pivot='mid', headaxislength=10)            
             
 #            axarr[0][i].arrow(xx[3*len(xx)//8-10], yy[3*len(yy)//8-10],
 #                           np.sign(S3[i])*(xx[3*len(xx)//8+10]-xx[3*len(xx)//8]),
@@ -307,10 +320,12 @@ for meas in [data_thorlabs,measured_stokes,designed]:
 plt.figlegend([p[0],p[4],p[8]],
            ['Thorlabs measurement','Time-sequential measurement','Designed states'],
            loc='lower center')
-axarr[1][0].axis('off')
-axarr[1][1].axis('off')
-axarr[1][2].axis('off')
-axarr[1][3].axis('off')
+
+
+#axarr[1][0].axis('off')
+#axarr[1][1].axis('off')
+#axarr[1][2].axis('off')
+#axarr[1][3].axis('off')
 plt.show()
 
 
