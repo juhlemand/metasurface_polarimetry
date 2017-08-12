@@ -240,19 +240,28 @@ for meas in [data_thorlabs,measured_stokes,designed]:
         # if we are in the Thorlabs data case
         if meas.all==data_thorlabs.all:
             err += diff(twopsi, twopsi_d[i])**2+diff(twochi,twochi_d[i])**2
-        # find the ellipticity
+        # find the ellipticity, the tangent of the ellipticity angle
         el=np.tan((twochi)/2)
         
-        thetas = np.linspace(0, 2*np.pi, 10000)
-        b = 1
-        a = np.sign(S3[i])*b/el
-        norm = max(a,b)
+        # set direction in which ellipse is traversed
+        if np.sign(S3[i]) > 0:
+            thetas = np.linspace(0, 2*np.pi, 10000)
+        else:
+            thetas = np.linspace(2*np.pi, 0, 10000)
+            
+        b = 1 # assume major axis is 1
+        a = b/np.abs(el) # now compute the length of the minor axis
+        norm = max(a,b) # normalize by whichever was larger
         a=a/norm
         b=b/norm
-        r = a*b/np.sqrt((a*np.cos(thetas)**2+(b*np.sin(thetas))**2))
+        # I think this results in being off by 90 degrees:        
+        #r = a*b/np.sqrt((a*np.cos(thetas)**2+(b*np.sin(thetas))**2))
 
-        x=r*np.cos(thetas)
-        y=r*np.sin(thetas)
+        #x= r*np.cos(thetas)
+        #y= r*np.sin(thetas)
+        
+        x = a*np.cos(thetas)
+        y = b*np.sin(thetas)        
         
         # rotate the ellipse
         xx=x*np.cos(0.5*twopsi)-y*np.sin(0.5*twopsi)
@@ -260,14 +269,17 @@ for meas in [data_thorlabs,measured_stokes,designed]:
 
         # plot the polarization ellipse
         if meas.all==data_thorlabs.all:
-            color='-k'
-            p.append(axarr[0][i].plot(xx,yy,color,alpha=0.8, label='Thorlabs measurement')[0])
+            linestyle='-'
+            col='red'
+            p.append(axarr[0][i].plot(xx,yy,color=col,ls=linestyle,alpha=0.8, label='Thorlabs measurement')[0])
         elif meas.all==measured_stokes.all:
-            color = '--r'
-            p.append(axarr[0][i].plot(xx,yy,color,alpha=0.8, label='Time-sequential measurement')[0])
+            linestyle = '--'
+            col = 'red'
+            p.append(axarr[0][i].plot(xx,yy,color=col, ls=linestyle, alpha=0.8, label='Time-sequential measurement')[0])
         elif meas.all==designed.all:
-            color = '--k'
-            p.append(axarr[0][i].plot(xx,yy,'--',alpha=0.8, label='Designed states')[0])
+            linestyle = '--'
+            col = 'blue'
+            p.append(axarr[0][i].plot(xx,yy, ls=linestyle, color=col, alpha=0.8, label='Designed states')[0])
             
         axarr[0][i].set_xlim([-1.1,1.1])
         axarr[0][i].set_ylim([-1.1,1.1])
@@ -275,14 +287,18 @@ for meas in [data_thorlabs,measured_stokes,designed]:
         # find ang
 
         if abs(el) > 0.05 and (meas.all==data_thorlabs.all or meas.all==designed.all):
-            axarr[0][i].arrow(xx[3*len(xx)//8-10], yy[3*len(yy)//8-10],
-                           np.sign(S3[i])*(xx[3*len(xx)//8+10]-xx[3*len(xx)//8]),
-                           np.sign(S3[i])*(yy[3*len(yy)//8+10]-yy[3*len(xx)//8]),
-                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=color)
-            axarr[0][i].arrow(xx[7*(len(xx)//8-10)], yy[7*(len(yy)//8-10)],
-                           np.sign(S3[i])*(xx[7*(len(xx)//8)+10]-xx[7*(len(xx)//8)]),
-                           np.sign(S3[i])*(yy[7*(len(yy)//8)+10]-yy[7*(len(xx)//8)]),
-                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=color)
+            points = [2000, 4500, 8000]
+                
+            axarr[0][i].quiver(xx[points], yy[points], (np.roll(xx, 1) - xx)[points], (np.roll(yy, 1)-yy)[points], color=col, headwidth=10, headlength=10, pivot='mid', headaxislength=10)            
+            
+#            axarr[0][i].arrow(xx[3*len(xx)//8-10], yy[3*len(yy)//8-10],
+#                           np.sign(S3[i])*(xx[3*len(xx)//8+10]-xx[3*len(xx)//8]),
+#                           np.sign(S3[i])*(yy[3*len(yy)//8+10]-yy[3*len(xx)//8]),
+#                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=col)
+#            axarr[0][i].arrow(xx[7*(len(xx)//8-10)], yy[7*(len(yy)//8-10)],
+#                           np.sign(S3[i])*(xx[7*(len(xx)//8)+10]-xx[7*(len(xx)//8)]),
+#                           np.sign(S3[i])*(yy[7*(len(yy)//8)+10]-yy[7*(len(xx)//8)]),
+#                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=col)
     n+=1
     if err>0.00000001:
         print('Error with respect to designed', err)
