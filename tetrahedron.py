@@ -331,3 +331,18 @@ plt.show()
 
 
 ###########################################################################
+#%% Prepare figure for export
+left = os.getcwd() # directory to come back to
+os.chdir('../../../..')
+os.chdir('Graphics')
+names = directory.split('\\')
+new_dir = names[-1]
+try:
+    if not os.path.isdir(new_dir):
+        os.mkdir(new_dir)
+    os.chdir(new_dir)
+    f_name = 'ellipses.pdf'
+    plt.savefig(f_name, dpi=my_dpi)
+except:
+    pass
+os.chdir(left)
