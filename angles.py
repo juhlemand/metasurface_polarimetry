@@ -11,77 +11,42 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
-if 'linux' in sys.platform:
-    directory = 'acquisition/data/big_metasurface'
+if 'darwin' or 'linux' in sys.platform:
+    directory = 'acquisition/data/small_metasurfaces/angles/top3left3'#top4left1'
 else:
     directory = 'acquisition\\data\\small_metasurfaces\\angles\\top4left1'
 
-subdirs = ['order-2', 'order-1']
+subdirs = ['order-2','order-1', 'order1', 'order2']
 #angledirs = ['-40dgr','-38dgr','-36dgr','-34dgr','-32dgr','-30dgr','-28dgr','-26dgr','-24dgr','-22dgr','-20dgr','-18dgr','-16dgr','-14dgr','-12dgr','-10dgr','-8dgr','-6dgr','-4dgr','-2dgr','0dgr', '2dgr','4dgr','6dgr','8dgr','10dgr','12dgr','14dgr','16dgr','18dgr','20dgr','22dgr','24dgr','26dgr','28dgr','30dgr','32dgr','34dgr','36dgr','38dgr','40dgr']
 angledirs = ['-40dgr','-36dgr','-32dgr','-28dgr','-24dgr','-20dgr','-16dgr','-12dgr','-8dgr','-4dgr',
              '0dgr','4dgr','8dgr','12dgr','16dgr','20dgr','24dgr','28dgr','32dgr','36dgr','40dgr']
 os.chdir(directory)
 
-####################################################################
-#calculating efficiency
-##try:
-##    with open('powers.txt') as f:
-##        raw = f.readlines()
-##
-##    efficiency = 0.
-##        
-##    for i in range(len(raw)):
-##        raw[i] = raw[i].split(' ')
-##        if 'mW' in raw[i][-1]:
-##            raw[i][1] = float(raw[i][1])*1000
-##        if 'inc' in raw[i][0]:
-##            inc_power = float(raw[i][1])
-##        if raw[i][0]!='0:' and raw[i][0]!='inc:':
-##            efficiency += float(raw[i][1])
-##            
-##    efficiency = efficiency/inc_power
-##    print('4-orders efficiency:',efficiency)
-##except:
-##    pass
-####################################################################
-#calculating efficiency
-
 data=[]
-data_thorlabs=[]
-for folder in angledirs:
-    os.chdir(folder)
-    os.chdir('order-1')
-    with open('polarimeter.txt') as f:
-        polarimeter = np.array(list(csv.reader(f)), dtype='float')
-        polarimeter = np.array([ 1 ] + list(np.mean(polarimeter,0)[0:3]))
-        data_thorlabs.append(polarimeter)
+data_thorlabs=np.zeros((len(angledirs),len(subdirs),4))
+indeks=0
+for a in angledirs:
+    index=0
+    os.chdir(a)
+#    print(os.path.dirname(os.path.realpath(__file__)))
+    for folder in subdirs:
+        os.chdir(folder)
+        with open('polarimeter.txt') as f:
+            polarimeter = np.array(list(csv.reader(f)), dtype='float')
+            polarimeter = np.array([ 1 ] + list(np.mean(polarimeter,0)[0:3]))
+            data_thorlabs[indeks][index][0:4]=polarimeter
+        os.chdir('..') 
+        index += 1
+            
 
-##    try:
-##        data.append(np.hstack([pol_only.transpose()[1],qwp_R.transpose()[1],qwp_L.transpose()[1]]))
-##    except:
-##        pass
+#    os.chdir('..')
     os.chdir('..')
-    os.chdir('..')
+    indeks+=1
     
     
 data = np.array(data)    
 data_thorlabs = np.array(data_thorlabs)
 
-##A = [[1,1,0,0],
-##     [1,0,1,0],
-##     [1,-1,0,0],
-##     [1,0,-1,0],
-##     [1,0,0,1],
-##     [1,0,0,-1]]
-##A = np.array(A)
-##Ainv = np.linalg.pinv(A)
-
-##measured_stokes=np.zeros((4,4))
-##for i in range(len(data)):
-##   measured_stokes[i] = np.dot(Ainv, data[i])
-##   measured_stokes[i][0] = 1.
-##   measured_stokes[i][1:] = measured_stokes[i][1:] / np.linalg.norm(measured_stokes[i][1:])
-##
 
 #############################################################################
 # plotting on Poincare sphere
@@ -137,40 +102,40 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
         ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
 plot_sphere(ax)
-
-# Plotting Thorlabs polarimeter data
-S1 = data_thorlabs.transpose()[1]
-S2 = data_thorlabs.transpose()[2]
-S3 = data_thorlabs.transpose()[3]
-
-for i in range(0,4):
-    for j in range(0,4):
-        plt.plot(list(S1[n] for n in [i,j]),
-                 list(S2[n] for n in [i,j]),
-                 list(S3[n] for n in [i,j]), color='orange', lw=0.5, marker=' ')
-
-### Plotting measured polarization data
-##S1 = measured_stokes.transpose()[1]
-##S2 = measured_stokes.transpose()[2]
-##S3 = measured_stokes.transpose()[3]
-##for i in range(0,4):
-##    for j in range(0,4):
-##        plt.plot(list(S1[n] for n in [i,j]),
-##                 list(S2[n] for n in [i,j]),
-##                 list(S3[n] for n in [i,j]), color='blue', lw=0.5, marker=' ')
-
-# Turn off the axis planes
-#vinkler = np.arange(-40,41,2)
-vinkler = np.arange(-40,41,4)
-#vinkler = np.insert(vinkler,0, [-40,-36,-32,-28,-24])
-#vinkler = np.insert(vinkler,len(vinkler), [24,28,32,36,40])
-ax.set_axis_off()
-plt.show()
-#plt.plot(vinkler, S1,'-o')
-#plt.plot(vinkler, S2,'-o')
-#plt.plot(vinkler, S3,'-o')
-plt.scatter(vinkler, S1)
-plt.scatter(vinkler, S2)
-plt.scatter(vinkler, S3)
-plt.show()
+    
+farve = ['b','g','r','k']
+for i in range(4):   
+    # Plotting Thorlabs polarimeter data
+    S1 = data_thorlabs[:,i,1]
+    S2 = data_thorlabs[:,i,2]
+    S3 = data_thorlabs[:,i,3]
+    
+    #for i in range(0,4):
+    #    for j in range(0,4):
+    #        plt.plot(list(S1[n] for n in [i,j]),
+    #                 list(S2[n] for n in [i,j]),
+    #                 list(S3[n] for n in [i,j]), color='orange', lw=0.5, marker=' ')
+            
+    for j in range(len(S1)):
+        ax.plot([S1.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S2.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S3.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])],  color=farve[i], marker='o')
+        
+for i in range(4):    
+    S1 = data_thorlabs[:,i,1]
+    S2 = data_thorlabs[:,i,2]
+    S3 = data_thorlabs[:,i,3]
+    # Turn off the axis planes
+    #vinkler = np.arange(-40,41,2)
+    vinkler = np.arange(-40,41,4)
+    #vinkler = np.insert(vinkler,0, [-40,-36,-32,-28,-24])
+    #vinkler = np.insert(vinkler,len(vinkler), [24,28,32,36,40])
+    ax.set_axis_off()
+    plt.show()
+    plt.figure()
+    #plt.plot(vinkler, S1,'-o')
+    #plt.plot(vinkler, S2,'-o')
+    #plt.plot(vinkler, S3,'-o')
+    plt.scatter(vinkler, S1)
+    plt.scatter(vinkler, S2)
+    plt.scatter(vinkler, S3)
+    plt.show()
 
