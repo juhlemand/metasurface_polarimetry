@@ -15,6 +15,10 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import sys
 from matplotlib.ticker import AutoMinorLocator
+from matplotlib.patches import FancyArrowPatch
+from mpl_toolkits.mplot3d import proj3d
+#from mpl_toolkits.mplot3d import Axes3D
+#import matplotlib.tri as mtri
 
 plt.close('all')
 
@@ -91,8 +95,27 @@ def sorted_nicely( l ):
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key = alphanum_key)
 
+def errIncS(A_actual, A_perceived, Sinc):
+    '''forklaring
 
-#%% Extract and fit linear polarizer data.
+    variabler
+    '''
+    Imeas = np.dot(A_actual,Sinc)
+    Sout = np.dot(A_perceived,Imeas)
+    #Sout=np.array(Sout)
+    
+    #euclidean distance 3dim plus great circle distance dim
+    normSout = [Sout[1]/np.linalg.norm([Sout[1],Sout[2],Sout[3]]),Sout[2]/np.linalg.norm([Sout[1],Sout[2],Sout[3]]),Sout[3]/np.linalg.norm([Sout[1],Sout[2],Sout[3]])]
+    #diffS = np.sqrt(np.square(Sinc[1]-normSout[0])+np.square(Sinc[2]-normSout[1])+np.square(Sinc[3]-normSout[2]))
+    diffS = np.arctan2(np.linalg.norm(np.cross(normSout,Sinc[1:])), np.dot(normSout,Sinc[1:]))
+
+    #euclidean distance 4dim
+#    diffS = np.sqrt(np.square(Sinc[0]-Sout[0])+np.square(Sinc[1]-Sout[1])+np.square(Sinc[2]-Sout[2])+np.square(Sinc[3]-Sout[3]))
+
+    # just difference
+    #diffS=Sout-Sinc
+    return normSout, diffS
+#%% Calibration
 q=0
 A=np.zeros((len(angledirs),4,4))
 Ainv=np.zeros((len(angledirs),4,4))
@@ -402,10 +425,10 @@ for folder in angledirs:
             pd3R_err = np.std(qwp_err(pd3_voltageQR))
             pd4R_err = np.std(qwp_err(pd4_voltageQR))
             
-            plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red')
-            plt.errorbar(pol_anglesR,pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue')
-            plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green')
-            plt.errorbar(pol_anglesR, pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
+  #          plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red')
+  #          plt.errorbar(pol_anglesR,pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue')
+  #          plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green')
+  #          plt.errorbar(pol_anglesR, pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
             #print(len(pd1_voltageQR))
         elif i == 1:
             pd1L = np.mean(pd1_voltageQR)
@@ -416,12 +439,12 @@ for folder in angledirs:
             pd2L_err = np.std(qwp_err(pd2_voltageQR))
             pd3L_err = np.std(qwp_err(pd3_voltageQR))
             pd4L_err = np.std(qwp_err(pd4_voltageQR))
-            plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', alpha=0.5)
-            plt.errorbar(pol_anglesR, pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', alpha=0.5)
-            plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', alpha=0.5)
-            plt.errorbar(pol_anglesR, pd4_voltageQR, yerr=pd4_voltage_err, fmt=' ', color='orange', alpha=0.5)
+ #           plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', alpha=0.5)
+ #           plt.errorbar(pol_anglesR, pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', alpha=0.5)
+ #           plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', alpha=0.5)
+ #           plt.errorbar(pol_anglesR, pd4_voltageQR, yerr=pd4_voltage_err, fmt=' ', color='orange', alpha=0.5)
             #print(len(pd1_voltageQR))
-    plt.show()
+ #   plt.show()
     
     # Construct the instrument matrix
     A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
@@ -450,120 +473,232 @@ for folder in angledirs:
 #    print('Inverted matrix Ainv: ')
 #    print(Ainv[:][:][q])
 #    print('')
-    
-    # save the instrument matrix as a text file for use in other scripts
-    
-    #if 'linux' in platform:
-        #np.savetxt('../Ainv.txt', Ainv)
-    #else:
-        #np.savetxt('..\\Ainv.txt', Ainv)
-    
-#    np.savetxt('..\\Ainv.txt', Ainv[:][:][q])
-    
-    #Error in Ainv (see https://arxiv.org/pdf/hep-ex/9909031.pdf, http://sci-hub.io/10.1364/ao.47.002541)
-    #Ainv_err=np.abs(np.dot(np.dot(Ainv, A_err),Ainv)) #need to change starting here
-    
-    #Assuming elements in A have no covariance between each other
-#    Ainv_cov=np.zeros((4,4,4,4))
-#    
-#    # outer four sums to compute the whole covariance array
-#    for aa in range(4):
-#        for bb in range(4):
-#            for a in range(4):
-#                for b in range(4):
-#                    # sum over i and j
-#                    s=0.
-#                    # inner two summations just for one element
-#                    for i in range(4):
-#                        for j in range(4):
-#                            s += Ainv[aa][i]*Ainv[j][bb]*Ainv[a][i]*Ainv[j][b]*(A_err[i][j])**2
-#                    Ainv_cov[aa][bb][a][b] = s
-    
-#    print('Covariance in Ainv: ')
-#    print(Ainv_cov)
-    #np.savetxt('..\\Ainv_cov.txt', Ainv_cov)
-    # save the covariance matrix to a text-like file?
-    #if 'linux' in platform:
-    #    pickle.dump( Ainv_cov, open( "../Ainv_cov.p", "wb" ) )
-    #else:
-    #    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
+
     
 #    pickle.dump( Ainv_cov, open( "..\Ainv_cov.p", "wb" ) )
     os.chdir('..')
     os.chdir('..')
     q+=1
 
+#%% heatmap 
+plt.close('all')
 B=np.zeros((16,len(angledirs)-1))    
 for indeks in range(1,len(angledirs)):
  #   print(indeks)
     taeller=0
     for i1 in range(4):
         for i2 in range(4):
-            B[taeller][indeks-1]=abs((A[indeks][i1][i2]-A[0][i1][i2])/A[0][i1][i2])
+            B[taeller][indeks-1]=abs((A[indeks][i1][i2]-A[0][i1][i2]))#/A[0][i1][i2])*100
             taeller+=1
 plt.figure()
-z_min, z_max = 0,1# -np.abs(B).max(), np.abs(B).max()
-plt.imshow(B,vmin=z_min, vmax=z_max)#,cmap='RdBu'
+#z_min, z_max = 0,100# -np.abs(B).max(), np.abs(B).max()
+plt.imshow(B)#,cmap='RdBu'
+#plt.axis([0, 4, 0, 15])
+#row_labels = list('WXYZ')
+#ax.set_xticklabels(row_labels, minor=False)
 plt.colorbar()
-
+plt.xlabel('deg')
+plt.ylabel('elements in A')
+plt.title('heatmap of deviation (in %) of A vs deg')
 print('Analyzer matrix deviation: ')
 print(B)
+
+#%% Numerical calc of error on S
+phiangle = np.linspace(0, 0.5*np.pi, 20)
+chiangle = np.linspace(0, np.pi, 40)
+
+#phiangle, chiangle = np.meshgrid(phiangle, chiangle)
+
+# The Cartesian coordinates of the unit sphere
+x=[]
+y=[]
+z=[]
+for a in range(len(phiangle)):
+    for b in range(len(chiangle)):
+        x.append(np.cos(2*phiangle[a]) * np.cos(2*chiangle[b]))
+        y.append(np.sin(2*phiangle[a]) * np.cos(2*chiangle[b]))
+        z.append(np.sin(2*chiangle[b]))
+
+Sinc=np.zeros((4,len(x)))
+Sinc[0,:]=np.ones(len(x))
+Sinc[1,:]=np.array(x)
+Sinc[2,:]=np.array(y)
+Sinc[3,:]=np.array(z)
+
+#,,np.array(y),np.array(z)]
+#Sinc=np.array(Sinc)
+#Sinc=np.matrix.transpose(Sinc)
+#Sforskel=np.zeros((len(phiangle),len(angledirs)))
+S=[]
+err=[]
+for j in range(1,len(angledirs)):
+    for i in range(len(x)):
+        SV, fejl = errIncS(A[:][:][j], Ainv[:][:][0], Sinc[:,i])
+        S.append(SV)
+        err.append(fejl)
+        #Sforskel[i][j]=errIncS(A[:][:][j], Ainv[:][:][0], Sinc[:,i])
+S=np.array(S)
+err=np.array(err)
+S=np.transpose(S)        
+#err=np.transpose(S[:,1,:])
+
+##%% heatmap sphere
+#(n, m) = (20, 20)
+#
+## Meshing a unit sphere according to n, m 
+#theta = np.linspace(0, 2 * np.pi, num=n, endpoint=False)
+#phi = np.linspace(np.pi * (-0.5 + 1./(m+1)), np.pi*0.5, num=m, endpoint=False)
+#theta, phi = np.meshgrid(theta, phi)
+#theta, phi = theta.ravel(), phi.ravel()
+#theta = np.append(theta, [0.]) # Adding the north pole...
+#phi = np.append(phi, [np.pi*0.5])
+#mesh_x, mesh_y = ((np.pi*0.5 - phi)*np.cos(theta), (np.pi*0.5 - phi)*np.sin(theta))
+#triangles = mtri.Triangulation(mesh_x, mesh_y).triangles
+#x, y, z = np.cos(phi)*np.cos(theta), np.cos(phi)*np.sin(theta), np.sin(phi)
+#
+#nymidl=[]
+#midl=np.array(Sdifference)
+#for i in range(401):#len(phiangle)):
+#    nymidl.append(np.mean(midl[i,:]))
+#    
+## Defining a custom color scalar field
+##vals = np.sin(6*phi) * np.sin(3*theta)
+#nymidl=np.array(nymidl)
+#
+#colors = np.mean(nymidl[triangles], axis=1)
+#
+## Plotting
+#fig = plt.figure()
+#ax = fig.gca(projection='3d')
+#cmap = plt.get_cmap('Blues')
+#triang = mtri.Triangulation(x, y, triangles)
+#collec = ax.plot_trisurf(triang, z, cmap=cmap, shade=False, linewidth=0.)
+#collec.set_array(colors)
+#collec.autoscale()
+#plt.show()
 
 #%%  plot
 # plotting on Poincare sphere
 
-#class Arrow3D(FancyArrowPatch):
-#    def __init__(self, xs, ys, zs, *args, **kwargs):
-#        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
-#        self._verts3d = xs, ys, zs
-#
-#    def draw(self, renderer):
-#        xs3d, ys3d, zs3d = self._verts3d
-#        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
-#        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
-#        FancyArrowPatch.draw(self, renderer)
-#
-## Set the aspect ratio to 1 so our sphere looks spherical
+class Arrow3D(FancyArrowPatch):
+    def __init__(self, xs, ys, zs, *args, **kwargs):
+        FancyArrowPatch.__init__(self, (0,0), (0,0), *args, **kwargs)
+        self._verts3d = xs, ys, zs
+
+    def draw(self, renderer):
+        xs3d, ys3d, zs3d = self._verts3d
+        xs, ys, zs = proj3d.proj_transform(xs3d, ys3d, zs3d, renderer.M)
+        self.set_positions((xs[0],ys[0]),(xs[1],ys[1]))
+        FancyArrowPatch.draw(self, renderer)
+
+# Set the aspect ratio to 1 so our sphere looks spherical
 #fig = plt.figure(figsize=plt.figaspect(1.))
 #ax = fig.add_subplot(111, projection='3d')
-#
-#def plot_sphere(ax,arrows='xyz',equatorial=True):
-#    phi = np.linspace(0, np.pi, 200)
-#    theta = np.linspace(0, 2*np.pi, 200)
-#
-#    #equatorial circle
-#    xe=np.sin(theta)
-#    ye=np.cos(theta)
-#
-#    phi, theta = np.meshgrid(phi, theta)
-#
-#    # The Cartesian coordinates of the unit sphere
-#    x = np.sin(phi) * np.cos(theta)
-#    y = np.sin(phi) * np.sin(theta)
-#    z = np.cos(phi)
-#
-#    ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='#EBE3E8',
-#                antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
-#    if 'y' in arrows:
-#        ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
-#                        [0,0], mutation_scale=15, 
-#                        lw=0.25, arrowstyle="-|>", color="black"))
-#        ax.text(0,1.5,0, '$S_2$', fontweight='bold')        
-#    if 'x' in arrows:
-#        ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
-#                        [0,0], mutation_scale=15, 
-#                        lw=0.25, arrowstyle="-|>", color="black"))
-#        ax.text(1.6,0,0, '$S_1$', fontweight='bold')        
-#    if 'z' in arrows:        
-#        ax.add_artist(Arrow3D([0, 0], [0,0], 
-#                        [-0.03,1.5], mutation_scale=15, 
-#                        lw=0.25, arrowstyle="-|>", color="black"))
-#        ax.text(0,0,1.5, '$S_3$',fontweight='bold')
-#    if equatorial:
-#        ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
-#
-#plot_sphere(ax)
-#   
+
+def plot_sphere(ax,arrows='xyz',equatorial=True):
+    phi = np.linspace(0, np.pi, 200)
+    theta = np.linspace(0, 2*np.pi, 200)
+
+    #equatorial circle
+    xe=np.sin(theta)
+    ye=np.cos(theta)
+
+    phi, theta = np.meshgrid(phi, theta)
+
+    # The Cartesian coordinates of the unit sphere
+    x = np.sin(phi) * np.cos(theta)
+    y = np.sin(phi) * np.sin(theta)
+    z = np.cos(phi)
+
+    ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='#EBE3E8',
+                antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
+    if 'y' in arrows:
+        ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
+                        [0,0], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(0,1.5,0, '$S_2$', fontweight='bold')        
+    if 'x' in arrows:
+        ax.add_artist(Arrow3D([0.0, 1.5], [0,0], 
+                        [0,0], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(1.6,0,0, '$S_1$', fontweight='bold')        
+    if 'z' in arrows:        
+        ax.add_artist(Arrow3D([0, 0], [0,0], 
+                        [-0.03,1.5], mutation_scale=15, 
+                        lw=0.25, arrowstyle="-|>", color="black"))
+        ax.text(0,0,1.5, '$S_3$',fontweight='bold')
+    if equatorial:
+        ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
+
+
+colbar=np.zeros((len(angledirs),len(x)))
+for w in range(len(angledirs)-1):
+    fig = plt.figure(figsize=plt.figaspect(1.))
+    ax = fig.add_subplot(111, projection='3d')
+
+    plot_sphere(ax)
+    #for j in range(len(x)):
+    #    ax.plot([Sinc[1,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], [Sinc[2,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], [Sinc[3,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], color='r', marker='o')
+    
+    #for j in range(len(x)):
+    #    colbar[j]=np.mean(abs(err[:,j]))
+    maxred=np.max(err[(800*w):800*w+800])
+    mingreen=np.min(err[(800*w):800*w+800])
+    colbar[w,:]=err[(800*w):800*w+800]/maxred
+    
+    for j in range(len(x)):
+    #    print(np.mean(abs(err[:,j])))
+        farve=[colbar[w,j],1-colbar[w,j],0]
+    #    ax.plot([S[1,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[2,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[3,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], color=farve, marker='o')
+        ax.plot([S[0,j+800*w]], [S[1,j+800*w]], [S[2,j+800*w]], color=farve, marker='o')
+    
+    for i in range(4):
+        ax.plot([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='k', marker='o')
+        
+    for i in range(0,4):
+        for j in range(0,4):
+            plt.plot(list(A[0,n,1]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
+                     list(A[0,n,2]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
+                     list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color='orange', lw=0.6, marker=' ')
+    
+    
+    for i in range(4):
+        ax.plot([A[w+1,i,1]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,2]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,3]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], color='b', marker='o')
+
+    for i in range(0,4):
+        for j in range(0,4):
+            plt.plot(list(A[w+1,n,1]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
+                     list(A[w+1,n,2]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
+                     list(A[w+1,n,3]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]), color='yellow', lw=0.6, marker=' ')
+
+    ax.set_axis_off()
+    #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
+    maxred=np.around(maxred, decimals=2)
+    mingreen=np.around(mingreen, decimals=2)
+    
+    redtext="max error: " + np.array_str(maxred)
+    greentext="min error: " + np.array_str(mingreen)
+    
+#    red_proxy = plt.Rectangle((0, 0), 1, 1, fc=[1, 0, 0])
+#    green_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 1, 0])
+#    blue_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 1])
+#    black_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 0])
+#    ax.legend([red_proxy,green_proxy,blue_proxy,black_proxy],[redtext, greentext, 'A_actual (yellow tetrahedron)','A_perceived (orange tetrahedron)'],loc='lower center')
+
+    line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8)
+    line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markerfacecolor=[0,1,0],markersize=8)
+    line3 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8, markerfacecolor="blue")
+    line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8,markerfacecolor="black")
+    yline = plt.Line2D(range(1), range(1), color="yellow")
+    oline = plt.Line2D(range(1), range(1), color="orange")
+    plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, 'A_actual', 'A_perceived'),numpoints=1, loc=1)
+
+#    handles = [p1,p2,p3]
+#    labels  = ['roed','blue','black']
+#    ax.legend(handles,labels)
+
+    plt.show()
+  
 #for j in range(len(angledirs)):
 #    for h in range(4):
 #        ax.plot([A[1][h][j]/np.linalg.norm([A[1][h][j],A[][h][j],S3.item(j)])], [S2.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S3.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])],  c = farve[i]+2*j/(3*len(S1)), marker='o'))#A[1:3][h][j])

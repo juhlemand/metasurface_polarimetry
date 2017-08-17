@@ -11,8 +11,10 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
+#top3left2 is the best tetrahedron design and top4left1 is the best principal polarization state design
+
 if 'darwin' or 'linux' in sys.platform:
-    directory = 'acquisition/data/small_metasurfaces/angles/top3left3'#top4left1'
+    directory = 'acquisition/data/small_metasurfaces/angles/top3left3'#top4left1' 
 else:
     directory = 'acquisition\\data\\small_metasurfaces\\angles\\top4left1'
 
@@ -137,6 +139,7 @@ ax.legend([red_proxy,green_proxy,blue_proxy,yellow_proxy],['order-2', 'order-1',
 ax.set_axis_off()
 plt.show()
        
+helpline=[-1,1,-1,1]
 for i in range(4):    
     S1 = data_thorlabs[:,i,1]
     S2 = data_thorlabs[:,i,2]
@@ -153,6 +156,7 @@ for i in range(4):
     plot1=plt.scatter(vinkler, S1)
     plot2=plt.scatter(vinkler, S2)
     plot3=plt.scatter(vinkler, S3)
+    plt.axhline(helpline[i], color='black', alpha=0.25)
     plt.figlegend( (plot1, plot2, plot3),
            ('$s_1$', '$s_2$', '$s_3$'),
            'upper right' )
