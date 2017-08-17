@@ -592,8 +592,8 @@ class Arrow3D(FancyArrowPatch):
         FancyArrowPatch.draw(self, renderer)
 
 # Set the aspect ratio to 1 so our sphere looks spherical
-#fig = plt.figure(figsize=plt.figaspect(1.))
-#ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure(figsize=plt.figaspect(1.))
+ax = fig.add_subplot(111, projection='3d')
 
 def plot_sphere(ax,arrows='xyz',equatorial=True):
     phi = np.linspace(0, np.pi, 200)
@@ -611,7 +611,7 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
     z = np.cos(phi)
 
     ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='#EBE3E8',
-                antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
+                antialiased=True, alpha=0.1, lw=0.5)#, facecolors=cm)
     if 'y' in arrows:
         ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
                         [0,0], mutation_scale=15, 
@@ -629,9 +629,18 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
         ax.text(0,0,1.5, '$S_3$',fontweight='bold')
     if equatorial:
         ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
+    
+plot_sphere(ax)
 
+#for j in range(len(x)):
+pSinc=ax.scatter3D(Sinc[1,:],Sinc[2,:],Sinc[3,:],color='red', marker='o',alpha=0.7)
+ax.set_axis_off()
+#lineInc = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor='red',markersize=8)
+plt.legend([pSinc],['Incoming polarization'])
+plt.show()
 
 colbar=np.zeros((len(angledirs),len(x)))
+
 for w in range(len(angledirs)-1):
     fig = plt.figure(figsize=plt.figaspect(1.))
     ax = fig.add_subplot(111, projection='3d')
@@ -649,27 +658,29 @@ for w in range(len(angledirs)-1):
     for j in range(len(x)):
     #    print(np.mean(abs(err[:,j])))
         farve=[colbar[w,j],1-colbar[w,j],0]
+#    farve=[colbar[w,:],1-colbar[w,:],0]
     #    ax.plot([S[1,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[2,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[3,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], color=farve, marker='o')
-        ax.plot([S[0,j+800*w]], [S[1,j+800*w]], [S[2,j+800*w]], color=farve, marker='o')
-    
+        ax.scatter3D([S[0,j+800*w]], [S[1,j+800*w]], [S[2,j+800*w]], color=farve, marker='o')#,alpha =0.5
+#    ax.scatter3D([S[0,800*w:800*w+800]], [S[1,800*w:800*w+800]], [S[2,800*w:800*w+800]],cmap='viridis', marker='o')#,alpha =0.5
+        
     for i in range(4):
-        ax.plot([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='k', marker='o')
+        ax.scatter3D([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='k', marker='o')
         
     for i in range(0,4):
         for j in range(0,4):
             plt.plot(list(A[0,n,1]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
                      list(A[0,n,2]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
-                     list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color='orange', lw=0.6, marker=' ')
+                     list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color='orange', lw=1, marker=' ')
     
     
     for i in range(4):
-        ax.plot([A[w+1,i,1]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,2]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,3]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], color='b', marker='o')
+        ax.scatter3D([A[w+1,i,1]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,2]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,3]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], color='b', marker='o')
 
     for i in range(0,4):
         for j in range(0,4):
             plt.plot(list(A[w+1,n,1]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
                      list(A[w+1,n,2]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
-                     list(A[w+1,n,3]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]), color='yellow', lw=0.6, marker=' ')
+                     list(A[w+1,n,3]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]), color='yellow', lw=1, marker=' ')
 
     ax.set_axis_off()
     #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
