@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import sys
 from matplotlib.ticker import AutoMinorLocator
 
+#os.chdir('../../../..')
 
 linear_pol_extension = 'polarizer_only'  # folder for linear pol data
 qwp_R = 'qwp_R'  # folder for qwp at first configuration
@@ -25,21 +26,15 @@ power_meter_error = 0.001 #Error in power meter reading from ambient light, unit
 
 data_dir = 'acquisition\data\calibration1'
 
-<<<<<<< HEAD
+
 if 'linux' in sys.platform:
-    data_dir = 'acquisition/data/calibration6'
+    data_dir = 'acquisition/data/calibration8'
 else:
-    data_dir = 'acquisition\data\calibration6'
-=======
-if 'linux' in platform:
-    os.chdir('acquisition/data/calibration4')
-else:
-    os.chdir(data_dir)
-
->>>>>>> 2c3fb4f6f749c296469a35da75ed5f78cfab75e7
+    data_dir = 'acquisition\data\calibration8'
 
 
-#os.chdir(data_dir)
+
+os.chdir(data_dir)
 
 
 #%% Collect some error analysis functions
@@ -114,6 +109,7 @@ pd4_voltage_err = []
 fit_functions = []
 fit_parameters = []
 variances = []
+
 
 os.chdir(linear_pol_extension)  # go get the linear pol data
 
@@ -223,6 +219,8 @@ inc_powers = np.array(inc_powers)
 
 
 #%% Now plot linear polarization cal data
+
+
 
 # define a function to plot the resulting graph
 def linear_cal_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
@@ -630,7 +628,7 @@ def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
     thetas = np.linspace(min_angle, max_angle, 1000)    
     curve = partial_pol_func(thetas, 0)    
 
-    axes.plot(thetas, curve, linewidth = 1.0, color = 'blue')
+    axes.plot(thetas, curve, linewidth = 1.5, color = 'black')
 
     axes.set_ylim([np.min(curve), 1.05 * np.max(curve)])  
     axes.errorbar(xdata, ydata, yerr=yerror, fmt = ".", markersize = 6, ecolor = 'r', color = 'r')
@@ -654,8 +652,9 @@ def partial_pol_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
 
       
 #%% Now plot the data    
+from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 
-
+pol_angles2 = np.array(pol_angles2)
 # plot points and error bars over whole range first
 plt.figure(3)
 
@@ -664,23 +663,30 @@ save_fig = 1 # if 1, save the figures
 
 min_angle= 0
 max_angle = 90
-partial_pol_fig(plt.gca(), partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle, max_angle)
+axes = plt.gca()
+partial_pol_fig(axes, partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle,    max_angle)
+
+N = 1
+zoom = 2.5
+axins_dop = zoomed_inset_axes(axes, zoom, loc=2)
+min_angle= 40
+max_angle = 50
+mask_inset = np.logical_and((pol_angles2>=min_angle), (pol_angles2<=max_angle))
+pol_angles_inset =pol_angles2[mask_inset]
+dops_inset = partial_dops[mask_inset]
+dops_err_inset = partial_dops_err[mask_inset]
+
+x1, x2, y1, y2 = min_angle, max_angle, 0, 1.1*np.max(dops_inset)
+axins_dop.set_xlim(x1, x2) # apply the x-limits
+axins_dop.set_ylim(y1, y2) # apply the y-limits
+mark_inset(axes, axins_dop, loc1=2, loc2=1, fc="none", ec='k')
+axins_dop.set_xticklabels([min_angle, max_angle])
+#axins_dop.set_yticklabels([])
+
+partial_pol_fig(axins_dop, partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle, max_angle)
 
 if save_fig:
     file_name = 'partial_pol.svg'
-    os.chdir('../../../../Graphics')
-    plt.savefig(file_name, format='svg')
-    os.chdir('..\\' + data_dir + '\\' + partial_pol)
-
-# now make inset graphs
-plt.figure(4)
-
-min_angle= 40
-max_angle = 50
-partial_pol_fig(plt.gca(), partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle, max_angle)
-
-if save_fig:
-    file_name = 'partial_pol_inset1.svg'
     os.chdir('../../../../Graphics')
     plt.savefig(file_name, format='svg')
     os.chdir('..\\' + data_dir + '\\' + partial_pol)

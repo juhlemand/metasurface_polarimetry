@@ -213,6 +213,8 @@ n=0
 p=[]
 
 # iterate over measurement schemes
+psi_err = np.zeros(4)
+chi_err = np.zeros(4)
 for meas in [data_thorlabs,measured_stokes,designed]:
     S0 = meas.transpose()[0]
     S1 = meas.transpose()[1]
@@ -243,6 +245,8 @@ for meas in [data_thorlabs,measured_stokes,designed]:
         # if we are in the Thorlabs data case
         if meas.all==data_thorlabs.all:
             err += diff(twopsi, twopsi_d[i])**2+diff(twochi,twochi_d[i])**2
+            psi_err[i] = twopsi - twopsi_d[i]
+            chi_err[i] = twochi - twochi_d[i]
         # find the ellipticity, the tangent of the ellipticity angle
         el=np.tan((twochi)/2)
         
