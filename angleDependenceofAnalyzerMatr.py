@@ -95,6 +95,9 @@ def sorted_nicely( l ):
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(l, key = alphanum_key)
 
+def determine_dop(pol_state):
+    return np.sqrt(pol_state[1]**2+pol_state[2]**2+pol_state[3]**2)/pol_state[0]
+
 def errIncS(A_actual, A_perceived, Sinc):
     '''forklaring
 
@@ -108,13 +111,21 @@ def errIncS(A_actual, A_perceived, Sinc):
     normSout = [Sout[1]/np.linalg.norm([Sout[1],Sout[2],Sout[3]]),Sout[2]/np.linalg.norm([Sout[1],Sout[2],Sout[3]]),Sout[3]/np.linalg.norm([Sout[1],Sout[2],Sout[3]])]
     #diffS = np.sqrt(np.square(Sinc[1]-normSout[0])+np.square(Sinc[2]-normSout[1])+np.square(Sinc[3]-normSout[2]))
     diffS = np.arctan2(np.linalg.norm(np.cross(normSout,Sinc[1:])), np.dot(normSout,Sinc[1:]))
-
+    
+    SincDOP = determine_dop(Sinc)
+    SoutDOP = determine_dop(Sout)
+    
+    diffDOP = np.abs(SincDOP-SoutDOP)
+    diffS1 = np.abs(Sinc[1]-Sout[1])
+    diffS2 = np.abs(Sinc[2]-Sout[2])
+    diffS3 = np.abs(Sinc[3]-Sout[3])
+    
     #euclidean distance 4dim
 #    diffS = np.sqrt(np.square(Sinc[0]-Sout[0])+np.square(Sinc[1]-Sout[1])+np.square(Sinc[2]-Sout[2])+np.square(Sinc[3]-Sout[3]))
 
     # just difference
     #diffS=Sout-Sinc
-    return normSout, diffS
+    return normSout, diffS, diffDOP, diffS1, diffS2, diffS3, Sout
 #%% Calibration
 q=0
 A=np.zeros((len(angledirs),4,4))
@@ -531,15 +542,31 @@ Sinc[3,:]=np.array(z)
 #Sforskel=np.zeros((len(phiangle),len(angledirs)))
 S=[]
 err=[]
+dDOP=[]
+dS1=[]
+dS2=[]
+dS3=[]
+Sout=[]
 for j in range(1,len(angledirs)):
     for i in range(len(x)):
-        SV, fejl = errIncS(A[:][:][j], Ainv[:][:][0], Sinc[:,i])
+        SV, fejl, difdop, difS1, difS2, difS3, Sud  = errIncS(A[:][:][j], Ainv[:][:][0], Sinc[:,i])
         S.append(SV)
         err.append(fejl)
+        dDOP.append(difdop)
+        dS1.append(difS1)
+        dS2.append(difS2)
+        dS3.append(difS3)
+        Sout.append(Sud)
         #Sforskel[i][j]=errIncS(A[:][:][j], Ainv[:][:][0], Sinc[:,i])
 S=np.array(S)
 err=np.array(err)
 S=np.transpose(S)        
+dS1=np.array(dS1)
+dS2=np.array(dS2)
+dS3=np.array(dS3)
+dDOP=np.array(dDOP)
+Sout=np.array(Sout)
+
 #err=np.transpose(S[:,1,:])
 
 ##%% heatmap sphere
@@ -641,36 +668,32 @@ plt.show()
 
 colbar=np.zeros((len(angledirs),len(x)))
 
-for w in range(len(angledirs)-1):
+def plot_color_sphere(ax, S, err, title):
     fig = plt.figure(figsize=plt.figaspect(1.))
     ax = fig.add_subplot(111, projection='3d')
 
     plot_sphere(ax)
-    #for j in range(len(x)):
-    #    ax.plot([Sinc[1,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], [Sinc[2,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], [Sinc[3,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], color='r', marker='o')
-    
-    #for j in range(len(x)):
-    #    colbar[j]=np.mean(abs(err[:,j]))
     maxred=np.max(err[(800*w):800*w+800])
     mingreen=np.min(err[(800*w):800*w+800])
     colbar[w,:]=err[(800*w):800*w+800]/maxred
     
-    for j in range(len(x)):
+#    for j in range(len(x)):
     #    print(np.mean(abs(err[:,j])))
-        farve=[colbar[w,j],1-colbar[w,j],0]
 #    farve=[colbar[w,:],1-colbar[w,:],0]
     #    ax.plot([S[1,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[2,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[3,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], color=farve, marker='o')
-        ax.scatter3D([S[0,j+800*w]], [S[1,j+800*w]], [S[2,j+800*w]], color=farve, marker='o')#,alpha =0.5
-#    ax.scatter3D([S[0,800*w:800*w+800]], [S[1,800*w:800*w+800]], [S[2,800*w:800*w+800]],cmap='viridis', marker='o')#,alpha =0.5
+#        farve=[colbar[w,j],1-colbar[w,j],0]    
+#        ax.scatter3D([S[0,j+800*w]], [S[1,j+800*w]], [S[2,j+800*w]], color=farve, marker='o',alpha =0.7)#,alpha =0.5
+    farve=[colbar[w,:],1-colbar[w,:],np.zeros((len(colbar[w,:])))]
+    ax.scatter3D([S[0,800*w:800*w+800]], [S[1,800*w:800*w+800]], [S[2,800*w:800*w+800]],c=np.transpose(farve), cmap='viridis',marker='o')#,alpha =0.5
         
     for i in range(4):
-        ax.scatter3D([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='k', marker='o')
+        ax.scatter3D([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='cyan', marker='o')
         
     for i in range(0,4):
         for j in range(0,4):
             plt.plot(list(A[0,n,1]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
                      list(A[0,n,2]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
-                     list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color='orange', lw=1, marker=' ')
+                     list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color=[0.3,0.3,0.3], lw=1, marker=' ')
     
     
     for i in range(4):
@@ -680,7 +703,7 @@ for w in range(len(angledirs)-1):
         for j in range(0,4):
             plt.plot(list(A[w+1,n,1]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
                      list(A[w+1,n,2]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
-                     list(A[w+1,n,3]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]), color='yellow', lw=1, marker=' ')
+                     list(A[w+1,n,3]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]), color='magenta', lw=1, marker=' ')
 
     ax.set_axis_off()
     #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
@@ -699,17 +722,38 @@ for w in range(len(angledirs)-1):
     line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8)
     line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markerfacecolor=[0,1,0],markersize=8)
     line3 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8, markerfacecolor="blue")
-    line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8,markerfacecolor="black")
-    yline = plt.Line2D(range(1), range(1), color="yellow")
-    oline = plt.Line2D(range(1), range(1), color="orange")
+    line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8,markerfacecolor="cyan")
+    yline = plt.Line2D(range(1), range(1), color="magenta")
+    oline = plt.Line2D(range(1), range(1), color=[0.3,0.3,0.3])
     plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, 'A_actual', 'A_perceived'),numpoints=1, loc=1)
-
-#    handles = [p1,p2,p3]
-#    labels  = ['roed','blue','black']
-#    ax.legend(handles,labels)
-
+    plt.title(title)
     plt.show()
-  
+
+for w in range(len(angledirs)-1):
+    plot_color_sphere(plt.gca(), S, err,"Great circle error, angle = " + angledirs[w+1])
+#    fig = plt.figure(figsize=plt.figaspect(1.))
+#    ax = fig.add_subplot(111, projection='3d')
+#
+#    plot_sphere(ax)
+    #for j in range(len(x)):
+    #    ax.plot([Sinc[1,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], [Sinc[2,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], [Sinc[3,j]/np.linalg.norm([Sinc[1,j],Sinc[2,j],Sinc[3,j]])], color='r', marker='o')
+    
+    #for j in range(len(x)):
+    #    colbar[j]=np.mean(abs(err[:,j]))
+
+
+for w in range(len(angledirs)-1):
+    plot_color_sphere(plt.gca(), S, dS1, "S1 error, angle = " + angledirs[w+1])
+    
+for w in range(len(angledirs)-1):
+    plot_color_sphere(plt.gca(), S, dS2, "S2 error, angle = " + angledirs[w+1])
+    
+for w in range(len(angledirs)-1):
+    plot_color_sphere(plt.gca(), S, dS3, "S3 error, angle = " + angledirs[w+1])
+
+for w in range(len(angledirs)-1):
+    plot_color_sphere(plt.gca(), S, dDOP, "DOP error, angle = " + angledirs[w+1])
+
 #for j in range(len(angledirs)):
 #    for h in range(4):
 #        ax.plot([A[1][h][j]/np.linalg.norm([A[1][h][j],A[][h][j],S3.item(j)])], [S2.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S3.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])],  c = farve[i]+2*j/(3*len(S1)), marker='o'))#A[1:3][h][j])
@@ -743,3 +787,65 @@ for w in range(len(angledirs)-1):
 #L = np.array([pd1L, pd2L, pd3L, pd4L])
 #stokes=np.dot(Ainv, L)
 #
+
+
+###### old content replaced by plot_color_sphere
+
+#    maxred=np.max(err[(800*w):800*w+800])
+#    mingreen=np.min(err[(800*w):800*w+800])
+#    colbar[w,:]=err[(800*w):800*w+800]/maxred
+#    
+##    for j in range(len(x)):
+#    #    print(np.mean(abs(err[:,j])))
+##    farve=[colbar[w,:],1-colbar[w,:],0]
+#    #    ax.plot([S[1,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[2,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], [S[3,j]/np.linalg.norm([S[1,j],S[2,j],S[3,j]])], color=farve, marker='o')
+##        farve=[colbar[w,j],1-colbar[w,j],0]    
+##        ax.scatter3D([S[0,j+800*w]], [S[1,j+800*w]], [S[2,j+800*w]], color=farve, marker='o',alpha =0.7)#,alpha =0.5
+#    farve=[colbar[w,:],1-colbar[w,:],np.zeros((len(colbar[w,:])))]
+#    ax.scatter3D([S[0,800*w:800*w+800]], [S[1,800*w:800*w+800]], [S[2,800*w:800*w+800]],c=np.transpose(farve), cmap='viridis',marker='o')#,alpha =0.5
+#        
+#    for i in range(4):
+#        ax.scatter3D([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='cyan', marker='o')
+#        
+#    for i in range(0,4):
+#        for j in range(0,4):
+#            plt.plot(list(A[0,n,1]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
+#                     list(A[0,n,2]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
+#                     list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color=[0.3,0.3,0.3], lw=1, marker=' ')
+#    
+#    
+#    for i in range(4):
+#        ax.scatter3D([A[w+1,i,1]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,2]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,3]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], color='b', marker='o')
+#
+#    for i in range(0,4):
+#        for j in range(0,4):
+#            plt.plot(list(A[w+1,n,1]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
+#                     list(A[w+1,n,2]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
+#                     list(A[w+1,n,3]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]), color='magenta', lw=1, marker=' ')
+#
+#    ax.set_axis_off()
+#    #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
+#    maxred=np.around(maxred, decimals=2)
+#    mingreen=np.around(mingreen, decimals=2)
+#    
+#    redtext="max error: " + np.array_str(maxred)
+#    greentext="min error: " + np.array_str(mingreen)
+#    
+##    red_proxy = plt.Rectangle((0, 0), 1, 1, fc=[1, 0, 0])
+##    green_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 1, 0])
+##    blue_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 1])
+##    black_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 0])
+##    ax.legend([red_proxy,green_proxy,blue_proxy,black_proxy],[redtext, greentext, 'A_actual (yellow tetrahedron)','A_perceived (orange tetrahedron)'],loc='lower center')
+#
+#    line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8)
+#    line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markerfacecolor=[0,1,0],markersize=8)
+#    line3 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8, markerfacecolor="blue")
+#    line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8,markerfacecolor="cyan")
+#    yline = plt.Line2D(range(1), range(1), color="magenta")
+#    oline = plt.Line2D(range(1), range(1), color=[0.3,0.3,0.3])
+#    plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, 'A_actual', 'A_perceived'),numpoints=1, loc=1)
+
+#    handles = [p1,p2,p3]
+#    labels  = ['roed','blue','black']
+#    ax.legend(handles,labels)
+#    plt.show()
