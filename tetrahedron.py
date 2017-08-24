@@ -11,7 +11,7 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
-if 'linux' in sys.platform:
+if 'linux' or 'darwin' in sys.platform:
     directory = 'acquisition/data/big_metasurface'
     directory = 'acquisition/data/small_metasurfaces/top2_left3'
 else:
