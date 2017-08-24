@@ -28,7 +28,7 @@ else:
 
 subdirs = ['order-2','order-1', 'order1', 'order2']
 #angledirs = ['-40dgr','-38dgr','-36dgr','-34dgr','-32dgr','-30dgr','-28dgr','-26dgr','-24dgr','-22dgr','-20dgr','-18dgr','-16dgr','-14dgr','-12dgr','-10dgr','-8dgr','-6dgr','-4dgr','-2dgr','0dgr', '2dgr','4dgr','6dgr','8dgr','10dgr','12dgr','14dgr','16dgr','18dgr','20dgr','22dgr','24dgr','26dgr','28dgr','30dgr','32dgr','34dgr','36dgr','38dgr','40dgr']
-angledirs = ['-40dgr','-36dgr','-32dgr','-28dgr','-24dgr','-20dgr','-16dgr','-12dgr','-8dgr','-4dgr',
+angledirs = ['-36dgr','-32dgr','-28dgr','-24dgr','-20dgr','-16dgr','-12dgr','-8dgr','-4dgr',
              '0dgr','4dgr','8dgr','12dgr','16dgr','20dgr','24dgr','28dgr','32dgr','36dgr','40dgr']
 os.chdir(directory)
 
@@ -59,7 +59,7 @@ data_thorlabs = np.array(data_thorlabs)
 
 
 #############################################################################
-# plotting on Poincare sphere
+#%% plotting on Poincare sphere
 
 class Arrow3D(FancyArrowPatch):
     def __init__(self, xs, ys, zs, *args, **kwargs):
@@ -140,7 +140,7 @@ red_proxy = plt.Rectangle((0, 0), 1, 1, fc=[2/3, 0, 0])
 green_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 2/3, 0])
 blue_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 2/3])
 yellow_proxy = plt.Rectangle((0, 0), 1, 1, fc=[2/3, 2/3, 0])
-ax.legend([red_proxy,green_proxy,blue_proxy,yellow_proxy],['order-2', 'order-1', 'order1','order2'])
+ax.legend([red_proxy,green_proxy,blue_proxy,yellow_proxy],['$m=-2$', '$m=-1$', '$m=+1$','$m=+2$'])
 #plt.figlegend( (pp[0], pp[1], pp[2],pp[3]),
 #    ('order-2', 'order-1', 'order1','order2'),
 #    'upper right' )
@@ -164,16 +164,16 @@ for i in range(4):
     S3 = data_thorlabs[:,i,3]
     # Turn off the axis planes
     #vinkler = np.arange(-40,41,2)
-    vinkler = np.arange(-40,41,4)
+    vinkler = np.array([int(angle[:-3]) for angle in angledirs])
     #vinkler = np.insert(vinkler,0, [-40,-36,-32,-28,-24])
     #vinkler = np.insert(vinkler,len(vinkler), [24,28,32,36,40])
     plt.figure()
     #plt.plot(vinkler, S1,'-o')
     #plt.plot(vinkler, S2,'-o')
     #plt.plot(vinkler, S3,'-o')
-    plot1=plt.scatter(vinkler, S1)
-    plot2=plt.scatter(vinkler, S2)
-    plot3=plt.scatter(vinkler, S3)
+    plot1=plt.scatter(vinkler, S1, color='blue')
+    plot2=plt.scatter(vinkler, S2, color='orange')
+    plot3=plt.scatter(vinkler, S3, color = 'green')
     plt.axhline(helpline[i], color='black', alpha=0.25)
     plt.figlegend( (plot1, plot2, plot3),
            ('$s_1$', '$s_2$', '$s_3$'),
@@ -198,14 +198,14 @@ if 'big_metasurface' in directory:
                        [1,2*np.sqrt(2)/3,0,1/3]])
     twopsi_d=np.array([0, -2*np.pi/3, 2*np.pi/3, np.pi])
     twochi_d=np.array([-np.pi/2, np.pi/6,np.pi/6, np.pi/6])
-if 'left1' or 'left2' in directory:
+if ('left1' in directory) or ('left2' in directory):
     designed=np.array([[1,2*np.sqrt(2)/3,0,1/3],
                        [1,-np.sqrt(2)/3,np.sqrt(2/3),1/3],
                        [1,-np.sqrt(2)/3,-np.sqrt(2/3),1/3],
                        [1,0,0,-1]])
     twopsi_d=np.array([np.pi, 2*np.pi/3, -2*np.pi/3, 0])
     twochi_d=np.array([np.pi/6,np.pi/6, np.pi/6, -np.pi/2]) 
-if 'left3' or 'left4' in directory:
+if ('left3' in directory) or ('left4' in directory):
     designed=np.array([[1,0,-1,0.01],
                        [1,0,0,1],
                        [1,0,0,-1],
