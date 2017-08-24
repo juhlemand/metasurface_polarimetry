@@ -11,10 +11,18 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
-#top3left2 is the best tetrahedron design and top4left1 is the best principal polarization state design
+#top3left3 is the best tetrahedron design and top4left1 is the best principal polarization state design
+if 0:
+    design='top3left3'
+    title='Design: Principal polarizations'
+else:
+    design='top4left1'
+    title='Design: Regular Tetrahedron'
+    
+save_fig=1
 
 if 'darwin' or 'linux' in sys.platform:
-    directory = 'acquisition/data/small_metasurfaces/angles/top3left3'#top4left1' 
+    directory = 'acquisition/data/small_metasurfaces/angles/' + design #top3left3'#top4left1' 
 else:
     directory = 'acquisition\\data\\small_metasurfaces\\angles\\top4left1'
 
@@ -84,7 +92,7 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
     z = np.cos(phi)
 
     ax.plot_surface(x, y, z,  rstride=10, cstride=10, color='#EBE3E8',
-                antialiased=True, alpha=0.5, lw=0.)#, facecolors=cm)
+                antialiased=True, alpha=0.1, lw=0.)#, facecolors=cm)
     if 'y' in arrows:
         ax.add_artist(Arrow3D([0, 0], [-0.03, 1.5], 
                         [0,0], mutation_scale=15, 
@@ -137,6 +145,16 @@ ax.legend([red_proxy,green_proxy,blue_proxy,yellow_proxy],['order-2', 'order-1',
 #    ('order-2', 'order-1', 'order1','order2'),
 #    'upper right' )
 ax.set_axis_off()
+#plt.title(title)
+
+
+if save_fig:
+    file_name = 'StokesVectorsOnPSphere_'+ design + '.svg'
+    os.chdir('../../../../../Graphics/angle')
+    plt.savefig(file_name, format='svg')
+#    os.chdir('..\\' + data_dir + '/' + linear_pol_extension)
+
+
 plt.show()
        
 helpline=[-1,1,-1,1]
@@ -160,6 +178,10 @@ for i in range(4):
     plt.figlegend( (plot1, plot2, plot3),
            ('$s_1$', '$s_2$', '$s_3$'),
            'upper right' )
+    plt.title(subdirs[i])
+    if save_fig:
+        file_name = 'StokesVectorsVsAngle2D_'+ design + '_' + subdirs[i] + '.svg'
+        plt.savefig(file_name, format='svg')
     plt.show()
 
 #########################################################
@@ -308,4 +330,8 @@ plt.figlegend([p[0],p[7]],
 #axarr[1][2].axis('off')
 #axarr[1][3].axis('off')
 #plt.colorbar()
+if save_fig:
+    file_name = 'PolarizationEllipse_'+ design + '.svg'
+    plt.savefig(file_name, format='svg')
+
 plt.show()
