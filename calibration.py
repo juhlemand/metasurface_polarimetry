@@ -742,8 +742,8 @@ for tick in axins_dop.yaxis.get_major_ticks():
 for tick in axins_dop.xaxis.get_major_ticks():
     tick.label.set_fontsize(10) 
 
-axes.set_xlabel('Linear polarizer orientation ($\degree$)')
-axes.set_ylabel('Degree of Polarization (DOP)')
+axes.set_xlabel('Linear polarizer orientation ($\degree$)', size=14)
+axes.set_ylabel('Degree of Polarization (DOP)', size=14)
 
 save_fig = 1
 if save_fig:
