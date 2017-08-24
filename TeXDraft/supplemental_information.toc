@@ -1,0 +1,29 @@
+\contentsline {title}{Supplemental Information for ``Polarization state generation and measurement in parallel with a single metasurface"}{1}{}
+\tocdepth@munge 
+\contentsline {section}{\numberline {}Contents}{2}{}
+\tocdepth@restore 
+\contentsline {section}{\numberline {}Optimization: Details and Discussion}{2}{}
+\contentsline {subsection}{\numberline {}Schematic of procedure}{2}{}
+\contentsline {subsection}{\numberline {}Fabrication of Structures}{2}{}
+\contentsline {subsection}{\numberline {}FDTD Simulation of Designed Gratings}{2}{}
+\contentsline {subsection}{\numberline {}Effect of the Fabrication Imperfections on Produced Polarization Ellipses}{2}{}
+\contentsline {subsection}{\numberline {}Limits of the Scheme}{2}{}
+\contentsline {section}{\numberline {}Metasurface Polarimetry}{2}{}
+\contentsline {subsection}{\numberline {}Details of Optical Setup}{2}{}
+\contentsline {subsubsection}{\numberline {}Polarizers}{3}{}
+\contentsline {subsubsection}{\numberline {}Quarter-wave plates}{3}{}
+\contentsline {subsubsection}{\numberline {}Other polarization optics}{4}{}
+\contentsline {subsubsection}{\numberline {}Detection electronics}{4}{}
+\contentsline {subsubsection}{\numberline {}Beam re-sizing optics}{4}{}
+\contentsline {subsection}{\numberline {}Necessity of the polarizer following the grating}{4}{}
+\contentsline {subsection}{\numberline {}Calibration procedure, step-by-step}{6}{}
+\contentsline {subsubsection}{\numberline {}Linear polarizer only}{7}{}
+\contentsline {subsubsection}{\numberline {}Linear polarizer and quater-waveplate}{8}{}
+\contentsline {subsubsection}{\numberline {}Compilation of the instrument matrix}{9}{}
+\contentsline {subsection}{\numberline {}Production of partially polarized light}{9}{}
+\contentsline {subsection}{\numberline {}Error propagation and error bars}{10}{}
+\contentsline {subsection}{\numberline {}Comment on the commercial rotating waveplate polarimeter (RWP)}{10}{}
+\contentsline {section}{\numberline {}Angle dependence of polarization production and polarimetry}{10}{}
+\contentsline {subsection}{\numberline {}Effect of off-normal incidence on the produced polarization ellipses}{10}{}
+\contentsline {subsection}{\numberline {}Effect of off-normal incidence on polarimeter calibration and Stokes vector determination}{10}{}
+\contentsline {section}{\numberline {}References}{10}{}

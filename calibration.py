@@ -218,6 +218,7 @@ angles = np.array(angles)
 inc_powers = np.array(inc_powers)
 
 
+
 #%% Now plot linear polarization cal data
 
 
@@ -296,6 +297,7 @@ fig = plt.figure()
 ax = plt.gca()
 fit_errs = linear_cal_fig(ax, pd_errs, angles, pd_voltages, min_angle, max_angle)
 
+save_fig=1
 if save_fig:
     file_name = 'linear_cal.svg'
     os.chdir('../../../../Graphics')
@@ -305,9 +307,11 @@ if save_fig:
 plt.show()
 
 #%% move onto the qwpR part of the calibration
+fig, axarr = plt.subplots(1, 2, figsize=(10,4))
 
 # get the data for both qwp sets of measurements
 for i in range(2):
+    ax = axarr[i]
     qwp_power_incR = []
     qwp_anglesR = []
     pol_anglesR = []
@@ -402,10 +406,10 @@ for i in range(2):
         pd3R_err = np.std(qwp_err(pd3_voltageQR))
         pd4R_err = np.std(qwp_err(pd4_voltageQR))
         
-        plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red')
-        plt.errorbar(pol_anglesR,pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue')
-        plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green')
-        plt.errorbar(pol_anglesR, pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
+        ax.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', label='PD #1')
+        ax.errorbar(pol_anglesR,pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', label='PD #2')
+        ax.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', label='PD #3')
+        ax.errorbar(pol_anglesR, pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange',label='PD #4')
         #print(len(pd1_voltageQR))
     elif i == 1:
         pd1L = np.mean(pd1_voltageQR)
@@ -416,11 +420,57 @@ for i in range(2):
         pd2L_err = np.std(qwp_err(pd2_voltageQR))
         pd3L_err = np.std(qwp_err(pd3_voltageQR))
         pd4L_err = np.std(qwp_err(pd4_voltageQR))
-        plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', alpha=0.5)
-        plt.errorbar(pol_anglesR, pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', alpha=0.5)
-        plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', alpha=0.5)
-        plt.errorbar(pol_anglesR, pd4_voltageQR, yerr=pd4_voltage_err, fmt=' ', color='orange', alpha=0.5)
+        ax.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', label='PD #1')
+        ax.errorbar(pol_anglesR, pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', label='PD #2')
+        ax.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', label='PD #3')
+        ax.errorbar(pol_anglesR, pd4_voltageQR, yerr=pd4_voltage_err, fmt=' ', color='orange', label='PD #4')
         #print(len(pd1_voltageQR))
+        
+        
+
+
+    minor_locatorx = AutoMinorLocator(2)
+    minor_locatory = AutoMinorLocator(2)
+
+    ax.xaxis.set_minor_locator(minor_locatorx)
+    ax.yaxis.set_minor_locator(minor_locatory)
+
+    major_length = 4
+    major_width = 1.5
+    minor_length = 2
+    minor_width = 1.5
+    
+    ax.set_yticks([])
+    tick_label_size = 10
+    ax.tick_params(axis='x', labelsize = tick_label_size, direction='in', length=major_length, width=major_width, which = 'major', top='off', color='k')
+    ax.tick_params(axis='x', labelsize = tick_label_size, direction='in', length=minor_length, width=minor_width, which = 'minor', top='off', color='k')
+    ax.tick_params(axis='y', labelsize = tick_label_size, direction='in', length=major_length, width=major_width, which = 'major', top='off', color='k')
+    ax.tick_params(axis='y', labelsize = tick_label_size, direction='in', length=minor_length, width=minor_width, which = 'minor', top='off', color='k')
+    ax.set_xlim([0, 360])
+    ax.legend(prop = {'size': 9}, loc=0, numpoints = 1)
+    
+    if i == 0:
+        pol = 'RCP'
+    else:
+        pol = 'LCP'
+    
+    title_size = 18
+    label_size=14
+    ax.set_title('Calibration with ' + pol, size=title_size)
+    ax.set_xlabel('Polarizer/QWP angle ($\degree$)', size=label_size)
+    ax.set_ylabel('Normalized intensity (a.u.)', size=label_size)
+    
+save_fig=1
+if save_fig:
+    ret = os.getcwd()
+    file_name = 'qwp_cal.pdf'
+    os.chdir('../../../../Graphics/Supplement_Graphics/')
+    plt.savefig(file_name, format='pdf')
+    os.chdir(ret)
+    print('QWP figure saved.')
+    
+
+
 plt.show()
 
 #%% Construct the instrument matrix
@@ -664,13 +714,13 @@ save_fig = 1 # if 1, save the figures
 min_angle= 0
 max_angle = 90
 axes = plt.gca()
-partial_pol_fig(axes, partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle,    max_angle)
+partial_pol_fig(axes, partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle, max_angle)
 
 N = 1
-zoom = 2.5
-axins_dop = zoomed_inset_axes(axes, zoom, loc=2)
-min_angle= 40
-max_angle = 50
+zoom = 4
+axins_dop = zoomed_inset_axes(axes, zoom, loc=4)
+min_angle= 42.5
+max_angle = 47.5
 mask_inset = np.logical_and((pol_angles2>=min_angle), (pol_angles2<=max_angle))
 pol_angles_inset =pol_angles2[mask_inset]
 dops_inset = partial_dops[mask_inset]
@@ -680,16 +730,28 @@ x1, x2, y1, y2 = min_angle, max_angle, 0, 1.1*np.max(dops_inset)
 axins_dop.set_xlim(x1, x2) # apply the x-limits
 axins_dop.set_ylim(y1, y2) # apply the y-limits
 mark_inset(axes, axins_dop, loc1=2, loc2=1, fc="none", ec='k')
-axins_dop.set_xticklabels([min_angle, max_angle])
-#axins_dop.set_yticklabels([])
+axins_dop.tick_params(axis='x', labelsize=0.5)
+axins_dop.set_xticks([min_angle,45,max_angle])
+
+
 
 partial_pol_fig(axins_dop, partial_dops_err[::N], pol_angles2[::N], partial_dops[::N], min_angle, max_angle)
 
+for tick in axins_dop.yaxis.get_major_ticks():
+    tick.label.set_fontsize(10) 
+for tick in axins_dop.xaxis.get_major_ticks():
+    tick.label.set_fontsize(10) 
+
+axes.set_xlabel('Linear polarizer orientation ($\degree$)')
+axes.set_ylabel('Degree of Polarization (DOP)')
+
+save_fig = 1
 if save_fig:
+    ret = os.getcwd()
     file_name = 'partial_pol.svg'
     os.chdir('../../../../Graphics')
     plt.savefig(file_name, format='svg')
-    os.chdir('..\\' + data_dir + '\\' + partial_pol)
+    os.chdir(ret)
 
 plt.show()
 
