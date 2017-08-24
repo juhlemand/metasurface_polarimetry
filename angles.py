@@ -11,8 +11,10 @@ from mpl_toolkits.mplot3d import proj3d
 from matplotlib.colors import LightSource
 import random
 
+#top3left2 is the best tetrahedron design and top4left1 is the best principal polarization state design
+
 if 'darwin' or 'linux' in sys.platform:
-    directory = 'acquisition/data/small_metasurfaces/angles/top3left3'#top4left1'
+    directory = 'acquisition/data/small_metasurfaces/angles/top3left3'#top4left1' 
 else:
     directory = 'acquisition\\data\\small_metasurfaces\\angles\\top4left1'
 
@@ -105,6 +107,7 @@ plot_sphere(ax)
    
 t = np.linspace(0, 1, 21)  
 farve = [np.array([1/3, 0, 0]),np.array([0, 1/3, 0]),np.array([0, 0, 1/3]),np.array([1/3, 1/3, 0])]
+pp=[]
 for i in range(4):   
     # Plotting Thorlabs polarimeter data
     S1 = data_thorlabs[:,i,1]
@@ -116,32 +119,48 @@ for i in range(4):
     #        plt.plot(list(S1[n] for n in [i,j]),
     #                 list(S2[n] for n in [i,j]),
     #                 list(S3[n] for n in [i,j]), color='orange', lw=0.5, marker=' ')
-           
+             
     for j in range(len(S1)):
-        ax.plot([S1.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S2.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S3.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])],  c = farve[i]+2*j/(3*len(S1)), marker='o')
+        pp.append(ax.plot([S1.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S2.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S3.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])],  c = farve[i]+2*j/(3*len(S1)), marker='o'))
 #    ax.scatter(S1, S2, S3, marker='o')
 
-
+#legend
+#cbar = plt.colorbar()
+#cbar.ax.set_yticklabels(['0','1','2','>3'])
+#cbar.set_label('# of something', rotation=270)
+red_proxy = plt.Rectangle((0, 0), 1, 1, fc=[2/3, 0, 0])
+green_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 2/3, 0])
+blue_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 2/3])
+yellow_proxy = plt.Rectangle((0, 0), 1, 1, fc=[2/3, 2/3, 0])
+ax.legend([red_proxy,green_proxy,blue_proxy,yellow_proxy],['order-2', 'order-1', 'order1','order2'])
+#plt.figlegend( (pp[0], pp[1], pp[2],pp[3]),
+#    ('order-2', 'order-1', 'order1','order2'),
+#    'upper right' )
 ax.set_axis_off()
 plt.show()
        
-#for i in range(4):    
-#    S1 = data_thorlabs[:,i,1]
-#    S2 = data_thorlabs[:,i,2]
-#    S3 = data_thorlabs[:,i,3]
-#    # Turn off the axis planes
-#    #vinkler = np.arange(-40,41,2)
-#    vinkler = np.arange(-40,41,4)
-#    #vinkler = np.insert(vinkler,0, [-40,-36,-32,-28,-24])
-#    #vinkler = np.insert(vinkler,len(vinkler), [24,28,32,36,40])
-#    plt.figure()
-#    #plt.plot(vinkler, S1,'-o')
-#    #plt.plot(vinkler, S2,'-o')
-#    #plt.plot(vinkler, S3,'-o')
-#    plt.scatter(vinkler, S1)
-#    plt.scatter(vinkler, S2)
-#    plt.scatter(vinkler, S3)
-#    plt.show()
+helpline=[-1,1,-1,1]
+for i in range(4):    
+    S1 = data_thorlabs[:,i,1]
+    S2 = data_thorlabs[:,i,2]
+    S3 = data_thorlabs[:,i,3]
+    # Turn off the axis planes
+    #vinkler = np.arange(-40,41,2)
+    vinkler = np.arange(-40,41,4)
+    #vinkler = np.insert(vinkler,0, [-40,-36,-32,-28,-24])
+    #vinkler = np.insert(vinkler,len(vinkler), [24,28,32,36,40])
+    plt.figure()
+    #plt.plot(vinkler, S1,'-o')
+    #plt.plot(vinkler, S2,'-o')
+    #plt.plot(vinkler, S3,'-o')
+    plot1=plt.scatter(vinkler, S1)
+    plot2=plt.scatter(vinkler, S2)
+    plot3=plt.scatter(vinkler, S3)
+    plt.axhline(helpline[i], color='black', alpha=0.25)
+    plt.figlegend( (plot1, plot2, plot3),
+           ('$s_1$', '$s_2$', '$s_3$'),
+           'upper right' )
+    plt.show()
 
 #########################################################
 #%% Plotting polarization ellipses
@@ -173,9 +192,9 @@ if 'left3' or 'left4' in directory:
     twochi_d=np.array([0,np.pi/2, -np.pi/2, 0])
 
 colrgb = np.array([0.5, 0.5, 0.5])    
+n=0
+p=[]
 for q in range(len(angledirs)):
-    n=0
-    p=[]
 
     data_thorlabs1=data_thorlabs[q,:,:]
     # iterate over measurement schemes
@@ -279,13 +298,14 @@ for q in range(len(angledirs)):
         print('Error with respect to designed', err)
 
 
-#plt.figlegend([p[0],p[4],p[8]],
-#           ['Thorlabs measurement','Time-sequential measurement','Designed states'],
-#           loc='lower center')
+plt.figlegend([p[0],p[7]],
+           ['Thorlabs measurement','Designed states'],
+           loc='lower center')
 
 
 #axarr[1][0].axis('off')
 #axarr[1][1].axis('off')
 #axarr[1][2].axis('off')
 #axarr[1][3].axis('off')
+#plt.colorbar()
 plt.show()
