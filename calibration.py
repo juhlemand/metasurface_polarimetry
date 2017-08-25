@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed Jun 21 09:42:59 2017
-
 This is a script to analyze polarimetry calibration data.
-
 @contributors: Noah, Ruoping
 """
 import os, re, pickle
@@ -24,29 +22,14 @@ partial_pol = 'partial_pol8'  # folder location of partial pol data
 
 power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
 
-#data_dir = 'acquisition\data\calibration1'
+data_dir = 'acquisition\data\calibration1'
 
-<<<<<<< HEAD
-#<<<<<<< HEAD
-if 'linux' or 'darwin' in sys.platform:
-    data_dir = 'acquisition/data/calibration6'
-else:
-    data_dir = 'acquisition\data\calibration6'
-#=======
-#if 'linux' in platform:
-#    os.chdir('acquisition/data/calibration4')
-#else:
-#    os.chdir(data_dir)
-
-#>>>>>>> 2c3fb4f6f749c296469a35da75ed5f78cfab75e7
-=======
 
 if 'linux' in sys.platform:
     data_dir = 'acquisition/data/calibration8'
 else:
     data_dir = 'acquisition\data\calibration8'
 
->>>>>>> 59ab829f1df1d0aed8683565530cc39e44e9a20b
 
 
 os.chdir(data_dir)
@@ -83,7 +66,6 @@ def covS(i, j, D, I, Dcov, Icov):
 
 def qwp_err(pd_arr):
     '''function returning list of qwp measurement averages for error analysis
-
     pd_arr: 1xn array with photodiode voltages, spanning the entire 360 degrees
     '''
     # must be an even # of measurements in the end and we divide total number by two                                     so it must be an even multiple of 4
@@ -303,7 +285,7 @@ def linear_cal_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
     return fit_errs
 
 
-save_fig = 0
+save_fig = 1
 
 # now plot it
 min_angle = 0
@@ -317,7 +299,7 @@ if save_fig:
     file_name = 'linear_cal.svg'
     os.chdir('../../../../Graphics')
     plt.savefig(file_name, format='svg')
-    os.chdir('..\\' + data_dir + '/' + linear_pol_extension)
+    os.chdir('..\\' + data_dir + '\\' + linear_pol_extension)
 
 plt.show()
 
@@ -493,8 +475,6 @@ A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
 A3_err=np.array([np.sqrt(pd1R_err**2+pd1L_err**2)/2, np.sqrt(pd2R_err**2+pd2L_err**2)/2,
                  np.sqrt(pd3R_err**2+pd3L_err**2)/2, np.sqrt(pd4R_err**2+pd4L_err**2)/2])
 
-#A3_err =     
-    
 A3 = np.matrix.transpose(np.array([A3]))
 A3_err = np.matrix.transpose(np.array([A3_err]))
 
@@ -725,8 +705,8 @@ pol_angles2 = np.array(pol_angles2)
 # plot points and error bars over whole range first
 plt.figure(3)
 
-N = 1 # take every Nth datapoint
-save_fig = 0 # if 1, save the figures
+N = 3 # take every Nth datapoint
+save_fig = 1 # if 1, save the figures
 
 min_angle= 0
 max_angle = 90
