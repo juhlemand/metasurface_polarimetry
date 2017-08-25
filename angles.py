@@ -12,7 +12,7 @@ from matplotlib.colors import LightSource
 import random
 
 #top3left3 is the best tetrahedron design and top4left1 is the best principal polarization state design
-if 0:
+if 1:
     design='top3left3'
     title='Design: Principal polarizations'
 else:
@@ -26,12 +26,14 @@ if 'darwin' or 'linux' in sys.platform:
 else:
     directory = 'acquisition\\data\\small_metasurfaces\\angles\\top4left1'
 
+# directories of diffraction orders
 subdirs = ['order-2','order-1', 'order1', 'order2']
-#angledirs = ['-40dgr','-38dgr','-36dgr','-34dgr','-32dgr','-30dgr','-28dgr','-26dgr','-24dgr','-22dgr','-20dgr','-18dgr','-16dgr','-14dgr','-12dgr','-10dgr','-8dgr','-6dgr','-4dgr','-2dgr','0dgr', '2dgr','4dgr','6dgr','8dgr','10dgr','12dgr','14dgr','16dgr','18dgr','20dgr','22dgr','24dgr','26dgr','28dgr','30dgr','32dgr','34dgr','36dgr','38dgr','40dgr']
+#directories of metasurface angle to incident beam
 angledirs = ['-36dgr','-32dgr','-28dgr','-24dgr','-20dgr','-16dgr','-12dgr','-8dgr','-4dgr',
              '0dgr','4dgr','8dgr','12dgr','16dgr','20dgr','24dgr','28dgr','32dgr','36dgr','40dgr']
 os.chdir(directory)
 
+#get data from file, all angles
 data=[]
 data_thorlabs=np.zeros((len(angledirs),len(subdirs),4))
 indeks=0
@@ -112,69 +114,58 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
         ax.plot(xe,ye,0,'--', dashes=(10, 10), lw=0.25, color='red', alpha=1)
 
 plot_sphere(ax)
-   
-t = np.linspace(0, 1, 21)  
-farve = [np.array([1/3, 0, 0]),np.array([0, 1/3, 0]),np.array([0, 0, 1/3]),np.array([1/3, 1/3, 0])]
+
+#define the start color, i.e. the color corresponding to the maximum negative angle
+farve = [np.array([1/3, 0, 0]),np.array([0, 1/3, 0]),np.array([0, 0, 1/3]),np.array([1/3, 1/3, 0])] #color
 pp=[]
 for i in range(4):   
     # Plotting Thorlabs polarimeter data
     S1 = data_thorlabs[:,i,1]
     S2 = data_thorlabs[:,i,2]
     S3 = data_thorlabs[:,i,3]
-    
-    #for i in range(0,4):
-    #    for j in range(0,4):
-    #        plt.plot(list(S1[n] for n in [i,j]),
-    #                 list(S2[n] for n in [i,j]),
-    #                 list(S3[n] for n in [i,j]), color='orange', lw=0.5, marker=' ')
-             
+    #plot stokes parameters from all angles on Poincare sphere              
     for j in range(len(S1)):
         pp.append(ax.plot([S1.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S2.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])], [S3.item(j)/np.linalg.norm([S1.item(j),S2.item(j),S3.item(j)])],  c = farve[i]+2*j/(3*len(S1)), marker='o'))
-#    ax.scatter(S1, S2, S3, marker='o')
+#    ax.scatter(S1, S2, S3, marker='o')  #plot all at once using scatter
 
 #legend
-#cbar = plt.colorbar()
-#cbar.ax.set_yticklabels(['0','1','2','>3'])
-#cbar.set_label('# of something', rotation=270)
 red_proxy = plt.Rectangle((0, 0), 1, 1, fc=[2/3, 0, 0])
 green_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 2/3, 0])
 blue_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 2/3])
 yellow_proxy = plt.Rectangle((0, 0), 1, 1, fc=[2/3, 2/3, 0])
 ax.legend([red_proxy,green_proxy,blue_proxy,yellow_proxy],['$m=-2$', '$m=-1$', '$m=+1$','$m=+2$'])
-#plt.figlegend( (pp[0], pp[1], pp[2],pp[3]),
-#    ('order-2', 'order-1', 'order1','order2'),
-#    'upper right' )
 ax.set_axis_off()
-#plt.title(title)
+#plt.title(title)  #option of adding title
 
 
 if save_fig:
     file_name = 'StokesVectorsOnPSphere_'+ design + '.svg'
     os.chdir('../../../../../Graphics/angle')
     plt.savefig(file_name, format='svg')
-#    os.chdir('..\\' + data_dir + '/' + linear_pol_extension)
 
 
 plt.show()
-       
-helpline=[-1,1,-1,1]
+
+# 2D plots of Stokes parameters vs angle. One plot per diffraction order       
+helpline=[-1,1,-1,1]  #line showing the designed value of the dominating stokes parameter
 for i in range(4):    
     S1 = data_thorlabs[:,i,1]
     S2 = data_thorlabs[:,i,2]
     S3 = data_thorlabs[:,i,3]
     # Turn off the axis planes
     #vinkler = np.arange(-40,41,2)
-    vinkler = np.array([int(angle[:-3]) for angle in angledirs])
+    vinkler = np.array([int(angle[:-3]) for angle in angledirs]) # define the angle values
     #vinkler = np.insert(vinkler,0, [-40,-36,-32,-28,-24])
     #vinkler = np.insert(vinkler,len(vinkler), [24,28,32,36,40])
     plt.figure()
-    #plt.plot(vinkler, S1,'-o')
-    #plt.plot(vinkler, S2,'-o')
-    #plt.plot(vinkler, S3,'-o')
     plot1=plt.scatter(vinkler, S1, color='blue')
     plot2=plt.scatter(vinkler, S2, color='orange')
     plot3=plt.scatter(vinkler, S3, color = 'green')
-    plt.axhline(helpline[i], color='black', alpha=0.25)
+    if design == 'top3left3':
+        plt.axhline(helpline[i], color='black', alpha=0.25)
+    elif i == 3:
+        plt.axhline(-1, color='black', alpha=0.25) # only plot line for circular pol
+    
     plt.figlegend( (plot1, plot2, plot3),
            ('$s_1$', '$s_2$', '$s_3$'),
            'upper right' )
@@ -212,10 +203,10 @@ if ('left3' in directory) or ('left4' in directory):
                        [1,0,1,0.01]])
     twopsi_d=np.array([-np.pi/2, 0, 0, np.pi/2])
     twochi_d=np.array([0,np.pi/2, -np.pi/2, 0])
-
-colrgb = np.array([0.5, 0.5, 0.5])    
+  
 n=0
 p=[]
+#iterate over angles and plot
 for q in range(len(angledirs)):
 
     data_thorlabs1=data_thorlabs[q,:,:]
@@ -225,11 +216,6 @@ for q in range(len(angledirs)):
         S1 = meas.transpose()[1]
         S2 = meas.transpose()[2]
         S3 = meas.transpose()[3]
-    
-        #S0 = np.array([1,1])
-        #S1 = np.array([0,0])
-        #S2 = np.array([0,0])
-        #S3 = np.array([1,-1])
     
         S1=S1/S0
         S2=S2/S0
@@ -264,11 +250,6 @@ for q in range(len(angledirs)):
             norm = max(a,b) # normalize by whichever was larger
             a=a/norm
             b=b/norm
-            # I think this results in being off by 90 degrees:        
-            #r = a*b/np.sqrt((a*np.cos(thetas)**2+(b*np.sin(thetas))**2))
-    
-            #x= r*np.cos(thetas)
-            #y= r*np.sin(thetas)
             
             x = a*np.cos(thetas)
             y = b*np.sin(thetas)        
@@ -283,7 +264,7 @@ for q in range(len(angledirs)):
             # plot the polarization ellipse
             if meas.all==data_thorlabs1.all:
                 linestyle='-'
-                col=farve[1]+2*q/(3*len(angledirs))
+                col=farve[1]+2*q/(3*len(angledirs)) #define colors from dark green (max neg angles) to light green (max pos angles)
                 p.append(axarr[i].plot(xx,yy,color=col,ls=linestyle,alpha=0.8, label='Thorlabs measurement', linewidth=lw)[0])
             elif meas.all==designed.all:
                 linestyle = '--'
@@ -307,14 +288,6 @@ for q in range(len(angledirs)):
                 
                 axarr[i].quiver(xx[points], yy[points], u, v, color=col, headwidth=10, headlength=10, pivot='mid', headaxislength=10)            
                 
-    #            axarr[0][i].arrow(xx[3*len(xx)//8-10], yy[3*len(yy)//8-10],
-    #                           np.sign(S3[i])*(xx[3*len(xx)//8+10]-xx[3*len(xx)//8]),
-    #                           np.sign(S3[i])*(yy[3*len(yy)//8+10]-yy[3*len(xx)//8]),
-    #                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=col)
-    #            axarr[0][i].arrow(xx[7*(len(xx)//8-10)], yy[7*(len(yy)//8-10)],
-    #                           np.sign(S3[i])*(xx[7*(len(xx)//8)+10]-xx[7*(len(xx)//8)]),
-    #                           np.sign(S3[i])*(yy[7*(len(yy)//8)+10]-yy[7*(len(xx)//8)]),
-    #                           head_width=0.1, head_length=0.2, linewidth=0., alpha=.8, color=col)
         n+=1
     if err>0.00000001:
         print('Error with respect to designed', err)
@@ -325,11 +298,6 @@ plt.figlegend([p[0],p[7]],
            loc='lower center')
 
 
-#axarr[1][0].axis('off')
-#axarr[1][1].axis('off')
-#axarr[1][2].axis('off')
-#axarr[1][3].axis('off')
-#plt.colorbar()
 if save_fig:
     file_name = 'PolarizationEllipse_'+ design + '.svg'
     plt.savefig(file_name, format='svg')

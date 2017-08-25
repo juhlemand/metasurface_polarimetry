@@ -2,9 +2,9 @@
 """
 Created on Wed Jun 21 09:42:59 2017
 
-This is a script to analyze polarimetry calibration data.
+This is a script to analyze the angle dependence of the analyzer matrix
 
-@contributors: Noah, Ruoping
+@contributors: Noah, Ruoping, Michael
 """
 #%reset -f
 
@@ -39,11 +39,10 @@ else:
     data_dir = 'acquisition\\data\\incident_angles_calibration\\20deg'
 
 os.chdir(data_dir)
+#angles of (big) metasurface away from normal incidence
 angledirs = ['0deg','5deg','10deg','15deg','20deg']
 
 #%% Collect some error analysis functions
-
-
 def covS(i, j, D, I, Dcov, Icov):
     ''' This function returns the element (i,j) of the covariance matrix of the result of Ainv*I
         D: the inverse instrument matrix
@@ -101,18 +100,27 @@ def determine_dop(pol_state):
     return np.sqrt(pol_state[1]**2+pol_state[2]**2+pol_state[3]**2)/pol_state[0]
 
 def errIncS(A_actual, A_perceived, Sinc):
-    '''forklaring
+    '''Calculate the measured Stokes vector (Sout) and error between Sinc and Sout
 
-    variabler
+    Sout: measured Stokes vector (simulated)
+    normSout: normalized Sout
+    diffS: distance between Sinc and Sout vectors
+    DiffDOP, diffS1, diffS2, diffS3: distance on each of 4 axes
     '''
     Imeas = np.dot(A_actual,Sinc)
     Sout = np.dot(A_perceived,Imeas)
-    #Sout=np.array(Sout)
     
-    #euclidean distance 3dim plus great circle distance dim
+    GreatCircledist = 1 #Choose between Eucledian 4D dist or Great Circle dist
+    
+    #euclidean distance plus great circle distance
     normSout = [Sout[1]/np.linalg.norm([Sout[1],Sout[2],Sout[3]]),Sout[2]/np.linalg.norm([Sout[1],Sout[2],Sout[3]]),Sout[3]/np.linalg.norm([Sout[1],Sout[2],Sout[3]])]
-            #diffS = np.sqrt(np.square(Sinc[1]-normSout[0])+np.square(Sinc[2]-normSout[1])+np.square(Sinc[3]-normSout[2]))
-    #diffS = np.arctan2(np.linalg.norm(np.cross(normSout,Sinc[1:])), np.dot(normSout,Sinc[1:]))
+            #diffS = np.sqrt(np.square(Sinc[1]-normSout[0])+np.square(Sinc[2]-normSout[1])+np.square(Sinc[3]-normSout[2])) #Eucledean 3D method
+    if GreatCircledist:
+        diffS = np.arctan2(np.linalg.norm(np.cross(normSout,Sinc[1:])), np.dot(normSout,Sinc[1:]))
+    else:
+        #euclidean distance 4dim
+        diffS = np.sqrt(np.square(Sinc[0]-Sout[0])+np.square(Sinc[1]-Sout[1])+np.square(Sinc[2]-Sout[2])+np.square(Sinc[3]-Sout[3]))
+    
     
     SincDOP = determine_dop(Sinc)
     SoutDOP = determine_dop(Sout)
@@ -121,17 +129,15 @@ def errIncS(A_actual, A_perceived, Sinc):
     diffS1 = np.abs(Sinc[1]-Sout[1])
     diffS2 = np.abs(Sinc[2]-Sout[2])
     diffS3 = np.abs(Sinc[3]-Sout[3])
-    
-    #euclidean distance 4dim
-    diffS = np.sqrt(np.square(Sinc[0]-Sout[0])+np.square(Sinc[1]-Sout[1])+np.square(Sinc[2]-Sout[2])+np.square(Sinc[3]-Sout[3]))
 
     # just difference
     #diffS=Sout-Sinc
-    return normSout, diffS, diffDOP, diffS1, diffS2, diffS3, Sout
-#%% Calibration
+    return normSout, diffS, diffDOP, diffS1, diffS2, diffS3, Sout, GreatCircledist
+#%% Short version of calibration.py
 q=0
 A=np.zeros((len(angledirs),4,4))
 Ainv=np.zeros((len(angledirs),4,4))
+#iterate over angles
 for folder in angledirs:
     os.chdir(folder)
 
@@ -141,10 +147,6 @@ for folder in angledirs:
     pd2_voltage = []
     pd3_voltage = []
     pd4_voltage = []
-    pd1_voltage_err = []  # photodiode errors
-    pd2_voltage_err = []
-    pd3_voltage_err = []
-    pd4_voltage_err = []
     fit_functions = []
     fit_parameters = []
     variances = []
@@ -166,11 +168,6 @@ for folder in angledirs:
                 pd2_voltage.append(np.mean(my_data[:, 1]))
                 pd3_voltage.append(np.mean(my_data[:, 2]))
                 pd4_voltage.append(np.mean(my_data[:, 3]))
-                #Here error is the standard deviation of the individual measurements
-                pd1_voltage_err.append(np.std(my_data[:, 0]))
-                pd2_voltage_err.append(np.std(my_data[:, 1]))
-                pd3_voltage_err.append(np.std(my_data[:, 2]))
-                pd4_voltage_err.append(np.std(my_data[:, 3]))
                 
             except ValueError: # don't do anything with invalid file name
                 pass
@@ -194,16 +191,7 @@ for folder in angledirs:
     pd2_voltage2 = np.array(pd2_voltage[(num_angles)//2:])
     pd3_voltage2 = np.array(pd3_voltage[(num_angles)//2:])
     pd4_voltage2 = np.array(pd4_voltage[(num_angles)//2:])
-    
-    pd1_voltage_err1 = np.array(pd1_voltage_err[:(num_angles)//2])
-    pd2_voltage_err1 = np.array(pd2_voltage_err[:(num_angles)//2])
-    pd3_voltage_err1 = np.array(pd3_voltage_err[:(num_angles)//2])
-    pd4_voltage_err1 = np.array(pd4_voltage_err[:(num_angles)//2])
-    pd1_voltage_err2 = np.array(pd1_voltage_err[(num_angles)//2:])
-    pd2_voltage_err2 = np.array(pd2_voltage_err[(num_angles)//2:])
-    pd3_voltage_err2 = np.array(pd3_voltage_err[(num_angles)//2:])
-    pd4_voltage_err2 = np.array(pd4_voltage_err[(num_angles)//2:])
-    
+        
     # slice the incident power list in half as well
     inc_powers1 = np.array(inc_powers[:(num_angles)//2])
     inc_powers2 = np.array(inc_powers[(num_angles)//2:])
@@ -217,40 +205,15 @@ for folder in angledirs:
     pd2_voltage2 = pd2_voltage2/inc_powers2
     pd3_voltage2 = pd3_voltage2/inc_powers2
     pd4_voltage2 = pd4_voltage2/inc_powers2
-    
-    # adding error from power meter, propagating error through normalization
-    pd1_voltage_err1 = pd1_voltage1 * np.sqrt((pd1_voltage_err1/pd1_voltage1)**2 + (power_meter_error/inc_powers1)**2)
-    pd2_voltage_err1 = pd2_voltage1 * np.sqrt((pd2_voltage_err1/pd2_voltage1)**2 + (power_meter_error/inc_powers1)**2)
-    pd3_voltage_err1 = pd3_voltage1 * np.sqrt((pd3_voltage_err1/pd3_voltage1)**2 + (power_meter_error/inc_powers1)**2)
-    pd4_voltage_err1 = pd1_voltage1 * np.sqrt((pd4_voltage_err1/pd4_voltage1)**2 + (power_meter_error/inc_powers1)**2)
-    pd1_voltage_err2 = pd1_voltage2 * np.sqrt((pd1_voltage_err2/pd1_voltage2)**2 + (power_meter_error/inc_powers2)**2)
-    pd2_voltage_err2 = pd2_voltage2 * np.sqrt((pd2_voltage_err2/pd2_voltage2)**2 + (power_meter_error/inc_powers2)**2)
-    pd3_voltage_err2 = pd3_voltage2 * np.sqrt((pd3_voltage_err2/pd3_voltage2)**2 + (power_meter_error/inc_powers2)**2)
-    pd4_voltage_err2 = pd4_voltage2 * np.sqrt((pd4_voltage_err2/pd4_voltage2)**2 + (power_meter_error/inc_powers2)**2)
-    
-    
-    #pd1_voltage_err1=np.sqrt((pd1_voltage_err1/inc_powers1)**2+(power_meter_error*pd1_voltage1/(inc_powers1*inc_powers1))**2)
-    #pd2_voltage_err1=np.sqrt((pd2_voltage_err1/inc_powers1)**2+(power_meter_error*pd2_voltage1/(inc_powers1*inc_powers1))**2)
-    #pd3_voltage_err1=np.sqrt((pd3_voltage_err1/inc_powers1)**2+(power_meter_error*pd3_voltage1/(inc_powers1*inc_powers1))**2)
-    #pd4_voltage_err1=np.sqrt((pd4_voltage_err1/inc_powers1)**2+(power_meter_error*pd4_voltage1/(inc_powers1*inc_powers1))**2)
-    #pd1_voltage_err2=np.sqrt((pd1_voltage_err2/inc_powers1)**2+(power_meter_error*pd1_voltage2/(inc_powers1*inc_powers1))**2)
-    #pd2_voltage_err2=np.sqrt((pd2_voltage_err2/inc_powers1)**2+(power_meter_error*pd2_voltage2/(inc_powers1*inc_powers1))**2)
-    #pd3_voltage_err2=np.sqrt((pd3_voltage_err2/inc_powers1)**2+(power_meter_error*pd3_voltage2/(inc_powers1*inc_powers1))**2)
-    #pd4_voltage_err2=np.sqrt((pd4_voltage_err2/inc_powers1)**2+(power_meter_error*pd4_voltage2/(inc_powers1*inc_powers1))**2)
-    
+            
     # now average the two and propagate the error through the averaging
     pd1_voltage = (pd1_voltage1+pd1_voltage2)/2
     pd2_voltage = (pd2_voltage1+pd2_voltage2)/2
     pd3_voltage = (pd3_voltage1+pd3_voltage2)/2
     pd4_voltage = (pd4_voltage1+pd4_voltage2)/2
-    pd1_voltage_err = np.sqrt((pd1_voltage_err1**2+pd1_voltage_err2**2))/2
-    pd2_voltage_err = np.sqrt((pd2_voltage_err1**2+pd2_voltage_err2**2))/2
-    pd3_voltage_err = np.sqrt((pd3_voltage_err1**2+pd3_voltage_err2**2))/2
-    pd4_voltage_err = np.sqrt((pd4_voltage_err1**2+pd4_voltage_err2**2))/2
     
     # construct a larger matrix to hold the voltages
     pd_voltages = np.vstack((pd1_voltage, pd2_voltage, pd3_voltage, pd4_voltage))
-    pd_errs = np.vstack((pd1_voltage_err,pd2_voltage_err,pd3_voltage_err,pd4_voltage_err))
     # convert these lists to proper numpy arrays
     angles = np.array(angles)
     inc_powers = np.array(inc_powers)
@@ -259,13 +222,11 @@ for folder in angledirs:
     # Now plot linear polarization cal data
     
     # define a function to plot the resulting graph
-    def linear_cal_fig(axes, yerror, xdata, ydata, min_angle, max_angle):
+    def linear_cal_fig(xdata, ydata, min_angle, max_angle):
         
         # define a fitting function
         def fit_function(theta, a, b, c):
             return a + b*np.cos(2*theta*np.pi/180) + c*np.sin(2*theta*np.pi/180)
-        
-        axes.set_yticks([]) # y units are arbitrary, so no ticks
         
         fit_errs=[]
         fit_functions=[]
@@ -290,55 +251,17 @@ for folder in angledirs:
         mask = np.where((xdata>=min_angle) & (xdata<=max_angle))
         xdata = xdata[mask]
         ydata = ydata[:, mask]
-        yerror = yerror[:, mask]
-        thetas = np.linspace(min_angle, max_angle, 1000)        
-        colors = [(0, 0, 1, 0.5), (0, 0, 0, 0.5), (0, 0.5, 0.25, 0.5), (0.5, 0, 0.5, 0.5)]    
             
-        for i in range(0, 4):
-            err = np.transpose(yerror[i, :])
-            y = np.transpose(ydata[i, :])
-            axes.plot(thetas, fit_function(thetas, *fit_parameters[i]), linewidth=1.5, color = colors[i], label='PD #' + str(i+1))
-            axes.errorbar(xdata, y, fmt=" ", yerr=err, markersize = 6, ecolor = 'r', color = 'r', capsize=2.5, elinewidth=2.5) 
- #           print(fit_parameters[i])
-            
-        axes.legend(prop={'size': 9})
-        axes.set_ylim([0, 1.02*np.max(pd_voltages)])
-        axes.set_xlim([min_angle, max_angle])
-        minor_locatorx = AutoMinorLocator(2)
-        minor_locatory = AutoMinorLocator(2)
-    
-        axes.xaxis.set_minor_locator(minor_locatorx)
-        axes.yaxis.set_minor_locator(minor_locatory)
-    
-        major_length = 7
-        major_width = 1.5
-        minor_length = 5
-        minor_width = 1.5    
-    
-        axes.tick_params(axis='x', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
-        axes.tick_params(axis='x', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
-        axes.tick_params(axis='y', labelsize = 14, direction='in', length = major_length, width=major_width, which = 'major', top='off', color='k')
-        axes.tick_params(axis='y', labelsize = 14, direction='in', length = minor_length, width=minor_width, which = 'minor', top='off', color='k')
-        axes.set_xlim([min_angle, max_angle])
-        return fit_errs
-    
+#        for i in range(0, 4):
+#            y = np.transpose(ydata[i, :])
+        return fit_errs   
     
     save_figure = 0
     
-    # now plot it
+    # now calc fit error
     min_angle = 0
     max_angle = 180
-    fig = plt.figure()
-    ax = plt.gca()
-    fit_errs = linear_cal_fig(ax, pd_errs, angles, pd_voltages, min_angle, max_angle)
-    
-    if save_figure:
-        file_name = 'linear_cal.svg'
-        os.chdir('../../../../Graphics')
-        plt.savefig(file_name, format='svg')
-        os.chdir('..\\' + data_dir + '\\' + linear_pol_extension)
-    
-    plt.show()
+    fit_errs = linear_cal_fig(angles, pd_voltages, min_angle, max_angle)   
     
     # move onto the qwpR part of the calibration
     
@@ -351,10 +274,6 @@ for folder in angledirs:
         pd2_voltageQR = []
         pd3_voltageQR = []
         pd4_voltageQR = []
-        pd1_voltage_err = []
-        pd2_voltage_err = []
-        pd3_voltage_err = []
-        pd4_voltage_err = []
         
         os.chdir('..')  # move up a level
         if i == 1:  # determine which directory to cd into
@@ -380,10 +299,6 @@ for folder in angledirs:
                     pd2_voltageQR.append(np.mean(data[:, 1]))
                     pd3_voltageQR.append(np.mean(data[:, 2]))
                     pd4_voltageQR.append(np.mean(data[:, 3]))
-                    pd1_voltage_err.append(np.std(my_data[:, 0]))
-                    pd2_voltage_err.append(np.std(my_data[:, 1]))
-                    pd3_voltage_err.append(np.std(my_data[:, 2]))
-                    pd4_voltage_err.append(np.std(my_data[:, 3]))
                 except ValueError:  # don't do anything with invalid file name
                     print('file skipped ', file)
                     pass
@@ -394,12 +309,6 @@ for folder in angledirs:
         
         numAngles = len(pol_anglesR)
     
-        # converting to array
-        pd1_voltage_err=np.array(pd1_voltage_err)
-        pd2_voltage_err=np.array(pd2_voltage_err)
-        pd3_voltage_err=np.array(pd3_voltage_err)
-        pd4_voltage_err=np.array(pd4_voltage_err)
-        
         # convert arrays to numpy format
         pd1_voltageQR = np.array(pd1_voltageQR)
         pd2_voltageQR = np.array(pd2_voltageQR)
@@ -412,66 +321,30 @@ for folder in angledirs:
         pd2_voltageQR = pd2_voltageQR/qwp_power_incR
         pd3_voltageQR = pd3_voltageQR/qwp_power_incR
         pd4_voltageQR = pd4_voltageQR/qwp_power_incR
-        
-        # add in voltage from the power meter
-        pd1_voltage_err = pd1_voltageQR * np.sqrt((pd1_voltage_err/pd1_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
-        pd2_voltage_err = pd2_voltageQR * np.sqrt((pd2_voltage_err/pd2_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
-        pd3_voltage_err = pd3_voltageQR * np.sqrt((pd3_voltage_err/pd3_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
-        pd4_voltage_err = pd4_voltageQR * np.sqrt((pd4_voltage_err/pd4_voltageQR)**2 + (power_meter_error/qwp_power_incR)**2)
-        
-        # adding in the error from power meter
-    #    pd1_voltage_err=np.sqrt((pd1_voltage_err/qwp_power_incR)**2+(power_meter_error*pd1_voltage_err/(qwp_power_incR**2))**2)
-    #    pd2_voltage_err=np.sqrt((pd2_voltage_err/qwp_power_incR)**2+(power_meter_error*pd2_voltage_err/(qwp_power_incR**2))**2)
-    #    pd3_voltage_err=np.sqrt((pd3_voltage_err/qwp_power_incR)**2+(power_meter_error*pd3_voltage_err/(qwp_power_incR**2))**2)
-    #    pd4_voltage_err=np.sqrt((pd4_voltage_err/qwp_power_incR)**2+(power_meter_error*pd4_voltage_err/(qwp_power_incR**2))**2)
-    
-      # average all the values in the list    
+ 
+        # average all the values in the list    
         if i == 0:
             # compute the mean value measured on each photodiode
             pd1R = np.mean(pd1_voltageQR)
             pd2R = np.mean(pd2_voltageQR)
             pd3R = np.mean(pd3_voltageQR)
             pd4R = np.mean(pd4_voltageQR)
-            # measurement error is standard deviation of sets of 90 deg apart measurements
-            pd1R_err = np.std(qwp_err(pd1_voltageQR))
-            pd2R_err = np.std(qwp_err(pd2_voltageQR))
-            pd3R_err = np.std(qwp_err(pd3_voltageQR))
-            pd4R_err = np.std(qwp_err(pd4_voltageQR))
             
-  #          plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red')
-  #          plt.errorbar(pol_anglesR,pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue')
-  #          plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green')
-  #          plt.errorbar(pol_anglesR, pd4_voltageQR,yerr=pd4_voltage_err, fmt=' ', color='orange')
-            #print(len(pd1_voltageQR))
         elif i == 1:
             pd1L = np.mean(pd1_voltageQR)
             pd2L = np.mean(pd2_voltageQR)
             pd3L = np.mean(pd3_voltageQR)
             pd4L = np.mean(pd4_voltageQR)
-            pd1L_err = np.std(qwp_err(pd1_voltageQR))
-            pd2L_err = np.std(qwp_err(pd2_voltageQR))
-            pd3L_err = np.std(qwp_err(pd3_voltageQR))
-            pd4L_err = np.std(qwp_err(pd4_voltageQR))
- #           plt.errorbar(pol_anglesR, pd1_voltageQR, yerr=pd1_voltage_err, fmt=' ', color='red', alpha=0.5)
- #           plt.errorbar(pol_anglesR, pd2_voltageQR, yerr=pd2_voltage_err, fmt=' ', color='blue', alpha=0.5)
- #           plt.errorbar(pol_anglesR, pd3_voltageQR, yerr=pd3_voltage_err, fmt=' ', color='green', alpha=0.5)
- #           plt.errorbar(pol_anglesR, pd4_voltageQR, yerr=pd4_voltage_err, fmt=' ', color='orange', alpha=0.5)
-            #print(len(pd1_voltageQR))
- #   plt.show()
     
     # Construct the instrument matrix
     A3 = np.array([(pd1R-pd1L)/2, (pd2R-pd2L)/2, (pd3R-pd3L)/2, (pd4R-pd4L)/2])
-    A3_err=np.array([np.sqrt(pd1R_err**2+pd1L_err**2)/2, np.sqrt(pd2R_err**2+pd2L_err**2)/2,
-                     np.sqrt(pd3R_err**2+pd3L_err**2)/2, np.sqrt(pd4R_err**2+pd4L_err**2)/2])
     
     A3 = np.matrix.transpose(np.array([A3]))
-    A3_err = np.matrix.transpose(np.array([A3_err]))
     
     A02 = np.array(fit_parameters)  # data from linear calibration
-    A02_err = np.array(fit_errs)
     
+    #Instrument matrix for each of q angles
     A[q][:][:] = np.hstack((A02, A3))  # This is the instrument matrix!
-    A_err = np.hstack((A02_err, A3_err))
     
  #   print('Instrument matrix A: ')
  #   print(A)
@@ -481,7 +354,8 @@ for folder in angledirs:
 #    print('Condition number of A: ')
 #    print(A_cond)
 #    print('')
-    
+
+    #Inverse instrument matrix for each of q angles    
     Ainv[q][:][:] = np.linalg.inv(A[q][:][:])  # this is the inverse of the instrument matrix
 #    print('Inverted matrix Ainv: ')
 #    print(Ainv[:][:][q])
@@ -493,7 +367,7 @@ for folder in angledirs:
     os.chdir('..')
     q+=1
 
-plt.close('all')
+#plt.close('all')
 
 #%% heatmap 
 
@@ -530,7 +404,7 @@ print(B)
 
 #%% Numerical calc of error on S
 
-##Symmetric sampling of sphere
+##OPTION 1: Symmetric sampling of sphere
 
 #noofpphi=20
 #noofpchi=40
@@ -553,7 +427,7 @@ print(B)
         
 n = 800
 
-##even sampling of sphere
+##OPTION2: even sampling of sphere
 #golden_angle = np.pi * (3 - np.sqrt(5)) 
 #theta = golden_angle * np.arange(n) 
 #z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
@@ -564,7 +438,7 @@ n = 800
 #x = radius * np.cos(theta)
 #y = radius * np.sin(theta)
 
-#spiral sampling of sphere
+##OPTION3: spiral sampling of sphere
 theta = np.linspace(0, 60*np.pi, n) 
 z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
 radius = np.sqrt(1 - z * z)
@@ -575,17 +449,14 @@ x = radius * np.cos(theta)
 y = radius * np.sin(theta)
 
 
-
+#Define incoming Stokes vectors
 Sinc=np.zeros((4,len(x)))
 Sinc[0,:]=np.ones(len(x))
 Sinc[1,:]=np.array(x)
 Sinc[2,:]=np.array(y)
 Sinc[3,:]=np.array(z)
 
-#,,np.array(y),np.array(z)]
-#Sinc=np.array(Sinc)
-#Sinc=np.matrix.transpose(Sinc)
-#Sforskel=np.zeros((len(phiangle),len(angledirs)))
+#Calculate error on measured stokes vectors
 S=[]
 err=[]
 dDOP=[]
@@ -595,7 +466,7 @@ dS3=[]
 Sout=[]
 for j in range(1,len(angledirs)):
     for i in range(len(x)):
-        SV, fejl, difdop, difS1, difS2, difS3, Sud  = errIncS(A[j][:][:], Ainv[0][:][:], Sinc[:,i])
+        SV, fejl, difdop, difS1, difS2, difS3, Sud, GreatCircledist  = errIncS(A[j][:][:], Ainv[0][:][:], Sinc[:,i])
         S.append(SV)
         err.append(fejl)
         dDOP.append(difdop)
@@ -603,15 +474,14 @@ for j in range(1,len(angledirs)):
         dS2.append(difS2)
         dS3.append(difS3)
         Sout.append(Sud)
-        #Sforskel[i][j]=errIncS(A[:][:][j], Ainv[:][:][0], Sinc[:,i])
-S=np.array(S)
-err=np.array(err)
-S=np.transpose(S)        
-dS1=np.array(dS1)
-dS2=np.array(dS2)
-dS3=np.array(dS3)
-dDOP=np.array(dDOP)
-Sout=np.array(Sout)
+S=np.array(S) #normalized measured Stokes
+err=np.array(err) #error between measured and inc Stokes
+S=np.transpose(S) 
+dS1=np.array(dS1) #error on S1
+dS2=np.array(dS2) #error on S2
+dS3=np.array(dS3) #error on S3
+dDOP=np.array(dDOP) #error on SOP
+Sout=np.array(Sout) #full measured Stokes vector
 
 
 
@@ -670,7 +540,7 @@ def plot_sphere(ax,arrows='xyz',equatorial=True):
     
 plot_sphere(ax)
 
-#for j in range(len(x)):
+#plot incoming Stokes vectors without colormap
 pSinc=ax.scatter3D(Sinc[1,:],Sinc[2,:],Sinc[3,:],color='red', marker='o',alpha=0.7)
 ax.set_axis_off()
 #lineInc = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor='red',markersize=8)
@@ -687,26 +557,28 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     ax = fig.add_subplot(111, projection='3d')
 
     plot_sphere(ax)
-    maxred=np.max(err[(n*w):n*w+n])
-    mingreen=np.min(err[(n*w):n*w+n])
-    colbar[w,:]=err[(n*w):n*w+n]/maxred
+    maxred=np.max(err[(n*w):n*w+n]) #maximum error of meas with this angle
+    mingreen=np.min(err[(n*w):n*w+n]) #minimum erro
+    colbar[w,:]=err[(n*w):n*w+n]/maxred #normalize error to one
     
-    farve=[colbar[w,:],1-colbar[w,:],np.zeros((len(colbar[w,:])))]
-    ax.scatter3D([S[0,n*w:n*w+n]], [S[1,n*w:n*w+n]], [S[2,n*w:n*w+n]],c=np.transpose(farve), cmap='viridis',marker='o')#,alpha =0.5
-        
+    farve=[colbar[w,:],1-colbar[w,:],np.zeros((len(colbar[w,:])))] #vary color from red (max error) to green (min error)
+    # plot normalized measured stokes par (normSout) or incoming stokes par (Sinc)
+    if plotMeasuredPol:
+        ax.scatter3D([S[0,n*w:n*w+n]], [S[1,n*w:n*w+n]], [S[2,n*w:n*w+n]],c=np.transpose(farve), cmap='viridis',marker='o')#,alpha =0.5
+    else:
+        ax.scatter3D([Sinc[1,:]], [Sinc[2,:]], [Sinc[3,:]],c=np.transpose(farve), cmap='viridis',marker='o')#,alpha =0.5
+    #plot perceived analyzer matrix
     for i in range(4):
         ax.scatter3D([A[0,i,1]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,2]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], [A[0,i,3]/np.linalg.norm([A[0,i,1],A[0,i,2],A[0,i,3]])], color='cyan', marker='o')
-        
     for i in range(0,4):
         for j in range(0,4):
             plt.plot(list(A[0,n,1]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
                      list(A[0,n,2]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]),
                      list(A[0,n,3]/np.linalg.norm([A[0,n,1],A[0,n,2],A[0,n,3]]) for n in [i,j]), color=[0.3,0.3,0.3], lw=1, marker=' ')
     
-    
+    #plot actual analyzer matrix 
     for i in range(4):
         ax.scatter3D([A[w+1,i,1]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,2]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], [A[w+1,i,3]/np.linalg.norm([A[w+1,i,1],A[w+1,i,2],A[w+1,i,3]])], color='b', marker='o')
-
     for i in range(0,4):
         for j in range(0,4):
             plt.plot(list(A[w+1,n,1]/np.linalg.norm([A[w+1,n,1],A[w+1,n,2],A[w+1,n,3]]) for n in [i,j]),
@@ -715,45 +587,49 @@ def plot_color_sphere(ax, S, err, title, vinkel):
 
     ax.set_axis_off()
     #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
+    
+    #make legend
     maxred=np.around(maxred, decimals=2)
     mingreen=np.around(mingreen, decimals=2)
-    
     redtext="max error: " + np.array_str(maxred)
     greentext="min error: " + np.array_str(mingreen)
-    
-#    red_proxy = plt.Rectangle((0, 0), 1, 1, fc=[1, 0, 0])
-#    green_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 1, 0])
-#    blue_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 1])
-#    black_proxy = plt.Rectangle((0, 0), 1, 1, fc=[0, 0, 0])
-#    ax.legend([red_proxy,green_proxy,blue_proxy,black_proxy],[redtext, greentext, 'A_actual (yellow tetrahedron)','A_perceived (orange tetrahedron)'],loc='lower center')
-
-    line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8)
-    line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markerfacecolor=[0,1,0],markersize=8)
+    line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8, alpha=0.8)
+    line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markerfacecolor=[0,1,0],markersize=8, alpha=0.8)
     line3 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8, markerfacecolor="blue")
     line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8,markerfacecolor="cyan")
     yline = plt.Line2D(range(1), range(1), color="magenta")
     oline = plt.Line2D(range(1), range(1), color=[0.3,0.3,0.3])
     plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, 'A_actual', 'A_perceived'),numpoints=1, loc="lower right")
+    
     plt.title(title + ', angle = ' + vinkel)
+    
     if save_fig:
         file_name = 'PolarimeterAngle' + vinkel + title + '.svg'
         plt.savefig(file_name, format='svg')
     plt.show()
 
-save_fig = 1
-os.chdir('../../../Graphics/angle/4D Eucledean dist')
-#for w in range(len(angledirs)-1):
-#    plot_color_sphere(plt.gca(), S, err,"4D Eucledean dist", angledirs[w+1])
-    
-for w in range(len(angledirs)-1):
-    plot_color_sphere(plt.gca(), S, dS1, "S1 error", angledirs[w+1])
-    
-for w in range(len(angledirs)-1):
-    plot_color_sphere(plt.gca(), S, dS2, "S2 error", angledirs[w+1])
-    
-for w in range(len(angledirs)-1):
-    plot_color_sphere(plt.gca(), S, dS3, "S3 error", angledirs[w+1])
+plotMeasuredPol=1 #Choose whether you want to plot the incoming or (simulated) measured stokes vectors on the Pshere
+#save_fig = 0
+#os.chdir('../../../Graphics/angle/4D Eucledean dist')
 
-for w in range(len(angledirs)-1):
-    plot_color_sphere(plt.gca(), S, dDOP, "DOP error", angledirs[w+1])
+
+#plot measured polarization and error shown as color
+if GreatCircledist:
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, err,"Great Circle dist", angledirs[w+1]) #plot the Great Circle dist error
+else:
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, err,"4D Eucledean dist", angledirs[w+1]) #or plot the Eucledean dist depending on choice in errIncS
+
+#for w in range(len(angledirs)-1):
+#    plot_color_sphere(plt.gca(), S, dS1, "S1 error", angledirs[w+1]) # plot error on S1
+#    
+#for w in range(len(angledirs)-1):
+#    plot_color_sphere(plt.gca(), S, dS2, "S2 error", angledirs[w+1]) # plot error on S2
+#    
+#for w in range(len(angledirs)-1):
+#    plot_color_sphere(plt.gca(), S, dS3, "S3 error", angledirs[w+1]) # plot error on S3
+#
+#for w in range(len(angledirs)-1):
+#    plot_color_sphere(plt.gca(), S, dDOP, "DOP error", angledirs[w+1]) # plot error on DOP
 
