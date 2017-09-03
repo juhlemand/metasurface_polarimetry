@@ -17,6 +17,7 @@ import sys
 from matplotlib.ticker import AutoMinorLocator
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
+from scipy import stats as stats
 #from mpl_toolkits.mplot3d import Axes3D
 #import matplotlib.tri as mtri
 
@@ -30,8 +31,7 @@ qwp_L = 'qwp_L'  # folder for qwp at second configuration
 
 partial_pol = 'partial_pol8'  # folder location of partial pol data
 
-power_meter_error = 0.001 #Error in power meter reading from ambient light, unit in mW
-
+plotStokes = 0 #do you want to plot Stokes parameters in cartesion (1) or polar (0) coordinates?
 
 if 'linux' or 'darwin' in sys.platform:
     data_dir = 'acquisition/data/incident_angles_calibration'
@@ -125,14 +125,35 @@ def errIncS(A_actual, A_perceived, Sinc):
     SincDOP = determine_dop(Sinc)
     SoutDOP = determine_dop(Sout)
     
+    
     diffDOP = np.abs(SincDOP-SoutDOP)
-    diffS1 = np.abs(Sinc[1]-Sout[1])
-    diffS2 = np.abs(Sinc[2]-Sout[2])
-    diffS3 = np.abs(Sinc[3]-Sout[3])
+    diffS0 = np.abs(Sinc[0]-Sout[0])/Sinc[0]
+    diffS1 = np.abs(Sinc[1]-normSout[0])
+    diffS2 = np.abs(Sinc[2]-normSout[1])
+    diffS3 = np.abs(Sinc[3]-normSout[2])
+    
+    azimutOut = 0.5 * np.arctan2(Sout[2],Sout[1])
+    elliptOut = 0.5 * np.arctan2(Sout[3],np.sqrt(Sout[1]**2+Sout[2]**2))
+    elliptOut2nd = Sout[3]/(Sout[0]+np.sqrt(Sout[1]**2+Sout[2]**2))
+    
+    azimutInc = 0.5 * np.arctan2(Sinc[2],Sinc[1])
+    elliptInc = 0.5 * np.arctan2(Sinc[3],np.sqrt(Sinc[1]**2+Sinc[2]**2))
+    elliptInc2nd = Sout[3]/(Sinc[0]+np.sqrt(Sinc[1]**2+Sinc[2]**2))
+    
+    diffAz = np.abs(azimutOut - azimutInc) #np.abs(np.mod(azimutOut - azimutInc + np.pi, 2*np.pi) - np.pi)
+    diffEl = np.abs(elliptOut - elliptInc)
+    diffA = azimutOut - azimutInc
+    diffE = elliptOut - elliptInc
+    
+    #desperate actions to remove errors when crossing zero radians
+    if diffAz>2.5 and Sout[1]<0 and np.abs(Sout[2])<0.1:
+        diffAz=np.abs(diffAz-np.pi)
+        diffA=diffAz
+        
 
     # just difference
     #diffS=Sout-Sinc
-    return normSout, diffS, diffDOP, diffS1, diffS2, diffS3, Sout, GreatCircledist
+    return normSout, diffS, diffDOP, diffS0, diffS1, diffS2, diffS3, diffAz, diffEl, diffA, diffE, Sout, GreatCircledist
 #%% Short version of calibration.py
 q=0
 A=np.zeros((len(angledirs),4,4))
@@ -440,14 +461,24 @@ n = 800
 
 ##OPTION3: spiral sampling of sphere
 theta = np.linspace(0, 60*np.pi, n) 
-z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
+if plotStokes:
+    z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
+else:
+    z = np.linspace(0.95 - 1.0 / n, 1.0 / n - 0.95, n)
 radius = np.sqrt(1 - z * z)
  
 x = np.zeros((n))
-t = np.zeros((n))
+y = np.zeros((n))
+#t = np.zeros((n))
 x = radius * np.cos(theta)
 y = radius * np.sin(theta)
 
+#delete values that arctan2 puts in wrong quadrant
+#index=np.where(np.abs(y) < 0.05)
+#x=np.delete(x, index)
+#y=np.delete(y, index)
+#z=np.delete(z, index)
+#n=len(x)
 
 #Define incoming Stokes vectors
 Sinc=np.zeros((4,len(x)))
@@ -460,26 +491,41 @@ Sinc[3,:]=np.array(z)
 S=[]
 err=[]
 dDOP=[]
+dS0=[]
 dS1=[]
 dS2=[]
 dS3=[]
+dAz=[]
+dEl=[]
+dA=[]
+dE=[]
 Sout=[]
 for j in range(1,len(angledirs)):
     for i in range(len(x)):
-        SV, fejl, difdop, difS1, difS2, difS3, Sud, GreatCircledist  = errIncS(A[j][:][:], Ainv[0][:][:], Sinc[:,i])
+        SV, fejl, difdop, difS0, difS1, difS2, difS3, difAz, difEl, difA, difE, Sud, GreatCircledist  = errIncS(A[j][:][:], Ainv[0][:][:], Sinc[:,i])
         S.append(SV)
         err.append(fejl)
         dDOP.append(difdop)
+        dS0.append(difS0)
         dS1.append(difS1)
         dS2.append(difS2)
         dS3.append(difS3)
+        dAz.append(difAz)
+        dEl.append(difEl)
+        dA.append(difA)
+        dE.append(difE)
         Sout.append(Sud)
 S=np.array(S) #normalized measured Stokes
 err=np.array(err) #error between measured and inc Stokes
-S=np.transpose(S) 
+S=np.transpose(S)
+dS0=np.array(dS0) 
 dS1=np.array(dS1) #error on S1
 dS2=np.array(dS2) #error on S2
 dS3=np.array(dS3) #error on S3
+dAz=np.array(dAz) #abs error on Azimuthal angle
+dEl=np.array(dEl) #abs error on ellipticity
+dA=np.array(dA) #error on Azimuthal angle
+dE=np.array(dE) #error on ellipticity
 dDOP=np.array(dDOP) #error on SOP
 Sout=np.array(Sout) #full measured Stokes vector
 
@@ -561,6 +607,25 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     mingreen=np.min(err[(n*w):n*w+n]) #minimum erro
     colbar[w,:]=err[(n*w):n*w+n]/maxred #normalize error to one
     
+    #calculate root mean square error to compare
+    if title=="Azimuthal error":
+        rmse_dAz=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
+        rmse_dAz=np.around(rmse_dAz,decimals=4)
+        #(mu, sigma) = stats.norm.fit(dA[(n*w):n*w+n])
+        mu=np.mean(dA[(n*w):n*w+n])
+        sigma=np.sqrt(np.mean((dA[(n*w):n*w+n]-mu)**2))
+        sigma=np.around(sigma,decimals=4)
+        title=title + ", $\sigma$=" + np.array2string(sigma) #np.array2string(rmse_dAz)
+    #calculate root mean square error to compare    
+    if title=="Ellipticity error":
+        rmse_dEl=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
+        rmse_dEl=np.around(rmse_dEl,decimals=4)
+        #(mu, sigma) = stats.norm.fit(dE[(n*w):n*w+n])
+        mu=np.mean(dE[(n*w):n*w+n])
+        sigma=np.sqrt(np.mean((dE[(n*w):n*w+n]-mu)**2))
+        sigma=np.around(sigma,decimals=4)
+        title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
+    
     farve=[colbar[w,:],1-colbar[w,:],np.zeros((len(colbar[w,:])))] #vary color from red (max error) to green (min error)
     # plot normalized measured stokes par (normSout) or incoming stokes par (Sinc)
     if plotMeasuredPol:
@@ -591,15 +656,15 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     #make legend
     maxred=np.around(maxred, decimals=2)
     mingreen=np.around(mingreen, decimals=2)
-    redtext="max error: " + np.array_str(maxred)
-    greentext="min error: " + np.array_str(mingreen)
+    redtext="$max$ $error:$ " + np.array_str(maxred)
+    greentext="$min$ $error:$ " + np.array_str(mingreen)
     line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8, alpha=0.8)
     line2 = plt.Line2D(range(1), range(1), color="white", marker='o',markerfacecolor=[0,1,0],markersize=8, alpha=0.8)
     line3 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8, markerfacecolor="blue")
     line4 = plt.Line2D(range(1), range(1), color="white", marker='o',markersize=8,markerfacecolor="cyan")
     yline = plt.Line2D(range(1), range(1), color="magenta")
     oline = plt.Line2D(range(1), range(1), color=[0.3,0.3,0.3])
-    plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, 'A_actual', 'A_perceived'),numpoints=1, loc="lower right")
+    plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, '$A_{actual}$', '$A_{perceived}$'),numpoints=1, loc="lower right")#A_actual', 'A_perceived'
     
     plt.title(title + ', angle = ' + vinkel)
     
@@ -621,15 +686,23 @@ else:
     for w in range(len(angledirs)-1):
         plot_color_sphere(plt.gca(), S, err,"4D Eucledean dist", angledirs[w+1]) #or plot the Eucledean dist depending on choice in errIncS
 
-#for w in range(len(angledirs)-1):
-#    plot_color_sphere(plt.gca(), S, dS1, "S1 error", angledirs[w+1]) # plot error on S1
-#    
-#for w in range(len(angledirs)-1):
-#    plot_color_sphere(plt.gca(), S, dS2, "S2 error", angledirs[w+1]) # plot error on S2
-#    
-#for w in range(len(angledirs)-1):
-#    plot_color_sphere(plt.gca(), S, dS3, "S3 error", angledirs[w+1]) # plot error on S3
-#
+if plotStokes:
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, dS1, "S1 error", angledirs[w+1]) # plot error on S1
+        
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, dS2, "S2 error", angledirs[w+1]) # plot error on S2
+        
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, dS3, "S3 error", angledirs[w+1]) # plot error on S3
+else:
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, dAz, "Azimuthal error", angledirs[w+1]) # plot error on Azimuth
+    for w in range(len(angledirs)-1):
+        plot_color_sphere(plt.gca(), S, dEl, "Ellipticity error", angledirs[w+1]) # plot error on Azimuth
+
 #for w in range(len(angledirs)-1):
 #    plot_color_sphere(plt.gca(), S, dDOP, "DOP error", angledirs[w+1]) # plot error on DOP
 
+#rmse_dAz=np.mean(dAz**2)
+#rmse_dEl=np.mean(dEl**2)
