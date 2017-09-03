@@ -464,7 +464,7 @@ theta = np.linspace(0, 60*np.pi, n)
 if plotStokes:
     z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
 else:
-    z = np.linspace(0.95 - 1.0 / n, 1.0 / n - 0.95, n)
+    z = np.linspace(0.98 - 1.0 / n, 1.0 / n - 0.98, n)
 radius = np.sqrt(1 - z * z)
  
 x = np.zeros((n))
@@ -611,18 +611,18 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     if title=="Azimuthal error":
         rmse_dAz=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
         rmse_dAz=np.around(rmse_dAz,decimals=4)
-        #(mu, sigma) = stats.norm.fit(dA[(n*w):n*w+n])
-        mu=np.mean(dA[(n*w):n*w+n])
-        sigma=np.sqrt(np.mean((dA[(n*w):n*w+n]-mu)**2))
+        (mu, sigma) = stats.norm.fit(dA[(n*w):n*w+n])
+        #mu=np.mean(dA[(n*w):n*w+n])
+        #sigma=np.sqrt(np.mean((dA[(n*w):n*w+n]-mu)**2))
         sigma=np.around(sigma,decimals=4)
         title=title + ", $\sigma$=" + np.array2string(sigma) #np.array2string(rmse_dAz)
     #calculate root mean square error to compare    
     if title=="Ellipticity error":
         rmse_dEl=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
         rmse_dEl=np.around(rmse_dEl,decimals=4)
-        #(mu, sigma) = stats.norm.fit(dE[(n*w):n*w+n])
-        mu=np.mean(dE[(n*w):n*w+n])
-        sigma=np.sqrt(np.mean((dE[(n*w):n*w+n]-mu)**2))
+        (mu, sigma) = stats.norm.fit(dE[(n*w):n*w+n])
+        #mu=np.mean(dE[(n*w):n*w+n])
+        #sigma=np.sqrt(np.mean((dE[(n*w):n*w+n]-mu)**2))
         sigma=np.around(sigma,decimals=4)
         title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
     
