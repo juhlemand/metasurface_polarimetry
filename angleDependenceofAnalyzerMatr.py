@@ -14,7 +14,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import sys
-from matplotlib.ticker import AutoMinorLocator
+#from matplotlib.ticker import AutoMinorLocator
 from matplotlib.patches import FancyArrowPatch
 from mpl_toolkits.mplot3d import proj3d
 from scipy import stats as stats
@@ -140,20 +140,19 @@ def errIncS(A_actual, A_perceived, Sinc):
     elliptInc = 0.5 * np.arctan2(Sinc[3],np.sqrt(Sinc[1]**2+Sinc[2]**2))
     elliptInc2nd = Sout[3]/(Sinc[0]+np.sqrt(Sinc[1]**2+Sinc[2]**2))
     
-    diffAz = np.abs(azimutOut - azimutInc) #np.abs(np.mod(azimutOut - azimutInc + np.pi, 2*np.pi) - np.pi)
-    diffEl = np.abs(elliptOut - elliptInc)
     diffA = azimutOut - azimutInc
     diffE = elliptOut - elliptInc
     
-    #desperate actions to remove errors when crossing zero radians
-    if diffAz>2.5 and Sout[1]<0 and np.abs(Sout[2])<0.1:
-        diffAz=np.abs(diffAz-np.pi)
-        diffA=diffAz
-        
+    #remove errors when crossing zero radians
+    if np.abs(diffA)>2.5 and Sout[1]<0 and np.abs(Sout[2])<0.1:
+        if diffA<0:
+            diffA=diffA+np.pi    
+        else:
+            diffA=diffA-np.pi             
 
     # just difference
     #diffS=Sout-Sinc
-    return normSout, diffS, diffDOP, diffS0, diffS1, diffS2, diffS3, diffAz, diffEl, diffA, diffE, Sout, GreatCircledist
+    return normSout, diffS, diffDOP, diffS0, diffS1, diffS2, diffS3, diffA, diffE, Sout, GreatCircledist
 #%% Short version of calibration.py
 q=0
 A=np.zeros((len(angledirs),4,4))
@@ -497,12 +496,10 @@ dS2=[]
 dS3=[]
 dAz=[]
 dEl=[]
-dA=[]
-dE=[]
 Sout=[]
 for j in range(1,len(angledirs)):
     for i in range(len(x)):
-        SV, fejl, difdop, difS0, difS1, difS2, difS3, difAz, difEl, difA, difE, Sud, GreatCircledist  = errIncS(A[j][:][:], Ainv[0][:][:], Sinc[:,i])
+        SV, fejl, difdop, difS0, difS1, difS2, difS3, difAz, difEl, Sud, GreatCircledist  = errIncS(A[j][:][:], Ainv[0][:][:], Sinc[:,i])
         S.append(SV)
         err.append(fejl)
         dDOP.append(difdop)
@@ -512,8 +509,6 @@ for j in range(1,len(angledirs)):
         dS3.append(difS3)
         dAz.append(difAz)
         dEl.append(difEl)
-        dA.append(difA)
-        dE.append(difE)
         Sout.append(Sud)
 S=np.array(S) #normalized measured Stokes
 err=np.array(err) #error between measured and inc Stokes
@@ -522,10 +517,8 @@ dS0=np.array(dS0)
 dS1=np.array(dS1) #error on S1
 dS2=np.array(dS2) #error on S2
 dS3=np.array(dS3) #error on S3
-dAz=np.array(dAz) #abs error on Azimuthal angle
-dEl=np.array(dEl) #abs error on ellipticity
-dA=np.array(dA) #error on Azimuthal angle
-dE=np.array(dE) #error on ellipticity
+dAz=np.array(dAz) #error on Azimuthal angle
+dEl=np.array(dEl) #error on ellipticity
 dDOP=np.array(dDOP) #error on SOP
 Sout=np.array(Sout) #full measured Stokes vector
 
@@ -603,28 +596,31 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     ax = fig.add_subplot(111, projection='3d')
 
     plot_sphere(ax)
-    maxred=np.max(err[(n*w):n*w+n]) #maximum error of meas with this angle
-    mingreen=np.min(err[(n*w):n*w+n]) #minimum erro
-    colbar[w,:]=err[(n*w):n*w+n]/maxred #normalize error to one
     
     #calculate root mean square error to compare
     if title=="Azimuthal error":
         rmse_dAz=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
         rmse_dAz=np.around(rmse_dAz,decimals=4)
-        (mu, sigma) = stats.norm.fit(dA[(n*w):n*w+n])
+        (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
         #mu=np.mean(dA[(n*w):n*w+n])
         #sigma=np.sqrt(np.mean((dA[(n*w):n*w+n]-mu)**2))
-        sigma=np.around(sigma,decimals=4)
+        sigma=np.around(sigma,decimals=3)
         title=title + ", $\sigma$=" + np.array2string(sigma) #np.array2string(rmse_dAz)
+        err=np.abs(err)
     #calculate root mean square error to compare    
     if title=="Ellipticity error":
         rmse_dEl=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
         rmse_dEl=np.around(rmse_dEl,decimals=4)
-        (mu, sigma) = stats.norm.fit(dE[(n*w):n*w+n])
+        (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
         #mu=np.mean(dE[(n*w):n*w+n])
         #sigma=np.sqrt(np.mean((dE[(n*w):n*w+n]-mu)**2))
-        sigma=np.around(sigma,decimals=4)
+        sigma=np.around(sigma,decimals=3)
         title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
+        err=np.abs(err)
+
+    maxred=np.max(err[(n*w):n*w+n]) #maximum error of meas with this angle
+    mingreen=np.min(err[(n*w):n*w+n]) #minimum erro
+    colbar[w,:]=err[(n*w):n*w+n]/maxred #normalize error to one
     
     farve=[colbar[w,:],1-colbar[w,:],np.zeros((len(colbar[w,:])))] #vary color from red (max error) to green (min error)
     # plot normalized measured stokes par (normSout) or incoming stokes par (Sinc)
@@ -669,22 +665,22 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     plt.title(title + ', angle = ' + vinkel)
     
     if save_fig:
-        file_name = 'PolarimeterAngle' + vinkel + title + '.svg'
+        file_name = 'PolarimeterAngle' + vinkel + title[:15] + '.svg'
         plt.savefig(file_name, format='svg')
     plt.show()
 
 plotMeasuredPol=1 #Choose whether you want to plot the incoming or (simulated) measured stokes vectors on the Pshere
-#save_fig = 0
-#os.chdir('../../../Graphics/angle/4D Eucledean dist')
+save_fig = 1
+os.chdir('../../../Graphics/angle/AzimuthEllipticity')
 
 
 #plot measured polarization and error shown as color
-if GreatCircledist:
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, err,"Great Circle dist", angledirs[w+1]) #plot the Great Circle dist error
-else:
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, err,"4D Eucledean dist", angledirs[w+1]) #or plot the Eucledean dist depending on choice in errIncS
+#if GreatCircledist:
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, err,"Great Circle dist", angledirs[w+1]) #plot the Great Circle dist error
+#else:
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, err,"4D Eucledean dist", angledirs[w+1]) #or plot the Eucledean dist depending on choice in errIncS
 
 if plotStokes:
     for w in range(len(angledirs)-1):
