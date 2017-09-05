@@ -34,13 +34,13 @@ partial_pol = 'partial_pol8'  # folder location of partial pol data
 plotStokes = 0 #do you want to plot Stokes parameters in cartesion (1) or polar (0) coordinates?
 
 if 'linux' or 'darwin' in sys.platform:
-    data_dir = 'acquisition/data/incident_angles_calibration'
+    data_dir = 'acquisition/data' #incident_angles_calibration'
 else:
     data_dir = 'acquisition\\data\\incident_angles_calibration\\20deg'
 
 os.chdir(data_dir)
 #angles of (big) metasurface away from normal incidence
-angledirs = ['0deg','5deg','10deg','15deg','20deg']
+angledirs = ['calibration5','calibration6'] #['0deg','5deg','10deg','15deg','20deg']
 
 #%% Collect some error analysis functions
 def covS(i, j, D, I, Dcov, Icov):
@@ -74,7 +74,7 @@ def qwp_err(pd_arr):
 
     pd_arr: 1xn array with photodiode voltages, spanning the entire 360 degrees
     '''
-    # must be an even # of measurements in the end and we divide total number by two                                     so it must be an even multiple of 4
+    # must be an even # of measurements in the end and we divide total number by two so it must be an even multiple of 4
     assert (len(pd_arr)/4) % 1 < 1e-12    
     avg_90deg = np.zeros(len(pd_arr))  # a vector to store the averages    
     offset = int(len(pd_arr)/4)  # number of steps to +90 deg measurement
@@ -599,22 +599,22 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     
     #calculate root mean square error to compare
     if title=="Azimuthal error":
-        rmse_dAz=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
-        rmse_dAz=np.around(rmse_dAz,decimals=4)
+        #rmse_dAz=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
+        #rmse_dAz=np.around(rmse_dAz,decimals=4)
         (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
         #mu=np.mean(dA[(n*w):n*w+n])
         #sigma=np.sqrt(np.mean((dA[(n*w):n*w+n]-mu)**2))
-        sigma=np.around(sigma,decimals=3)
+        sigma=np.around(sigma,decimals=4)
         title=title + ", $\sigma$=" + np.array2string(sigma) #np.array2string(rmse_dAz)
         err=np.abs(err)
     #calculate root mean square error to compare    
     if title=="Ellipticity error":
-        rmse_dEl=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
-        rmse_dEl=np.around(rmse_dEl,decimals=4)
+        #rmse_dEl=np.sqrt(np.mean(err[(n*w):n*w+n]**2))
+        #rmse_dEl=np.around(rmse_dEl,decimals=4)
         (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
         #mu=np.mean(dE[(n*w):n*w+n])
         #sigma=np.sqrt(np.mean((dE[(n*w):n*w+n]-mu)**2))
-        sigma=np.around(sigma,decimals=3)
+        sigma=np.around(sigma,decimals=4)
         title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
         err=np.abs(err)
 
@@ -650,8 +650,8 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
     
     #make legend
-    maxred=np.around(maxred, decimals=2)
-    mingreen=np.around(mingreen, decimals=2)
+    maxred=np.around(maxred, decimals=3)
+    mingreen=np.around(mingreen, decimals=3)
     redtext="$max$ $error:$ " + np.array_str(maxred)
     greentext="$min$ $error:$ " + np.array_str(mingreen)
     line1 = plt.Line2D(range(1), range(1), color="white", marker='o', markerfacecolor=[1,0,0],markersize=8, alpha=0.8)
@@ -662,16 +662,17 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     oline = plt.Line2D(range(1), range(1), color=[0.3,0.3,0.3])
     plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, '$A_{actual}$', '$A_{perceived}$'),numpoints=1, loc="lower right")#A_actual', 'A_perceived'
     
-    plt.title(title + ', angle = ' + vinkel)
+    new=angledirs[0]
+    plt.title(title + ', Calibration no. ' + vinkel[11:] + ' using ' + new[11:])#angle =
     
     if save_fig:
-        file_name = 'PolarimeterAngle' + vinkel + title[:15] + '.svg'
+        file_name = title[:15] + 'Calibration no ' + vinkel[11:] + ' using ' + new[11:] + '.svg'#'PolarimeterAngle' + vinkel + title[:15] + '.svg'
         plt.savefig(file_name, format='svg')
     plt.show()
 
 plotMeasuredPol=1 #Choose whether you want to plot the incoming or (simulated) measured stokes vectors on the Pshere
 save_fig = 1
-os.chdir('../../../Graphics/angle/AzimuthEllipticity')
+os.chdir('../../Graphics/angle/AzimuthEllipticity')#../
 
 
 #plot measured polarization and error shown as color
