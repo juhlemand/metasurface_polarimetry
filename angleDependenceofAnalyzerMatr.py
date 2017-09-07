@@ -31,16 +31,16 @@ qwp_L = 'qwp_L'  # folder for qwp at second configuration
 
 partial_pol = 'partial_pol8'  # folder location of partial pol data
 
-plotStokes = 0 #do you want to plot Stokes parameters in cartesion (1) or polar (0) coordinates?
+plotStokes = 1 #do you want to plot Stokes parameters in cartesion (1) or polar (0) coordinates?
 
 if 'linux' or 'darwin' in sys.platform:
-    data_dir = 'acquisition/data' #incident_angles_calibration'
+    data_dir = 'acquisition/data/incident_angles_calibration' #incident_angles_calibration'
 else:
     data_dir = 'acquisition\\data\\incident_angles_calibration\\20deg'
 
 os.chdir(data_dir)
 #angles of (big) metasurface away from normal incidence
-angledirs = ['calibration5','calibration6'] #['0deg','5deg','10deg','15deg','20deg']
+angledirs = ['0deg','5deg','10deg','15deg','20deg']#['calibration5','calibration6']
 
 #%% Collect some error analysis functions
 def covS(i, j, D, I, Dcov, Icov):
@@ -141,14 +141,17 @@ def errIncS(A_actual, A_perceived, Sinc):
     elliptInc2nd = Sout[3]/(Sinc[0]+np.sqrt(Sinc[1]**2+Sinc[2]**2))
     
     diffA = azimutOut - azimutInc
-    diffE = elliptOut - elliptInc
+    diffE = np.degrees(elliptOut - elliptInc)
+    #diffE = elliptOut - elliptInc
     
     #remove errors when crossing zero radians
     if np.abs(diffA)>2.5 and Sout[1]<0 and np.abs(Sout[2])<0.1:
         if diffA<0:
             diffA=diffA+np.pi    
         else:
-            diffA=diffA-np.pi             
+            diffA=diffA-np.pi   
+    
+    diffA=np.degrees(diffA)
 
     # just difference
     #diffS=Sout-Sinc
@@ -463,7 +466,7 @@ theta = np.linspace(0, 60*np.pi, n)
 if plotStokes:
     z = np.linspace(1 - 1.0 / n, 1.0 / n - 1, n)
 else:
-    z = np.linspace(0.98 - 1.0 / n, 1.0 / n - 0.98, n)
+    z = np.linspace(0.95 - 1.0 / n, 1.0 / n - 0.95, n)
 radius = np.sqrt(1 - z * z)
  
 x = np.zeros((n))
@@ -604,7 +607,7 @@ def plot_color_sphere(ax, S, err, title, vinkel):
         (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
         #mu=np.mean(dA[(n*w):n*w+n])
         #sigma=np.sqrt(np.mean((dA[(n*w):n*w+n]-mu)**2))
-        sigma=np.around(sigma,decimals=4)
+        sigma=np.around(sigma,decimals=2)
         title=title + ", $\sigma$=" + np.array2string(sigma) #np.array2string(rmse_dAz)
         err=np.abs(err)
     #calculate root mean square error to compare    
@@ -614,7 +617,7 @@ def plot_color_sphere(ax, S, err, title, vinkel):
         (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
         #mu=np.mean(dE[(n*w):n*w+n])
         #sigma=np.sqrt(np.mean((dE[(n*w):n*w+n]-mu)**2))
-        sigma=np.around(sigma,decimals=4)
+        sigma=np.around(sigma,decimals=2)
         title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
         err=np.abs(err)
 
@@ -650,7 +653,7 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     #ax.set_title("max error (red): " + np.array_str(np.max(err[(800*w):800*w+800])))
     
     #make legend
-    maxred=np.around(maxred, decimals=3)
+    maxred=np.around(maxred, decimals=2)
     mingreen=np.around(mingreen, decimals=3)
     redtext="$max$ $error:$ " + np.array_str(maxred)
     greentext="$min$ $error:$ " + np.array_str(mingreen)
@@ -662,17 +665,17 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     oline = plt.Line2D(range(1), range(1), color=[0.3,0.3,0.3])
     plt.legend((line1,line2,(line3, yline),(line4,oline)),(redtext,greentext, '$A_{actual}$', '$A_{perceived}$'),numpoints=1, loc="lower right")#A_actual', 'A_perceived'
     
-    new=angledirs[0]
-    plt.title(title + ', Calibration no. ' + vinkel[11:] + ' using ' + new[11:])#angle =
+    #new=angledirs[0]
+    plt.title(title + ', angle = ' + vinkel[:11])#Calibration no. + ' using ' + new[11:]
     
     if save_fig:
-        file_name = title[:15] + 'Calibration no ' + vinkel[11:] + ' using ' + new[11:] + '.svg'#'PolarimeterAngle' + vinkel + title[:15] + '.svg'
+        file_name ='PolarimeterAngle' + vinkel + title[:15] + '.svg'#'Calibration no ' + vinkel[11:] + ' using ' + new[11:] + '.svg'
         plt.savefig(file_name, format='svg')
     plt.show()
 
-plotMeasuredPol=1 #Choose whether you want to plot the incoming or (simulated) measured stokes vectors on the Pshere
+plotMeasuredPol=0 #Choose whether you want to plot the incoming or (simulated) measured stokes vectors on the Pshere
 save_fig = 1
-os.chdir('../../Graphics/angle/AzimuthEllipticity')#../
+os.chdir('../../../Graphics/angle/s1tos3')#../
 
 
 #plot measured polarization and error shown as color
@@ -683,23 +686,26 @@ os.chdir('../../Graphics/angle/AzimuthEllipticity')#../
 #    for w in range(len(angledirs)-1):
 #        plot_color_sphere(plt.gca(), S, err,"4D Eucledean dist", angledirs[w+1]) #or plot the Eucledean dist depending on choice in errIncS
 
-if plotStokes:
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, dS1, "S1 error", angledirs[w+1]) # plot error on S1
-        
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, dS2, "S2 error", angledirs[w+1]) # plot error on S2
-        
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, dS3, "S3 error", angledirs[w+1]) # plot error on S3
-else:
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, dAz, "Azimuthal error", angledirs[w+1]) # plot error on Azimuth
-    for w in range(len(angledirs)-1):
-        plot_color_sphere(plt.gca(), S, dEl, "Ellipticity error", angledirs[w+1]) # plot error on Azimuth
+#if plotStokes:
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, dS0, "S0 error", angledirs[w+1]) # plot error on S0
+#
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, dS1, "s1 error", angledirs[w+1]) # plot error on S1
+#        
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, dS2, "s2 error", angledirs[w+1]) # plot error on S2
+#        
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, dS3, "s3 error", angledirs[w+1]) # plot error on S3
+#else:
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, dAz, "Azimuthal error", angledirs[w+1]) # plot error on Azimuth
+#    for w in range(len(angledirs)-1):
+#        plot_color_sphere(plt.gca(), S, dEl, "Ellipticity error", angledirs[w+1]) # plot error on Azimuth
 
-#for w in range(len(angledirs)-1):
-#    plot_color_sphere(plt.gca(), S, dDOP, "DOP error", angledirs[w+1]) # plot error on DOP
+for w in range(len(angledirs)-1):
+    plot_color_sphere(plt.gca(), S, dDOP, "DOP error", angledirs[w+1]) # plot error on DOP
 
 #rmse_dAz=np.mean(dAz**2)
 #rmse_dEl=np.mean(dEl**2)
