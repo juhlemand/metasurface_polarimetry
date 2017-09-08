@@ -126,7 +126,7 @@ def errIncS(A_actual, A_perceived, Sinc):
     SoutDOP = determine_dop(Sout)
     
     
-    diffDOP = np.abs(SincDOP-SoutDOP)
+    diffDOP = SincDOP-SoutDOP
     diffS0 = np.abs(Sinc[0]-Sout[0])/Sinc[0]
     diffS1 = np.abs(Sinc[1]-normSout[0])
     diffS2 = np.abs(Sinc[2]-normSout[1])
@@ -620,6 +620,11 @@ def plot_color_sphere(ax, S, err, title, vinkel):
         sigma=np.around(sigma,decimals=2)
         title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
         err=np.abs(err)
+    if title=="DOP error":
+        (mu, sigma) = stats.norm.fit(err[(n*w):n*w+n])
+        sigma=np.around(sigma,decimals=3)
+        title=title + ", $\sigma$=" +  np.array2string(sigma)#np.array2string(rmse_dEl)
+        err=np.abs(err)
 
     maxred=np.max(err[(n*w):n*w+n]) #maximum error of meas with this angle
     mingreen=np.min(err[(n*w):n*w+n]) #minimum erro
@@ -669,13 +674,13 @@ def plot_color_sphere(ax, S, err, title, vinkel):
     plt.title(title + ', angle = ' + vinkel[:11])#Calibration no. + ' using ' + new[11:]
     
     if save_fig:
-        file_name ='PolarimeterAngle' + vinkel + title[:15] + '.svg'#'Calibration no ' + vinkel[11:] + ' using ' + new[11:] + '.svg'
+        file_name ='PolarimeterAngle' + vinkel + title[:9] + '.svg'#'Calibration no ' + vinkel[11:] + ' using ' + new[11:] + '.svg'
         plt.savefig(file_name, format='svg')
     plt.show()
 
 plotMeasuredPol=0 #Choose whether you want to plot the incoming or (simulated) measured stokes vectors on the Pshere
 save_fig = 1
-os.chdir('../../../Graphics/angle/s1tos3')#../
+os.chdir('../../../Graphics/angle/S0ands1tos3andDOP incident pol plotted')#../
 
 
 #plot measured polarization and error shown as color
